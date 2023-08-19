@@ -1,0 +1,45 @@
+{"version": 4,
+ "packagesDir": "lake-packages",
+ "packages":
+ [{"git":
+   {"url": "https://github.com/EdAyers/ProofWidgets4",
+    "subDir?": null,
+    "rev": "a0c2cd0ac3245a0dade4f925bcfa97e06dd84229",
+    "name": "proofwidgets",
+    "inputRev?": "v0.0.13"}},
+  {"git":
+   {"url": "https://github.com/mhuisi/lean4-cli.git",
+    "subDir?": null,
+    "rev": "5a858c32963b6b19be0d477a30a1f4b6c120be7e",
+    "name": "Cli",
+    "inputRev?": "nightly"}},
+  {"git":
+   {"url": "https://github.com/leanprover-community/mathlib4",
+    "subDir?": null,
+    "rev": "9fdeb8945b9fb7ac697fe383e8f48b395fe047b9",
+    "name": "mathlib",
+    "inputRev?": "9fdeb8945b9fb7ac697fe383e8f48b395fe047b9"}},
+  {"git":
+   {"url": "https://github.com/gebner/quote4",
+    "subDir?": null,
+    "rev": "81cc13c524a68d0072561dbac276cd61b65872a6",
+    "name": "Qq",
+    "inputRev?": "master"}},
+  {"git":
+   {"url": "https://github.com/JLimperg/aesop",
+    "subDir?": null,
+    "rev": "d13a9666e6f430b940ef8d092f1219e964b52a09",
+    "name": "aesop",
+    "inputRev?": "d13a9666e6f430b940ef8d092f1219e964b52a09"}},
+  {"git":
+   {"url": "https://github.com/tydeu/lean4-alloy/",
+    "subDir?": null,
+    "rev": "99a65c78fffed85115ffda77fcd68c6d22680f32",
+    "name": "alloy",
+    "inputRev?": "master"}},
+  {"git":
+   {"url": "https://github.com/leanprover/std4",
+    "subDir?": null,
+    "rev": "8b864260672b21d964d79ecb2376e01d0eab9f5b",
+    "name": "std",
+    "inputRev?": "8b864260672b21d964d79ecb2376e01d0eab9f5b"}}]}
