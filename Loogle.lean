@@ -9,23 +9,47 @@ open Lean Core Meta Elab Term Command
 elab "compileTimeSearchPath" : term =>
   return toExpr (← searchPathRef.get)
 
-def runQuery (query : String) : CoreM Unit := do
+def Result := Except String (String × Array Lean.Name)
+def Printer := Result → IO Unit 
+
+def runQuery (query : String) : CoreM Result  := do
   match Parser.runParserCategory (← getEnv) `find_patterns query with
-  | .error err => IO.println err
+  | .error err => pure $ .error err
   | .ok s => do
     MetaM.run' do
-      let args ← TermElabM.run' $ Mathlib.Tactic.Find.parseFindPatterns (.mk s)
-      match ← Mathlib.Tactic.Find.find args with
-      | .ok (header, names) => do
-          IO.println (← header.toString)
-          names.forM (fun name => IO.println name)
-      | .error err => IO.println (← err.toString)
+      try
+        let args ← TermElabM.run' $ Mathlib.Tactic.Find.parseFindPatterns (.mk s)
+        match ← Mathlib.Tactic.Find.find args with
+        | .ok (header, names) => do
+            pure $ .ok (← header.toString, names.toArray)
+        | .error err => pure $ .error (← err.toString)
+      catch e =>
+        pure $ .error (← e.toMessageData.toString)
 
-def interactive : CoreM Unit := do
+
+def printPlain : Printer
+  | .error err => IO.println err
+  | .ok (header, names) => do
+      IO.println header
+      names.forM (fun name => IO.println name)
+
+def toJson : Result → Json
+  | .error err => .mkObj [("error", .str err)]
+  | .ok (header, names) =>
+      .mkObj [("header", header),
+              ("names", .arr (names.map (fun name => .str name.toString)))]
+
+def printJson : Printer := fun r => IO.println (toJson r).compress
+
+def single (print : Printer) (query : String) : CoreM Unit := do
+  let r ← runQuery query
+  print r
+
+def interactive (print : Printer) : CoreM Unit := do
   while true do
     let query := (← (← IO.getStdin).getLine).trim
     if query.isEmpty then break
-    runQuery query
+    single print query
 
 unsafe def work (mod : String) (act : CoreM Unit) : IO Unit := do
   searchPathRef.set compileTimeSearchPath
@@ -37,8 +61,10 @@ unsafe def work (mod : String) (act : CoreM Unit) : IO Unit := do
 
 unsafe def main (args : List String) : IO Unit := do
   match args with
-  | ["-i"] => work "Mathlib" interactive
-  | [query] => work "Mathlib" (runQuery query)
-  | [mod, "-i"] => work mod interactive
-  | [mod, query] => work mod (runQuery query)
+  | ["-i"] => work "Mathlib" (interactive printPlain)
+  | ["-j"] => work "Mathlib" (interactive printJson)
+  | [query] => work "Mathlib" (single printPlain query)
+  | [mod, "-i"] => work mod (interactive printPlain)
+  | [mod, "-j"] => work mod (interactive printJson)
+  | [mod, query] => work mod (single printPlain query)
   | _ => IO.println "Usage: loogle [module] query"
