@@ -16,7 +16,12 @@
       # (or ditch) alloy
       packages.${system} = lakePkg;
       devShells.${system}.default = pkgs.mkShell {
-        packages = [ pkgs.elan pkgs.pkgsStatic.libseccomp pkgs.pkgconfig ];
+        packages = with pkgs;
+          [ elan
+            pkgsStatic.libseccomp
+            pkgconfig
+            python3
+          ];
       };
     };
 }

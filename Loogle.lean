@@ -39,7 +39,9 @@ def toJson : Result → Json
       .mkObj [("header", header),
               ("names", .arr (names.map (fun name => .str name.toString)))]
 
-def printJson : Printer := fun r => IO.println (toJson r).compress
+def printJson : Printer := fun r => do
+  IO.println (toJson r).compress
+  (← IO.getStdout).flush
 
 def single (print : Printer) (query : String) : CoreM Unit := do
   let r ← runQuery query
@@ -57,7 +59,11 @@ unsafe def work (mod : String) (act : CoreM Unit) : IO Unit := do
     Seccomp.enable
     let ctx := {fileName := "", fileMap := Inhabited.default}
     let state := {env}
-    Prod.fst <$> act.toIO ctx state
+    Prod.fst <$> act'.toIO ctx state
+  where act' := do
+    -- warm up the cache eagerly
+    let _ ← MetaM.run' $ Mathlib.Tactic.Find.findDeclsByConsts.get
+    act
 
 unsafe def main (args : List String) : IO Unit := do
   match args with
