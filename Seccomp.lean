@@ -28,6 +28,10 @@ alloy c extern def enable : BaseIO Unit := {
   seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(set_robust_list), 0);
   seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(sigaltstack), 0);
   seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(madvise), 0);
+  -- lean seems to use newfsstatat on handle 0 and 1 upon first use
+  -- of stdin and stdout. If they are used before Seccomp.enable
+  -- then the following is not needed
+  seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(newfstatat), 0);
   seccomp_load(ctx);
   return lean_io_result_mk_ok(lean_box(0));
 }
