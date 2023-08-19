@@ -1,11 +1,20 @@
 {
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
-  outputs = { self, nixpkgs }:
+  inputs.lean.url = "github:leanprover/lean4";
+  outputs = { self, lean, nixpkgs }:
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
+      leanPkgs = lean.packages.${system};
+      lakePkg = leanPkgs.buildLeanPackage {
+        name = "Loogle";
+        src = ./.;
+      };
     in
     {
+      # doesn't work yet, need to package dependencies and think about
+      # (or ditch) alloy
+      packages.${system} = lakePkg;
       devShells.${system}.default = pkgs.mkShell {
         packages = [ pkgs.elan pkgs.pkgsStatic.libseccomp pkgs.pkgconfig ];
       };
