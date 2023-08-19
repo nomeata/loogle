@@ -6,6 +6,7 @@ combined in a single query.
 Try these:
 
 * [`Real.sin`](?q=Real.sin)
+* [`Real.sin tsum`](?q=Real.sin tsum)
 * [`(List.replicate (_ + _) _)`](?q=(List.replicate (_ %2B _) _))
 * [`(_ * (_ ^ _))`](?q=(_ * (_ ^ _)))
 
