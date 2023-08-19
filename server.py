@@ -89,9 +89,6 @@ class MyHandler(BaseHTTPRequestHandler):
             self.wfile.write(b"""
                 </ul>
             """)
-        self.wfile.write(b"""
-            <h2>Documentation</h2>
-        """)
         self.wfile.write(blurb)
         self.wfile.write(b"""
             </main>

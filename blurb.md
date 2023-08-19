@@ -1,14 +1,17 @@
+## Try these:
+
+* [`Real.sin`](?q=Real.sin)
+* [`Real.sin tsum`](?q=Real.sin tsum)
+* [`(Real.sin (_ + 2*Real.pi))`](?q=(Real.sin (_ %2B 2*Real.pi)))
+* [`(List.replicate (_ + _) _)`](?q=(List.replicate (_ %2B _) _))
+* [`(Real.sqrt ?a * Real.sqrt ?a)`](?q=(Real.sqrt %3Fa * Real.sqrt %3Fa))
+
+## Documentation
+
 This website gives access to the `#find` command to search through mathlib for definitions and lemmas in various ways. One can search by: the constants
 involved in the type; a substring of the name; a subexpression of the type; or a subexpression
 located in the return type or a hypothesis specifically. All of these search methods can be
 combined in a single query.
-
-Try these:
-
-* [`Real.sin`](?q=Real.sin)
-* [`Real.sin tsum`](?q=Real.sin tsum)
-* [`(List.replicate (_ + _) _)`](?q=(List.replicate (_ %2B _) _))
-* [`(_ * (_ ^ _))`](?q=(_ * (_ ^ _)))
 
 
 1. By constant:
