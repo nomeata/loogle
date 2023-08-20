@@ -56,7 +56,7 @@ def interactive (print : Printer) : CoreM Unit := do
 unsafe def work (mod : String) (act : CoreM Unit) : IO Unit := do
   searchPathRef.set compileTimeSearchPath
   withImportModules [{module := mod.toName}, {module := `Mathlib.Tactic.Find}] {} 0 fun env => do
-    let ctx := {fileName := "", fileMap := Inhabited.default}
+    let ctx := {fileName := "/", fileMap := Inhabited.default}
     let state := {env}
     Prod.fst <$> act'.toIO ctx state
   where act' := do

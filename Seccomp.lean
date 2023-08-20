@@ -10,7 +10,7 @@ alloy c include <stdlib.h>
 namespace Seccomp
 
 alloy c extern def enable : BaseIO Unit := {
-  scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_KILL);
+  scmp_filter_ctx ctx = seccomp_init(SCMP_ACT_KILL_PROCESS);
   seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(read), 0);
   seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(write), 0);
   seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(close), 0);
