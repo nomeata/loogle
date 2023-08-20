@@ -15,7 +15,7 @@
       # doesn't work yet, need to package dependencies and think about
       # (or ditch) alloy
       packages.${system} = lakePkg;
-      devShells.${system}.default = pkgs.mkShell {
+      devShells.${system}.default = (pkgs.mkShell.override { stdenv = pkgs.llvmPackages_15.stdenv; }) {
         packages = with pkgs;
           [ elan
             pkgsStatic.libseccomp
