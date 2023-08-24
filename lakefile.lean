@@ -16,20 +16,20 @@ require aesop from git "https://github.com/JLimperg/aesop"
 
 require alloy from git "https://github.com/tydeu/lean4-alloy/" @ "master"
 
-extern_lib libseccomp pkg := do
-  let name := nameToStaticLib "seccomp"
-  let dst := pkg.nativeLibDir / name
-  let libdir ← captureProc { cmd := "pkg-config", args := #[ "--variable=libdir", "libseccomp"] }
-  logStep s!"Copying {name} from {libdir}"
-  proc { cmd := "mkdir", args := #[ "-p", pkg.nativeLibDir.toString] }
-  proc { cmd := "cp", args := #[ "-f", s!"{libdir}/{name}", dst.toString] }
-  pure $ BuildJob.pure dst
+-- extern_lib libseccomp pkg := do
+--   let name := nameToStaticLib "seccomp"
+--   let dst := pkg.nativeLibDir / name
+--   let libdir ← captureProc { cmd := "pkg-config", args := #[ "--variable=libdir", "libseccomp"] }
+--   logStep s!"Copying {name} from {libdir}"
+--   proc { cmd := "mkdir", args := #[ "-p", pkg.nativeLibDir.toString] }
+--   proc { cmd := "cp", args := #[ "-f", s!"{libdir}/{name}", dst.toString] }
+--   pure $ BuildJob.pure dst
 
-module_data alloy.c.o : BuildJob FilePath
-lean_lib Seccomp where
-  roots := #[`Seccomp]
-  precompileModules := true
-  nativeFacets := #[Module.oFacet, `alloy.c.o]
+-- module_data alloy.c.o : BuildJob FilePath
+-- lean_lib Seccomp where
+--   roots := #[`Seccomp]
+--   precompileModules := true
+--   nativeFacets := #[Module.oFacet, `alloy.c.o]
 
 @[default_target]
 lean_exe loogle where
