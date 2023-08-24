@@ -1,7 +1,8 @@
 {
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.lake2nix.url = "github:Kha/nale?dir=lake2nix";
-  inputs.mathlib4.url = "git+file:///home/jojo/build/lean/mathlib4?rev=069e0083ff4f1081710a73ec243e66d659ae59d5";
+  inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find-no-ProofWidgets";
+  #inputs.mathlib4.url = "git+file:///home/jojo/build/lean/mathlib4?rev=069e0083ff4f1081710a73ec243e66d659ae59d5";
   #inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find";
   inputs.mathlib4.flake = false;
   inputs.std4.url = "github:leanprover/std4/8b864260672b21d964d79ecb2376e01d0eab9f5b";

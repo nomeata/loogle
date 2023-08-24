@@ -163,16 +163,16 @@
       "locked": {
         "lastModified": 1692871097,
         "narHash": "sha256-YtLi0UlZqS3+Mlrh0Cc4pJv6B1HxxR18/4ZfPGa6M1I=",
-        "ref": "refs/heads/joachim/find-no-ProofWidgets",
+        "owner": "leanprover-community",
+        "repo": "mathlib4",
         "rev": "069e0083ff4f1081710a73ec243e66d659ae59d5",
-        "revCount": 5947,
-        "type": "git",
-        "url": "file:///home/jojo/build/lean/mathlib4"
+        "type": "github"
       },
       "original": {
-        "rev": "069e0083ff4f1081710a73ec243e66d659ae59d5",
-        "type": "git",
-        "url": "file:///home/jojo/build/lean/mathlib4"
+        "owner": "leanprover-community",
+        "ref": "joachim/find-no-ProofWidgets",
+        "repo": "mathlib4",
+        "type": "github"
       }
     },
     "nix": {
