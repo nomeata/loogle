@@ -12,7 +12,7 @@
   inputs.std4.flake = false;
   inputs.quote4.url = "github:gebner/quote4/81cc13c524a68d0072561dbac276cd61b65872a6";
   inputs.quote4.flake = false;
-  inputs.aesop.url = "github:JLimperg/aesop/d13a9666e6f430b940ef8d092f1219e964b52a09";
+  inputs.aesop.url = "github:nomeata/aesop/joachim/nix-hacks";
   inputs.aesop.flake = false;
   inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/a0c2cd0ac3245a0dade4f925bcfa97e06dd84229";
   inputs.ProofWidgets.flake = false;
@@ -65,18 +65,17 @@
       };
 
       loogle = inputs.lean.packages.${system}.buildLeanPackage {
-      #loogle = lake2nix.inputs.lean.packages.${system}.buildLeanPackage {
         name = "loogle";
         src = ./.;
         roots = [ "Loogle" ];
-        deps = nixpkgs.lib.unique (builtins.concatMap (d: d.packages.${system}.deps) [mathlib4_flake std4_flake quote4_flake aesop_flake ]);
+        deps = nixpkgs.lib.unique (builtins.concatMap (d: d.packages.${system}.deps) [mathlib4_flake ]);
       };
     in
     {
       packages.${system} = {
         std4 = std4_flake.packages.${system}.Std;
         mathlib4 = mathlib4_flake.packages.${system}.Mathlib;
-        loogle = loogle;
+        loogle = loogle.executable;
         loogleLib = loogle.modRoot;
       };
 

@@ -20,17 +20,17 @@
     "aesop": {
       "flake": false,
       "locked": {
-        "lastModified": 1691697619,
-        "narHash": "sha256-3zXzHgK/jMiY/XtHZpEAK1zoJHkVJrBB3yclvUfT29Y=",
-        "owner": "JLimperg",
+        "lastModified": 1692902978,
+        "narHash": "sha256-ZT4B5XcfexUiS5AekKbtnx1pOQwouln8a9pXFgUKyt0=",
+        "owner": "nomeata",
         "repo": "aesop",
-        "rev": "d13a9666e6f430b940ef8d092f1219e964b52a09",
+        "rev": "a2de9a1bd51e24178b5a27598709fac1abd56bb7",
         "type": "github"
       },
       "original": {
-        "owner": "JLimperg",
+        "owner": "nomeata",
+        "ref": "joachim/nix-hacks",
         "repo": "aesop",
-        "rev": "d13a9666e6f430b940ef8d092f1219e964b52a09",
         "type": "github"
       }
     },
@@ -94,9 +94,11 @@
       "locked": {
         "dir": "lake2nix",
         "lastModified": 1689516982,
-        "narHash": "sha256-8njRdeWX2EQ04nvzB8M10hQPc6/wfBLJsbG2ezmDbaA=",
-        "type": "git",
-        "url": "file:///home/jojo/build/lean/nale?dir=lake2nix"
+        "narHash": "sha256-nA5NHWGY99LZCCwwQ+3zOmAmX0POTmHxCKpzuUC1Kqs=",
+        "owner": "Kha",
+        "repo": "nale",
+        "rev": "b7d1918e72bba24456489c5d4a828ba08112f8d7",
+        "type": "github"
       },
       "original": {
         "dir": "lake2nix",
@@ -162,11 +164,11 @@
     "mathlib4": {
       "flake": false,
       "locked": {
-        "lastModified": 1692871097,
-        "narHash": "sha256-YtLi0UlZqS3+Mlrh0Cc4pJv6B1HxxR18/4ZfPGa6M1I=",
+        "lastModified": 1692903209,
+        "narHash": "sha256-Zlk3VvDkjfxOLq0ffle0YO0pOHriUB8dTFUGr6YXjMM=",
         "owner": "leanprover-community",
         "repo": "mathlib4",
-        "rev": "069e0083ff4f1081710a73ec243e66d659ae59d5",
+        "rev": "f6f0fddeb2f05c7c4db1cbfa6a8438e1c881eed9",
         "type": "github"
       },
       "original": {
@@ -246,11 +248,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1692436904,
-        "narHash": "sha256-JVBruExEWEjdYiEV+dB2SQzn3ngPXwGkEJjABgS9vTo=",
+        "lastModified": 1692902358,
+        "narHash": "sha256-1vhWi3HmCGvaHtrz9uZKyrhjAZ2taDJL+JoSiYNokIs=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "4c31c1aa2e6c190b76a80dbf359997cf6153f45c",
+        "rev": "74348e1743f6070998a6dca374cc9ad3b54eec35",
         "type": "github"
       },
       "original": {
