@@ -5,6 +5,8 @@ import urllib
 import subprocess
 import json
 import html
+import sys
+import time
 
 hostName = "localhost"
 serverPort = 8080
@@ -23,10 +25,32 @@ class Loogle():
         self.start()
 
     def query(self, query):
-        self.loogle.stdin.write(bytes(query, "utf8"));
-        self.loogle.stdin.write(b"\n");
-        self.loogle.stdin.flush();
-        return json.loads(self.loogle.stdout.readline())
+        try:
+            self.loogle.stdin.write(bytes(query, "utf8"));
+            self.loogle.stdin.write(b"\n");
+            self.loogle.stdin.flush();
+            output = self.loogle.stdout.readline()
+            return json.loads(output)
+        except (IOError, json.JSONDecodeError) as e:
+            time.sleep(5) # to allow the process to die
+            code = self.loogle.poll()
+            if code == -31:
+                sys.stderr.write(f"Backend died trying to escape the sandbox.\n")
+                self.start()
+                return {"error":
+                    f"Backend died trying to escape the sandbox. Restarting..."
+                }
+            if code is not None:
+                sys.stderr.write(f"Backend died with code {code}.\n")
+                self.start()
+                return {"error":
+                    f"The backend process died with code {code}. Restarting..."
+                }
+            else:
+                sys.stderr.write(f"Backend did not respond ({e}).\n")
+                self.loogle.kill() # just to be sure
+                self.start()
+                return {"error": "The backend process did not respond, killing and restarting..."}
 
 loogle = Loogle()
 
