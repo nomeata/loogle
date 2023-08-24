@@ -246,21 +246,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_3": {
-      "locked": {
-        "lastModified": 1692902358,
-        "narHash": "sha256-1vhWi3HmCGvaHtrz9uZKyrhjAZ2taDJL+JoSiYNokIs=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "74348e1743f6070998a6dca374cc9ad3b54eec35",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "quote4": {
       "flake": false,
       "locked": {
@@ -285,7 +270,10 @@
         "lake2nix": "lake2nix",
         "lean": "lean",
         "mathlib4": "mathlib4",
-        "nixpkgs": "nixpkgs_3",
+        "nixpkgs": [
+          "lean",
+          "nixpkgs"
+        ],
         "quote4": "quote4",
         "std4": "std4"
       }

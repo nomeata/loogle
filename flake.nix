@@ -1,6 +1,9 @@
 {
-  inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.lean.url = github:leanprover/lean4/b5a736708f40;
+
+  inputs.nixpkgs.url = github:NixOS/nixpkgs;
+  inputs.nixpkgs.follows = "lean/nixpkgs";
+
   inputs.lake2nix.url = "github:Kha/nale?dir=lake2nix";
   inputs.lake2nix.inputs.lean.follows = "lean";
 
