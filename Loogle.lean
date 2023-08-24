@@ -1,11 +1,13 @@
 import Aesop
 import Lean.Meta
 import Mathlib.Tactic.Find
-import Mathlib.Tactic.ToExpr
-import Mathlib.Tactic.RunCmd
 -- import Seccomp
 
 open Lean Core Meta Elab Term Command
+
+instance : ToExpr System.FilePath where
+  toTypeExpr := Lean.mkConst ``System.FilePath
+  toExpr path := mkApp (Lean.mkConst ``System.FilePath.mk) (toExpr path.1)
 
 elab "compileTimeSearchPath" : term =>
   return toExpr (← searchPathRef.get)
