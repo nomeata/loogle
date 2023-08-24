@@ -1,6 +1,23 @@
 {
   "nodes": {
     "flake-utils": {
+      "inputs": {
+        "systems": "systems"
+      },
+      "locked": {
+        "lastModified": 1689068808,
+        "narHash": "sha256-6ixXo3wt24N/melDWjq70UuHQLxGV8jZvooRanIHXw0=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "919d646de7be200f3bf08cb76ae1f09402b6f9b4",
+        "type": "github"
+      },
+      "original": {
+        "id": "flake-utils",
+        "type": "indirect"
+      }
+    },
+    "flake-utils_2": {
       "locked": {
         "lastModified": 1656928814,
         "narHash": "sha256-RIFfgBuKz6Hp89yRr7+NR5tzIAbn52h8vT6vXkYjZoM=",
@@ -15,19 +32,58 @@
         "type": "github"
       }
     },
-    "lean": {
+    "lake": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1688094074,
+        "narHash": "sha256-GWs4prsvSrsjhANNwvKmdTiC3aJtoBpUFnyWtunzpRM=",
+        "owner": "leanprover",
+        "repo": "lake",
+        "rev": "8e9152a1e08ebcdd9c1405f5b6c3276270c425ee",
+        "type": "github"
+      },
+      "original": {
+        "owner": "leanprover",
+        "ref": "lean4-master",
+        "repo": "lake",
+        "type": "github"
+      }
+    },
+    "lake2nix": {
       "inputs": {
         "flake-utils": "flake-utils",
+        "lake": "lake",
+        "lean": "lean"
+      },
+      "locked": {
+        "dir": "lake2nix",
+        "lastModified": 1689516982,
+        "narHash": "sha256-nA5NHWGY99LZCCwwQ+3zOmAmX0POTmHxCKpzuUC1Kqs=",
+        "owner": "Kha",
+        "repo": "nale",
+        "rev": "b7d1918e72bba24456489c5d4a828ba08112f8d7",
+        "type": "github"
+      },
+      "original": {
+        "dir": "lake2nix",
+        "owner": "Kha",
+        "repo": "nale",
+        "type": "github"
+      }
+    },
+    "lean": {
+      "inputs": {
+        "flake-utils": "flake-utils_2",
         "lean4-mode": "lean4-mode",
         "nix": "nix",
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1692380061,
-        "narHash": "sha256-1U0pSTQD9PZwKWu3OGxOJ/LPTHuvjV+VzFIkA7BqMGw=",
+        "lastModified": 1689353300,
+        "narHash": "sha256-RlfCcRbgoZrwqx8w73Pt52/ds66T3e3wTpzGdEgfxaY=",
         "owner": "leanprover",
         "repo": "lean4",
-        "rev": "63d2bdd4908b4df7db381537af754a7319e334e4",
+        "rev": "1a6663a41baf95cb995b79cd8a466ab81e230b35",
         "type": "github"
       },
       "original": {
@@ -65,6 +121,23 @@
       "original": {
         "owner": "kristapsdz",
         "repo": "lowdown",
+        "type": "github"
+      }
+    },
+    "mathlib4": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1692344716,
+        "narHash": "sha256-wSdVBo0m/H00aeuwQaGe8wpq0fgdQGu95V9dyykG4Qo=",
+        "owner": "leanprover-community",
+        "repo": "mathlib4",
+        "rev": "9fdeb8945b9fb7ac697fe383e8f48b395fe047b9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "leanprover-community",
+        "ref": "joachim/find",
+        "repo": "mathlib4",
         "type": "github"
       }
     },
@@ -122,11 +195,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1686089707,
-        "narHash": "sha256-LTNlJcru2qJ0XhlhG9Acp5KyjB774Pza3tRH0pKIb3o=",
+        "lastModified": 1657208011,
+        "narHash": "sha256-BlIFwopAykvdy1DYayEkj6ZZdkn+cVgPNX98QVLc0jM=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "af21c31b2a1ec5d361ed8050edd0303c31306397",
+        "rev": "2770cc0b1e8faa0e20eb2c6aea64c256a706d4f2",
         "type": "github"
       },
       "original": {
@@ -153,8 +226,24 @@
     },
     "root": {
       "inputs": {
-        "lean": "lean",
+        "lake2nix": "lake2nix",
+        "mathlib4": "mathlib4",
         "nixpkgs": "nixpkgs_3"
+      }
+    },
+    "systems": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
       }
     }
   },
