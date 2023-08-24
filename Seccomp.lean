@@ -1,3 +1,6 @@
+def Seccomp.enable : BaseIO Unit := pure ()
+
+/-
 import Alloy.C
 open scoped Alloy.C
 
@@ -49,3 +52,4 @@ alloy c extern def exit(code : UInt64) : BaseIO Unit := {
 }
 
 end Seccomp
+-/

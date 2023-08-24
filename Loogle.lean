@@ -1,8 +1,9 @@
+import Aesop
 import Lean.Meta
 import Mathlib.Tactic.Find
 import Mathlib.Tactic.ToExpr
 import Mathlib.Tactic.RunCmd
-import Seccomp
+-- import Seccomp
 
 open Lean Core Meta Elab Term Command
 
@@ -62,7 +63,7 @@ unsafe def work (mod : String) (act : CoreM Unit) : IO Unit := do
   where act' := do
     -- warm up the cache eagerly
     let _ ← MetaM.run' $ Mathlib.Tactic.Find.findDeclsByConsts.get
-    Seccomp.enable
+    -- Seccomp.enable
     act
 
 unsafe def main (args : List String) : IO Unit := do

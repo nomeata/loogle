@@ -87,16 +87,16 @@
       "inputs": {
         "flake-utils": "flake-utils",
         "lake": "lake",
-        "lean": "lean"
+        "lean": [
+          "lean"
+        ]
       },
       "locked": {
         "dir": "lake2nix",
         "lastModified": 1689516982,
-        "narHash": "sha256-nA5NHWGY99LZCCwwQ+3zOmAmX0POTmHxCKpzuUC1Kqs=",
-        "owner": "Kha",
-        "repo": "nale",
-        "rev": "b7d1918e72bba24456489c5d4a828ba08112f8d7",
-        "type": "github"
+        "narHash": "sha256-8njRdeWX2EQ04nvzB8M10hQPc6/wfBLJsbG2ezmDbaA=",
+        "type": "git",
+        "url": "file:///home/jojo/build/lean/nale?dir=lake2nix"
       },
       "original": {
         "dir": "lake2nix",
@@ -113,15 +113,16 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1689353300,
-        "narHash": "sha256-RlfCcRbgoZrwqx8w73Pt52/ds66T3e3wTpzGdEgfxaY=",
+        "lastModified": 1692055110,
+        "narHash": "sha256-HzLPDburW3AF5k2TXI5799HcwVBaUPaDOLr4btpGgZs=",
         "owner": "leanprover",
         "repo": "lean4",
-        "rev": "1a6663a41baf95cb995b79cd8a466ab81e230b35",
+        "rev": "b5a736708f408abc2e42aaf0e025a4ae8172d491",
         "type": "github"
       },
       "original": {
         "owner": "leanprover",
+        "ref": "b5a736708f40",
         "repo": "lean4",
         "type": "github"
       }
@@ -229,11 +230,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1657208011,
-        "narHash": "sha256-BlIFwopAykvdy1DYayEkj6ZZdkn+cVgPNX98QVLc0jM=",
+        "lastModified": 1686089707,
+        "narHash": "sha256-LTNlJcru2qJ0XhlhG9Acp5KyjB774Pza3tRH0pKIb3o=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "2770cc0b1e8faa0e20eb2c6aea64c256a706d4f2",
+        "rev": "af21c31b2a1ec5d361ed8050edd0303c31306397",
         "type": "github"
       },
       "original": {
@@ -280,6 +281,7 @@
         "ProofWidgets": "ProofWidgets",
         "aesop": "aesop",
         "lake2nix": "lake2nix",
+        "lean": "lean",
         "mathlib4": "mathlib4",
         "nixpkgs": "nixpkgs_3",
         "quote4": "quote4",

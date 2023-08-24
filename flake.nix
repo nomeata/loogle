@@ -1,6 +1,9 @@
 {
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
+  inputs.lean.url = github:leanprover/lean4/b5a736708f40;
   inputs.lake2nix.url = "github:Kha/nale?dir=lake2nix";
+  inputs.lake2nix.inputs.lean.follows = "lean";
+
   inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find-no-ProofWidgets";
   #inputs.mathlib4.url = "git+file:///home/jojo/build/lean/mathlib4?rev=069e0083ff4f1081710a73ec243e66d659ae59d5";
   #inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find";
@@ -24,21 +27,21 @@
         src = inputs.std4;
         depFlakes = [];
       };
-      
+
       quote4_flake = lake2nix.lib.lakeRepo2flake {
         name = "quote4";
         lean = lake2nix.inputs.lean;
         src = inputs.quote4;
         depFlakes = [];
       };
-      
+
       aesop_flake = lake2nix.lib.lakeRepo2flake {
         name = "aesop";
         lean = lake2nix.inputs.lean;
         src = inputs.aesop;
         depFlakes = [std4_flake];
       };
-      
+
       ProofWidgets_flake = lake2nix.lib.lakeRepo2flake {
         name = "ProofWidgets";
         lean = lake2nix.inputs.lean;
@@ -54,21 +57,28 @@
         depFlakes = [std4_flake quote4_flake aesop_flake];
       };
 
-      loogle = lake2nix.lib.lakeRepo2flake {
+      loogle_flake = lake2nix.lib.lakeRepo2flake {
         name = "loogle";
         lean = lake2nix.inputs.lean;
         src = ./.;
-        depFlakes = [mathlib4_flake];
+        depFlakes = [mathlib4_flake std4_flake quote4_flake aesop_flake ];
       };
 
+      loogle = inputs.lean.packages.${system}.buildLeanPackage {
+      #loogle = lake2nix.inputs.lean.packages.${system}.buildLeanPackage {
+        name = "loogle";
+        src = ./.;
+        roots = [ "Loogle" ];
+        deps = nixpkgs.lib.unique (builtins.concatMap (d: d.packages.${system}.deps) [mathlib4_flake std4_flake quote4_flake aesop_flake ]);
+      };
     in
     {
       packages.${system} = {
         std4 = std4_flake.packages.${system}.Std;
         mathlib4 = mathlib4_flake.packages.${system}.Mathlib;
-        loogle = loogle.packages.${system}.loogle;
+        loogle = loogle;
+        loogleLib = loogle.modRoot;
       };
-
 
       # doesn't work yet, need to package dependencies and think about
       # (or ditch) alloy

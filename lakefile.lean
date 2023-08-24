@@ -31,6 +31,10 @@ require alloy from git "https://github.com/tydeu/lean4-alloy/" @ "master"
 --   precompileModules := true
 --   nativeFacets := #[Module.oFacet, `alloy.c.o]
 
+lean_lib Loogle where
+  roots := #[`Loogle]
+  precompileModules := true
+
 @[default_target]
 lean_exe loogle where
   root := `Loogle
