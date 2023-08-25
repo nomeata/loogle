@@ -67,7 +67,7 @@ built `loogle` via `lake`, or using `nix run ./#loogle_server` if you use nix.
 Contact
 -------
 
-This tool was created by Joachim Breitner <mail@joachim-breitner.de>. Feel free
+This tool was created by Joachim Breitner <<mail@joachim-breitner.de>>. Feel free
 to use this repository to report issues or (even better) submit PRs that
 resolves such issues.
 
