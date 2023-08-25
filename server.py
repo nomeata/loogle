@@ -16,7 +16,7 @@ blurb = open("blurb.html","rb").read()
 class Loogle():
     def start(self):
         self.loogle = subprocess.Popen(
-            ["./build/bin/loogle","Mathlib","-j"],
+            ["./build/bin/loogle","--json", "--interactive"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
@@ -58,8 +58,14 @@ class MyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         query = ""
         result = {}
-
-        url_query = urllib.parse.urlparse(self.path).query
+        url = urllib.parse.urlparse(self.path)
+        if url.path != "/":
+            self.send_response(404)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"Not found")
+            return
+        url_query = url.query
         params = urllib.parse.parse_qs(url_query)
         if "q" in params and len(params["q"]) == 1:
             query = params["q"][0]

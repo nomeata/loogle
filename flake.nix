@@ -82,7 +82,7 @@
         staticLibDeps = [ loogle_seccomp ];
       };
 
-      loogle = leanPkgs.buildLeanPackage {
+      looglePkg = leanPkgs.buildLeanPackage {
         name = "loogle";
         src = ./.;
         roots = [ "Loogle" ];
@@ -93,14 +93,23 @@
         };
       };
 
-      loogle_exe = loogle.executable.overrideAttrs (super: {
+      loogle = looglePkg.executable.overrideAttrs (super: {
         buildInputs = super.buildInputs ++ [ pkgs.pkgsStatic.libseccomp ];
       });
+
+      loogle_server = pkgs.stdenv.mkDerivation {
+        name = "loogle_server";
+        buildInputs = [ pkgs.python3 ];
+        dontUnpack = true;
+        installPhase = ''
+          install -Dm755 ${./server.py} $out/bin/loogle_server
+          substituteInPlace $out/bin/loogle_server --replace ./build/bin/loogle ${loogle}/bin/loogle
+        '';
+      };
     in
     {
       packages.${system} = {
-        inherit loogle_seccomp;
-        loogle = loogle_exe;
+        inherit loogle_seccomp loogle looglePkg loogle_server;
         mathlib = mathlib4.modRoot;
       };
 
