@@ -113,6 +113,14 @@
         mathlib = mathlib4.modRoot;
       };
 
+      nixosConfigurations.loogle = nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = {
+          inherit loogle_server;
+        };
+        modules = [ ./nixos/configuration.nix ];
+      };
+
       devShells.${system}.default = (pkgs.mkShell.override { stdenv = pkgs.llvmPackages_15.stdenv; }) {
         packages = with pkgs;
           [ elan
