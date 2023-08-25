@@ -5,14 +5,14 @@
       "locked": {
         "lastModified": 1691697619,
         "narHash": "sha256-3zXzHgK/jMiY/XtHZpEAK1zoJHkVJrBB3yclvUfT29Y=",
-        "owner": "nomeata",
-        "repo": "JLimpberg",
+        "owner": "JLimpberg",
+        "repo": "aesop",
         "rev": "d13a9666e6f430b940ef8d092f1219e964b52a09",
         "type": "github"
       },
       "original": {
-        "owner": "nomeata",
-        "repo": "JLimpberg",
+        "owner": "JLimpberg",
+        "repo": "aesop",
         "rev": "d13a9666e6f430b940ef8d092f1219e964b52a09",
         "type": "github"
       }
