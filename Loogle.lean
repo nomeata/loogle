@@ -3,9 +3,10 @@ import Lake.CLI.Error
 import Lake.Util.Cli
 import Mathlib.Tactic.Find
 
+import Seccomp
+
 set_option autoImplicit false
 
--- import Seccomp
 
 open Lean Core Meta Elab Term Command
 
@@ -79,7 +80,7 @@ unsafe def work (path : Option String) (mod : String) (act : CoreM Unit) : IO Un
   where act' := do
     -- warm up the cache eagerly
     let _ ← MetaM.run' $ Mathlib.Tactic.Find.findDeclsByConsts.get
-    -- Seccomp.enable
+    Seccomp.enable
     act
 
 structure LoogleOptions where

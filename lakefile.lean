@@ -14,26 +14,33 @@ require std from git "https://github.com/leanprover/std4"
 require aesop from git "https://github.com/JLimperg/aesop"
   @ "d13a9666e6f430b940ef8d092f1219e964b52a09"
 
-require alloy from git "https://github.com/tydeu/lean4-alloy/" @ "master"
+target loogle_seccomp.o pkg : FilePath := do
+  let oFile := pkg.buildDir / "loogle_seccomp.o"
+  let srcJob ← inputFile <| pkg.dir / "loogle_seccomp.c"
+  let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
+  buildO "Seccomp c shim (.o)" oFile srcJob flags "cc"
 
--- extern_lib libseccomp pkg := do
---   let name := nameToStaticLib "seccomp"
---   let dst := pkg.nativeLibDir / name
---   let libdir ← captureProc { cmd := "pkg-config", args := #[ "--variable=libdir", "libseccomp"] }
---   logStep s!"Copying {name} from {libdir}"
---   proc { cmd := "mkdir", args := #[ "-p", pkg.nativeLibDir.toString] }
---   proc { cmd := "cp", args := #[ "-f", s!"{libdir}/{name}", dst.toString] }
---   pure $ BuildJob.pure dst
+extern_lib libloogle_seccomp pkg := do
+  let name := nameToStaticLib "loogle_seccomp"
+  let ffiO ← fetch <| pkg.target ``loogle_seccomp.o
+  buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
 
--- module_data alloy.c.o : BuildJob FilePath
--- lean_lib Seccomp where
---   roots := #[`Seccomp]
+extern_lib libseccomp pkg := do
+   let name := nameToStaticLib "seccomp"
+   let dst := pkg.nativeLibDir / name
+   let libdir ← captureProc { cmd := "pkg-config", args := #[ "--variable=libdir", "libseccomp"] }
+   logStep s!"Copying {name} from {libdir}"
+   proc { cmd := "mkdir", args := #[ "-p", pkg.nativeLibDir.toString] }
+   proc { cmd := "cp", args := #[ "-f", s!"{libdir}/{name}", dst.toString] }
+   pure $ BuildJob.pure dst
+
+lean_lib Seccomp where
+   roots := #[`Seccomp]
+   precompileModules := true
+  
+-- lean_lib Loogle where
+--   roots := #[`Loogle]
 --   precompileModules := true
---   nativeFacets := #[Module.oFacet, `alloy.c.o]
-
-lean_lib Loogle where
-  roots := #[`Loogle]
-  precompileModules := true
 
 @[default_target]
 lean_exe loogle where
