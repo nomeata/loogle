@@ -104,12 +104,13 @@
         installPhase = ''
           install -Dm755 ${./server.py} $out/bin/loogle_server
           substituteInPlace $out/bin/loogle_server --replace ./build/bin/loogle ${loogle}/bin/loogle
+          substituteInPlace $out/bin/loogle_server --replace blurb.html ${./blurb.html}
         '';
       };
     in
     {
       packages.${system} = {
-        inherit loogle_seccomp loogle looglePkg loogle_server;
+        inherit loogle_seccomp loogle loogle_server;
         mathlib = mathlib4.modRoot;
       };
 

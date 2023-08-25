@@ -2,6 +2,7 @@
 {
   imports = [
     (modulesPath + "/virtualisation/digital-ocean-config.nix")
+    # (modulesPath + "/virtualisation/qemu-vm.nix")
     ./ship.nix
   ];
 
@@ -11,6 +12,17 @@
   nix.settings.trusted-public-keys = [
     "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
   ];
+
+  # for testing
+  # virtualisation.forwardPorts = [
+  #   { from = "host"; host.port = 8888; guest.port = 80; }
+  # ];
+  # virtualisation.memorySize = 2048;
+  # users.users.root.initialPassword = "test";
+
+
+  documentation.nixos.enable = false;
+  documentation.enable = false;
 
   security.acme.defaults.email = "mail@joachim-breitner.de";
   security.acme.acceptTerms = true;
@@ -28,7 +40,7 @@
     "loogle.nomeata.de" = {
       serverAliases = [ ];
       enableACME = true;
-      forceSSL = true;
+      # forceSSL = true;
       locations = {
         "/" = {
           proxyPass = "http://localhost:8080";
