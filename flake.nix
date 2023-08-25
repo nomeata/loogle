@@ -79,7 +79,7 @@
     {
       packages.${system} = {
         loogle = loogle.executable;
-        mathlib = loogle.modRoot;
+        mathlib = mathlib4.modRoot;
       };
 
       devShells.${system}.default = (pkgs.mkShell.override { stdenv = pkgs.llvmPackages_15.stdenv; }) {
