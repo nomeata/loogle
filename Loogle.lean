@@ -129,7 +129,7 @@ OPTIONS:
   --help
   --interactive, -i     read querys from stdin
   --json, -j            print result in JSON format
-  --module mod          import this module (default: MATHLIB)
+  --module mod          import this module (default: Mathlib)
   --path path           search for .olean files here (default: the build time path)
 
 Current search path:
