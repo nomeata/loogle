@@ -20,34 +20,35 @@
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
+      leanPkgs = inputs.lean.packages.${system};
 
-      std4 = inputs.lean.packages.${system}.buildLeanPackage {
+      std4 = leanPkgs.buildLeanPackage {
         name = "Std";
         src = inputs.std4;
         roots = [ { mod = "Std"; glob = "one"; } ];
       };
 
-      quote4 = inputs.lean.packages.${system}.buildLeanPackage {
+      quote4 = leanPkgs.buildLeanPackage {
         name = "Qq";
         src = inputs.quote4;
         roots = [ { mod = "Qq"; glob = "one"; } ];
       };
 
-      aesop = inputs.lean.packages.${system}.buildLeanPackage {
+      aesop = leanPkgs.buildLeanPackage {
         name = "Aesop";
         src = inputs.aesop;
         roots = [ "Aesop" ];
         deps = [std4];
       };
 
-      # ProofWidgets = inputs.lean.packages.${system}.buildLeanPackage {
+      # ProofWidgets = leanPkgs.buildLeanPackage {
       #   name = "ProofWidgets";
       #   src = inputs.ProofWidgets;
       #   roots = [ "ProofWidgets" ];
       #   deps = [std4];
       # };
 
-      mathlib4 = inputs.lean.packages.${system}.buildLeanPackage {
+      mathlib4 = leanPkgs.buildLeanPackage {
         name = "Mathlib";
         src = inputs.mathlib4;
         # src = builtins.fetchTree {
@@ -66,19 +67,40 @@
         deps = [std4 quote4 aesop ];
       };
 
-      loogle = inputs.lean.packages.${system}.buildLeanPackage {
+      loogle_seccomp = pkgs.runCommandCC "loogle_seccomp"
+        { buildInputs = [ leanPkgs.leanc pkgs.pkgsStatic.libseccomp ]; } ''
+        mkdir -p $out
+        leanc -c -o $out/loogle_seccomp.o ${./loogle_seccomp.c} -fPIC
+        ar Trcs $out/loogle_seccomp.a $out/loogle_seccomp.o
+      '';
+
+      seccomp = leanPkgs.buildLeanPackage {
+        name = "Seccomp";
+        src = ./.;
+        roots = [ "Seccomp" ];
+        deps = leanPkgs.stdlib;
+        staticLibDeps = [ loogle_seccomp ];
+      };
+
+      loogle = leanPkgs.buildLeanPackage {
         name = "loogle";
         src = ./.;
         roots = [ "Loogle" ];
-        deps = inputs.lean.packages.${system}.stdlib ++ [ mathlib4 ];
+        deps = leanPkgs.stdlib ++ [ mathlib4 seccomp ];
+        linkFlags = [ "-lseccomp" ];
         overrideBuildModAttrs = self: super: {
           LOOGLE_PATH = mathlib4.modRoot;
         };
       };
+
+      loogle_exe = loogle.executable.overrideAttrs (super: {
+        buildInputs = super.buildInputs ++ [ pkgs.pkgsStatic.libseccomp ];
+      });
     in
     {
       packages.${system} = {
-        loogle = loogle.executable;
+        inherit loogle_seccomp;
+        loogle = loogle_exe;
         mathlib = mathlib4.modRoot;
       };
 
