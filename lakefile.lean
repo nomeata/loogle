@@ -2,7 +2,7 @@ import Lake
 open Lake DSL
 
 package «loogle» {
-  -- add any package configuration options here
+  moreLinkArgs := #[ "-lseccomp" ]
 }
 
 require mathlib from git "https://github.com/leanprover-community/mathlib4"
@@ -25,23 +25,10 @@ extern_lib libloogle_seccomp pkg := do
   let ffiO ← fetch <| pkg.target ``loogle_seccomp.o
   buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
 
-extern_lib libseccomp pkg := do
-   let name := nameToStaticLib "seccomp"
-   let dst := pkg.nativeLibDir / name
-   let libdir ← captureProc { cmd := "pkg-config", args := #[ "--variable=libdir", "libseccomp"] }
-   logStep s!"Copying {name} from {libdir}"
-   proc { cmd := "mkdir", args := #[ "-p", pkg.nativeLibDir.toString] }
-   proc { cmd := "cp", args := #[ "-f", s!"{libdir}/{name}", dst.toString] }
-   pure $ BuildJob.pure dst
-
 lean_lib Seccomp where
    roots := #[`Seccomp]
    precompileModules := true
   
--- lean_lib Loogle where
---   roots := #[`Loogle]
---   precompileModules := true
-
 @[default_target]
 lean_exe loogle where
   root := `Loogle

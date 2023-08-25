@@ -110,8 +110,8 @@ def lakeLongOption : (opt : String) → CliM PUnit
 | "--help"  => lakeShortOption 'h'
 | "--interactive"  => lakeShortOption 'i'
 | "--json" => lakeShortOption 'j'
-| "--path"     => do modifyThe LoogleOptions ({· with searchPath := some (← takeArg "--path")})
-| "--module"   => do modifyThe LoogleOptions ({· with searchPath := ← takeArg "--module"})
+| "--path"     => do modifyThe LoogleOptions ({· with searchPath := ← takeArg "--path"})
+| "--module"   => do modifyThe LoogleOptions ({· with module := ← takeArg "--module"})
 | opt         => throw <| Lake.CliError.unknownLongOption opt
 
 def lakeOption :=
