@@ -116,9 +116,7 @@
 
       nixosConfigurations.loogle = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = {
-          inherit loogle_server;
-        };
+        specialArgs = { inherit loogle_server nixpkgs; };
         modules = [ ./nixos/configuration.nix ];
       };
 

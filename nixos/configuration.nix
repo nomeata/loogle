@@ -1,4 +1,4 @@
-{ config, pkgs, modulesPath, lib, environment, loogle_server, ... }:
+{ config, pkgs, modulesPath, lib, environment, loogle_server, nixpkgs, ... }:
 {
   imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
 
@@ -30,6 +30,17 @@
   nix.settings.trusted-public-keys = [
     "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
     "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g="
+  ];
+
+  # enable nix flakes
+  nix.settings.experimental-features = ["nix-command" "flakes"];
+  nix.registry.nixpkgs.flake = nixpkgs;
+  nix.nixPath = [
+    "nixpkgs=/etc/nixpkgs/channels/nixpkgs}"
+    "/nix/var/nix/profiles/per-user/root/channels"
+  ];
+  systemd.tmpfiles.rules = [
+    "L+ /etc/nixpkgs/channels/nixpkgs     - - - - ${nixpkgs}"
   ];
 
 
