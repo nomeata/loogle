@@ -10,7 +10,7 @@
   inputs.std4.flake = false;
   inputs.quote4.url = "github:gebner/quote4/81cc13c524a68d0072561dbac276cd61b65872a6";
   inputs.quote4.flake = false;
-  inputs.aesop.url = "github:JLimpberg/aesop/d13a9666e6f430b940ef8d092f1219e964b52a09";
+  inputs.aesop.url = "github:JLimperg/aesop/d13a9666e6f430b940ef8d092f1219e964b52a09";
   inputs.aesop.flake = false;
 
   # inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/a0c2cd0ac3245a0dade4f925bcfa97e06dd84229";
