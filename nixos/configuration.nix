@@ -39,6 +39,12 @@
   security.acme.defaults.email = "mail@joachim-breitner.de";
   security.acme.acceptTerms = true;
 
+  services.openssh = {
+    enable = true;
+    settings.PasswordAuthentication = false;
+  };
+
+
   services.nginx = {
     enable = true;
     enableReload = true;
@@ -52,7 +58,7 @@
     "loogle.nomeata.de" = {
       serverAliases = [ ];
       enableACME = true;
-      # forceSSL = true;
+      forceSSL = true;
       locations = {
         "/" = {
           proxyPass = "http://localhost:8080";
@@ -66,6 +72,10 @@
     };
   };
 
+  users.users.loogle = {
+    isNormalUser = true;
+  };
+
   systemd.services.loogle = {
     description = "Loogle";
     enable = true;
@@ -77,7 +87,7 @@
     ];
     serviceConfig = {
       Type = "simple";
-      User = "ship";
+      User = "loogle";
       Restart = "always";
       ExecStart = "${loogle_server}/bin/loogle_server";
     };
