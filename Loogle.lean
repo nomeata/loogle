@@ -1,5 +1,10 @@
 import Lean.Meta
+import Lake.CLI.Error
+import Lake.Util.Cli
 import Mathlib.Tactic.Find
+
+set_option autoImplicit false
+
 -- import Seccomp
 
 open Lean Core Meta Elab Term Command
@@ -8,8 +13,16 @@ instance : ToExpr System.FilePath where
   toTypeExpr := Lean.mkConst ``System.FilePath
   toExpr path := mkApp (Lean.mkConst ``System.FilePath.mk) (toExpr path.1)
 
-elab "compileTimeSearchPath" : term =>
+elab "#compileTimeSearchPath" : term =>
   return toExpr (← searchPathRef.get)
+
+elab "#looglePath" : term =>
+  return toExpr (← IO.getEnv "LOOGLE_PATH")
+
+def compileTimeSearchPath : SearchPath :=
+  match #looglePath with 
+  | some p => System.SearchPath.parse p
+  | none => #compileTimeSearchPath
 
 def Result := Except String (String × Array Lean.Name)
 def Printer := Result → IO Unit 
@@ -55,8 +68,10 @@ def interactive (print : Printer) : CoreM Unit := do
     if query.isEmpty then break
     single print query
 
-unsafe def work (mod : String) (act : CoreM Unit) : IO Unit := do
-  searchPathRef.set compileTimeSearchPath
+unsafe def work (path : Option String) (mod : String) (act : CoreM Unit) : IO Unit := do
+  match path with
+  | some p => searchPathRef.set [p]
+  | none => searchPathRef.set compileTimeSearchPath
   withImportModules [{module := mod.toName}, {module := `Mathlib.Tactic.Find}] {} 0 fun env => do
     let ctx := {fileName := "/", fileMap := Inhabited.default}
     let state := {env}
@@ -67,12 +82,74 @@ unsafe def work (mod : String) (act : CoreM Unit) : IO Unit := do
     -- Seccomp.enable
     act
 
+structure LoogleOptions where
+  interactive : Bool := false
+  json : Bool := false
+  query : Option String := none
+  module : String := "Mathlib"
+  searchPath : Option String := none
+  wantsHelp : Bool := false
+abbrev CliMainM := ExceptT Lake.CliError IO
+abbrev CliStateM := StateT LoogleOptions CliMainM
+abbrev CliM := Lake.ArgsT CliStateM
+
+
+def takeArg (arg : String) : CliM String := do
+  match (← Lake.takeArg?) with
+  | none => throw <| Lake.CliError.missingArg arg
+  | some arg => pure arg
+
+def lakeShortOption : (opt : Char) → CliM PUnit
+| 'i' => modifyThe LoogleOptions ({· with interactive := true})
+| 'j' => modifyThe LoogleOptions ({· with json := true})
+| 'h' => modifyThe LoogleOptions ({· with wantsHelp := true})
+| opt => throw <| Lake.CliError.unknownShortOption opt
+
+def lakeLongOption : (opt : String) → CliM PUnit
+| "--help"  => lakeShortOption 'h'
+| "--interactive"  => lakeShortOption 'i'
+| "--json" => lakeShortOption 'j'
+| "--path"     => do modifyThe LoogleOptions ({· with searchPath := some (← takeArg "--path")})
+| "--module"   => do modifyThe LoogleOptions ({· with searchPath := ← takeArg "--module"})
+| opt         => throw <| Lake.CliError.unknownLongOption opt
+
+def lakeOption :=
+  Lake.option {
+    short := lakeShortOption
+    long := lakeLongOption
+    longShort := Lake.shortOptionWithArg lakeShortOption
+  }
+
+def usage := "
+USAGE:
+  loogle [OPTIONS] [QUERY]
+
+OPTIONS:
+  --help
+  --interactive, -i     read querys from stdin
+  --json, -j            print result in JSON format
+  --module mod          import this module (default: MATHLIB)
+  --path path           search for .olean files here (default: the build time path)
+
+Current search path:
+" ++ String.join (compileTimeSearchPath.map (fun p => s!" * {p}\n"))
+
+unsafe def loogleCli : CliM PUnit := do
+  match (← Lake.getArgs) with
+  | [] => IO.println usage
+  | _ => -- normal CLI
+    Lake.processOptions lakeOption
+    let opts ← getThe LoogleOptions
+    let queries ← Lake.takeArgs
+    let print := if opts.json then printJson else printPlain
+    if opts.wantsHelp || queries.isEmpty && not opts.interactive
+    then IO.println usage
+    else work opts.searchPath opts.module do
+      queries.forM (single print)
+      if opts.interactive
+      then interactive print
+
 unsafe def main (args : List String) : IO Unit := do
-  match args with
-  | ["-i"] => work "Mathlib" (interactive printPlain)
-  | ["-j"] => work "Mathlib" (interactive printJson)
-  | [query] => work "Mathlib" (single printPlain query)
-  | [mod, "-i"] => work mod (interactive printPlain)
-  | [mod, "-j"] => work mod (interactive printJson)
-  | [mod, query] => work mod (single printPlain query)
-  | _ => IO.println "Usage: loogle [module] query"
+  match (← (loogleCli.run args |>.run' {}).run) with
+    | .ok _ => pure ()
+    | .error e => IO.println e.toString

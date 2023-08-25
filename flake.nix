@@ -70,13 +70,16 @@
         name = "loogle";
         src = ./.;
         roots = [ "Loogle" ];
-        deps = [ mathlib4 ];
-        # hack = true;
+        deps = inputs.lean.packages.${system}.stdlib ++ [ mathlib4 ];
+        overrideBuildModAttrs = self: super: {
+          LOOGLE_PATH = mathlib4.modRoot;
+        };
       };
     in
     {
       packages.${system} = {
         loogle = loogle.executable;
+        mathlib = loogle.modRoot;
       };
 
       devShells.${system}.default = (pkgs.mkShell.override { stdenv = pkgs.llvmPackages_15.stdenv; }) {
