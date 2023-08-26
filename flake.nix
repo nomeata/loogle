@@ -123,6 +123,7 @@
       packages.${system} = {
         inherit loogle_seccomp loogle_exe loogle loogle_server;
         mathlib = mathlib4.modRoot;
+        default = loogle;
       };
 
       nixosConfigurations.loogle = nixpkgs.lib.nixosSystem {
