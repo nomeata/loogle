@@ -4,7 +4,7 @@
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.nixpkgs.follows = "lean/nixpkgs";
 
-  inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find-no-ProofWidgets";
+  inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find";
   inputs.mathlib4.flake = false;
   inputs.std4.url = "github:leanprover/std4/8b864260672b21d964d79ecb2376e01d0eab9f5b";
   inputs.std4.flake = false;
@@ -12,9 +12,8 @@
   inputs.quote4.flake = false;
   inputs.aesop.url = "github:JLimperg/aesop/d13a9666e6f430b940ef8d092f1219e964b52a09";
   inputs.aesop.flake = false;
-
-  # inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/a0c2cd0ac3245a0dade4f925bcfa97e06dd84229";
-  # inputs.ProofWidgets.flake = false;
+  inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/a0c2cd0ac3245a0dade4f925bcfa97e06dd84229";
+  inputs.ProofWidgets.flake = false;
 
   outputs = { self, nixpkgs, ...}@inputs:
     let
@@ -41,12 +40,51 @@
         deps = [std4];
       };
 
-      # ProofWidgets = leanPkgs.buildLeanPackage {
-      #   name = "ProofWidgets";
-      #   src = inputs.ProofWidgets;
-      #   roots = [ "ProofWidgets" ];
-      #   deps = [std4];
-      # };
+      # addFakeFile can plug into buildLeanPackage’s overrideBuildModAttrs
+      # it takes a lean module name and a filename, and makes that file available
+      # (as an empty file) in the build tree, e.g. for include_str.
+      addFakeFiles = m: self: super:
+        if m ? ${super.name}
+        then let
+          paths = m.${super.name};
+        in {
+          src = pkgs.runCommandCC "${super.name}-patched" {
+            inherit (super) leanPath src relpath;
+          } (''
+            dir=$(dirname $relpath)
+            mkdir -p $out/$dir
+            if [ -d $src ]; then cp -r $src/. $out/$dir/; else cp $src $out/$leanPath; fi
+          '' + pkgs.lib.concatMapStringsSep "\n" (p : ''
+            install -D -m 644 ${pkgs.emptyFile} $out/${p}
+          '') paths);
+        # this just fixes what seems to be a bug in buildLeanPackage
+        # (it expects to find $src/Bar.lean, nor $src/Foo/Bar.lean)
+        buildCommand = ''
+          dir=$(dirname $relpath)
+          mkdir -p $dir $out/$dir $ilean/$dir $c/$dir
+          if [ -d $src ]; then cp -r $src/. .; else cp $src $leanPath; fi
+          lean -o $out/$oleanPath -i $ilean/$ileanPath -c $c/$cPath $leanPath $leanFlags $leanPluginFlags $leanLoadDynlibFlags
+        '';
+        }
+        else {};
+
+      ProofWidgets = leanPkgs.buildLeanPackage {
+        name = "ProofWidgets";
+        src = inputs.ProofWidgets;
+        roots = [ "ProofWidgets" ];
+        deps = [std4];
+        overrideBuildModAttrs = addFakeFiles {
+          "ProofWidgets.Compat" = [ "build/js/compat.js" ];
+          "ProofWidgets.Component.Basic" = [ "build/js/interactiveExpr.js" ];
+          "ProofWidgets.Component.GoalTypePanel" = [ "build/js/goalTypePanel.js" ];
+          "ProofWidgets.Component.Recharts" = [ "build/js/recharts.js" ];
+          "ProofWidgets.Component.PenroseDiagram" = [ "build/js/penroseDisplay.js" ];
+          "ProofWidgets.Component.SelectionPanel" = [ "build/js/presentSelection.js" ];
+          "ProofWidgets.Component.HtmlDisplay" =
+            [ "build/js/htmlDisplay.js" "build/js/htmlDisplayPanel.js"];
+          "ProofWidgets.Presentation.Expr" = [ "build/js/exprPresentation.js" ];
+        };
+      };
 
       mathlib4 = leanPkgs.buildLeanPackage {
         name = "Mathlib";
@@ -64,7 +102,15 @@
           "-DautoImplicit=false"
           "-DrelaxedAutoImplicit=false"
         ];
-        deps = [std4 quote4 aesop ];
+        deps = [std4 quote4 aesop ProofWidgets];
+        overrideBuildModAttrs = addFakeFiles {
+          "Mathlib.Tactic.Widget.CommDiag" = [
+            "widget/src/penrose/commutative.dsl"
+            "widget/src/penrose/commutative.sty"
+            "widget/src/penrose/triangle.sub"
+            "widget/src/penrose/square.sub"
+          ];
+        };
       };
 
       loogle_seccomp = pkgs.runCommandCC "loogle_seccomp"
@@ -119,6 +165,7 @@
       packages.${system} = {
         inherit loogle_seccomp loogle_exe loogle loogle_server;
         mathlib = mathlib4.modRoot;
+        ProofWidgets = ProofWidgets.modRoot;
       };
 
       nixosConfigurations.loogle = nixpkgs.lib.nixosSystem {
