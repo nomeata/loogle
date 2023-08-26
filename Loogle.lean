@@ -15,16 +15,14 @@ instance : ToExpr System.FilePath where
   toTypeExpr := Lean.mkConst ``System.FilePath
   toExpr path := mkApp (Lean.mkConst ``System.FilePath.mk) (toExpr path.1)
 
-elab "#compileTimeSearchPath" : term =>
-  return toExpr (← searchPathRef.get)
-
-elab "#looglePath" : term =>
-  return toExpr (← IO.getEnv "LOOGLE_PATH")
-
-def compileTimeSearchPath : SearchPath :=
-  match #looglePath with 
-  | some p => System.SearchPath.parse p
-  | none => #compileTimeSearchPath
+elab "#compileTimeSearchPath" : term => do
+  let path ← searchPathRef.get
+  let path' :=
+    -- A little hack to not embed the searchpath when building under nix
+    if path.any (fun p => p.toString.endsWith "Loogle-depRoot")
+    then [] else path
+  return toExpr path'
+def compileTimeSearchPath : SearchPath := #compileTimeSearchPath
 
 def Result := Except String (String × Array Lean.Name)
 def Printer := Result → IO Unit 
@@ -147,7 +145,8 @@ OPTIONS:
   --path path           search for .olean files here (default: the build time path)
   --write-index file    persists the search index to a file
   --read-index file     read the search index from a file. This file is blindly trusted!
-
+" ++
+if compileTimeSearchPath.isEmpty then "" else "
 Default search path
 " ++ String.join (compileTimeSearchPath.map (fun p => s!" * {p}\n"))
 
