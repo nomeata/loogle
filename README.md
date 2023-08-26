@@ -30,8 +30,8 @@ To use `loogle` locally:
 Running locally (with nix)
 --------------------------
 
-You can also build it with nix. This will take several hours as it builds all
-of mathlib:
+You can also build it with nix. Teh first time this will take several hours as
+it builds all of mathlib:
 
 1. check out this repository
 2. nix run -L ./#loogle -- --help
@@ -48,9 +48,13 @@ Usage
       --json, -j            print result in JSON format
       --module mod          import this module (default: Mathlib)
       --path path           search for .olean files here (default: the build time path)
+      --write-index file    persists the search index to a file
+      --read-index file     read the search index from a file. This file is blindly trusted!
 
-It will create an internal index when starting, which takes a bit. In
-interactive mode, further queries are then quick.
+By default, it will create an internal index upon starting,  which takes a bit.
+You can use `--write-index` and `--read-index` to cache that, but it it is your
+responsibility to pass the right index for the given module and search path. In
+the nix setup, the index is built as part of the build process.
 
 Web service
 -----------

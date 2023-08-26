@@ -1,3 +1,4 @@
+import Mathlib.Util.Pickle
 import Lean.Meta
 import Lake.CLI.Error
 import Lake.Util.Cli
@@ -69,31 +70,42 @@ def interactive (print : Printer) : CoreM Unit := do
     if query.isEmpty then break
     single print query
 
-unsafe def work (path : Option String) (mod : String) (act : CoreM Unit) : IO Unit := do
-  match path with
-  | some p => searchPathRef.set [p]
-  | none => searchPathRef.set compileTimeSearchPath
-  withImportModules [{module := mod.toName}, {module := `Mathlib.Tactic.Find}] {} 0 fun env => do
-    let ctx := {fileName := "/", fileMap := Inhabited.default}
-    let state := {env}
-    Prod.fst <$> act'.toIO ctx state
-  where act' := do
-    -- warm up the cache eagerly
-    let _ ← MetaM.run' $ Mathlib.Tactic.Find.findDeclsByConsts.get
-    Seccomp.enable
-    act
-
 structure LoogleOptions where
   interactive : Bool := false
   json : Bool := false
   query : Option String := none
   module : String := "Mathlib"
   searchPath : Option String := none
+  writeIndex : Option String := none
+  readIndex : Option String := none
   wantsHelp : Bool := false
+
+unsafe def work (opts : LoogleOptions) (act : CoreM Unit) : IO Unit := do
+  if let some p := opts.searchPath
+  then searchPathRef.set [p]
+  else searchPathRef.set compileTimeSearchPath
+
+  let imports := [{module := opts.module.toName}, {module := `Mathlib.Tactic.Find}]
+  withImportModules imports {} 0 fun env => do
+    let ctx := {fileName := "/", fileMap := Inhabited.default}
+    let state := {env}
+    Prod.fst <$> act'.toIO ctx state
+  where act' : CoreM Unit := do
+    match opts.readIndex with
+    | some path => do
+      let (index, _) ← unpickle (NameRel × NameRel) path
+      Mathlib.Tactic.Find.findDeclsByConsts.cache.set $
+        Sum.inr (Task.pure (.ok index))
+    | none => do
+      -- warm up cache eagerly
+      let index ← Mathlib.Tactic.Find.findDeclsByConsts.cache.get
+      if let some path := opts.writeIndex then pickle path index
+    Seccomp.enable
+    act
+
 abbrev CliMainM := ExceptT Lake.CliError IO
 abbrev CliStateM := StateT LoogleOptions CliMainM
 abbrev CliM := Lake.ArgsT CliStateM
-
 
 def takeArg (arg : String) : CliM String := do
   match (← Lake.takeArg?) with
@@ -107,11 +119,13 @@ def lakeShortOption : (opt : Char) → CliM PUnit
 | opt => throw <| Lake.CliError.unknownShortOption opt
 
 def lakeLongOption : (opt : String) → CliM PUnit
-| "--help"  => lakeShortOption 'h'
-| "--interactive"  => lakeShortOption 'i'
+| "--help" => lakeShortOption 'h'
+| "--interactive" => lakeShortOption 'i'
 | "--json" => lakeShortOption 'j'
-| "--path"     => do modifyThe LoogleOptions ({· with searchPath := ← takeArg "--path"})
-| "--module"   => do modifyThe LoogleOptions ({· with module := ← takeArg "--module"})
+| "--path" => do modifyThe LoogleOptions ({· with searchPath := ← takeArg "--path"})
+| "--module" => do modifyThe LoogleOptions ({· with module := ← takeArg "--module"})
+| "--write-index" => do modifyThe LoogleOptions ({· with writeIndex := ← takeArg "--write-index"})
+| "--read-index" => do modifyThe LoogleOptions ({· with readIndex := ← takeArg "--read-index"})
 | opt         => throw <| Lake.CliError.unknownLongOption opt
 
 def lakeOption :=
@@ -131,8 +145,10 @@ OPTIONS:
   --json, -j            print result in JSON format
   --module mod          import this module (default: Mathlib)
   --path path           search for .olean files here (default: the build time path)
+  --write-index file    persists the search index to a file
+  --read-index file     read the search index from a file. This file is blindly trusted!
 
-Current search path:
+Default search path
 " ++ String.join (compileTimeSearchPath.map (fun p => s!" * {p}\n"))
 
 unsafe def loogleCli : CliM PUnit := do
@@ -143,9 +159,10 @@ unsafe def loogleCli : CliM PUnit := do
     let opts ← getThe LoogleOptions
     let queries ← Lake.takeArgs
     let print := if opts.json then printJson else printPlain
-    if opts.wantsHelp || queries.isEmpty && not opts.interactive
+    if opts.wantsHelp ||
+      queries.isEmpty && not opts.interactive && opts.writeIndex.isNone
     then IO.println usage
-    else work opts.searchPath opts.module do
+    else work opts do
       queries.forM (single print)
       if opts.interactive
       then interactive print

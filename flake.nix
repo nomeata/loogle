@@ -88,14 +88,21 @@
         roots = [ "Loogle" ];
         deps = leanPkgs.stdlib ++ [ mathlib4 seccomp ];
         linkFlags = [ "-lseccomp" ];
-        overrideBuildModAttrs = self: super: {
-          LOOGLE_PATH = mathlib4.modRoot;
-        };
       };
 
-      loogle = looglePkg.executable.overrideAttrs (super: {
+      loogle_exe = looglePkg.executable.overrideAttrs (super: {
         buildInputs = super.buildInputs ++ [ pkgs.pkgsStatic.libseccomp ];
       });
+
+      loogle_index = pkgs.runCommand "loogle.index" { buildInputs = [ loogle_exe ]; } ''
+        loogle --path ${mathlib4.modRoot} --write-index $out
+      '';
+
+      loogle = pkgs.runCommand "loogle" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
+        mkdir -p $out/bin
+        makeWrapper ${loogle_exe}/bin/loogle $out/bin/loogle --add-flags \
+          '--path ${mathlib4.modRoot} --read-index ${loogle_index}'
+      '';
 
       loogle_server = pkgs.stdenv.mkDerivation {
         name = "loogle_server";
@@ -110,7 +117,7 @@
     in
     {
       packages.${system} = {
-        inherit loogle_seccomp loogle loogle_server;
+        inherit loogle_seccomp loogle_exe loogle loogle_server;
         mathlib = mathlib4.modRoot;
       };
 
