@@ -63,7 +63,11 @@ class MyHandler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.send_header("Content-type", "text/plain")
             self.end_headers()
-            self.wfile.write(b"Not found")
+            try:
+                self.wfile.write(b"Not found.\n")
+            except BrokenPipeError:
+                # browsers seem to like to close this early
+                pass
             return
         url_query = url.query
         params = urllib.parse.parse_qs(url_query)
