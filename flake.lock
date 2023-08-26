@@ -1,5 +1,22 @@
 {
   "nodes": {
+    "ProofWidgets": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1689871898,
+        "narHash": "sha256-Yy57qLgw2S2JqL+2jbqyGB4vSEhjxuN5M5Vid7geOeM=",
+        "owner": "EdAyers",
+        "repo": "ProofWidgets4",
+        "rev": "a0c2cd0ac3245a0dade4f925bcfa97e06dd84229",
+        "type": "github"
+      },
+      "original": {
+        "owner": "EdAyers",
+        "repo": "ProofWidgets4",
+        "rev": "a0c2cd0ac3245a0dade4f925bcfa97e06dd84229",
+        "type": "github"
+      }
+    },
     "aesop": {
       "flake": false,
       "locked": {
@@ -190,6 +207,7 @@
     },
     "root": {
       "inputs": {
+        "ProofWidgets": "ProofWidgets",
         "aesop": "aesop",
         "lean": "lean",
         "mathlib4": "mathlib4",
