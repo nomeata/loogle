@@ -4,7 +4,7 @@
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.nixpkgs.follows = "lean/nixpkgs";
 
-  inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find-no-ProofWidgets";
+  inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find";
   inputs.mathlib4.flake = false;
   inputs.std4.url = "github:leanprover/std4/8b864260672b21d964d79ecb2376e01d0eab9f5b";
   inputs.std4.flake = false;
@@ -50,14 +50,18 @@
 
       mathlib4 = leanPkgs.buildLeanPackage {
         name = "Mathlib";
-        src = inputs.mathlib4;
-        # src = builtins.fetchTree {
-        #   name = "mathlib4-patched";
-        #   src = inputs.mathlib4;
-        #   postPatch = ''
-        #     sed -i '/Widget/d' ./Mathlib.lean ./Mathlib/Tactic.lean
-        #   '';
-        # };
+        # src = inputs.mathlib4;
+        # I did not figure out how to build ProofWidgets4 with buildLeanPackage, so I am patching
+        # it out. Unfortunately, the following also puts all sources files into a single
+        # store path, instead of having each source file being its own source (inputs.mathlib4 is a
+        # lazy tree, not derivation!). This mean even more recomputation. Oh well.
+        src = pkgs.applyPatches {
+          name = "mathlib4-patched";
+          src = inputs.mathlib4;
+          postPatch = ''
+            sed -i '/Widget/d' ./Mathlib.lean ./Mathlib/Tactic.lean
+          '';
+        };
         roots = [ { mod = "Mathlib"; glob = "one"; } ];
         leanFlags = [
           "-Dpp.unicode.fun=true"
