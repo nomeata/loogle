@@ -66,7 +66,7 @@
   };
 
   services.nginx.virtualHosts = {
-    "loogle.nomeata.de" = {
+    "loogle.lean-fro.org" = {
       serverAliases = [ ];
       enableACME = true;
       forceSSL = true;
