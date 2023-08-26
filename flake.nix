@@ -1,5 +1,5 @@
 {
-  inputs.lean.url = github:leanprover/lean4/b5a736708f40;
+  inputs.lean.url = github:leanprover/lean4/39c9e2a4d13dcb5ad76566fe5dda0c80b95171b2;
 
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.nixpkgs.follows = "lean/nixpkgs";
@@ -57,14 +57,6 @@
           '' + pkgs.lib.concatMapStringsSep "\n" (p : ''
             install -D -m 644 ${pkgs.emptyFile} $out/${p}
           '') paths);
-        # this just fixes what seems to be a bug in buildLeanPackage
-        # (it expects to find $src/Bar.lean, nor $src/Foo/Bar.lean)
-        buildCommand = ''
-          dir=$(dirname $relpath)
-          mkdir -p $dir $out/$dir $ilean/$dir $c/$dir
-          if [ -d $src ]; then cp -r $src/. .; else cp $src $leanPath; fi
-          lean -o $out/$oleanPath -i $ilean/$ileanPath -c $c/$cPath $leanPath $leanFlags $leanPluginFlags $leanLoadDynlibFlags
-        '';
         }
         else {};
 
