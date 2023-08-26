@@ -6,7 +6,7 @@ package «loogle» {
 }
 
 require mathlib from git "https://github.com/leanprover-community/mathlib4"
-  @ "9fdeb8945b9fb7ac697fe383e8f48b395fe047b9"
+  @ "joachim/find"
 
 require std from git "https://github.com/leanprover/std4"
   @ "8b864260672b21d964d79ecb2376e01d0eab9f5b"
