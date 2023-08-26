@@ -28,7 +28,7 @@ def compileTimeSearchPath : SearchPath :=
 def Result := Except String (String × Array Lean.Name)
 def Printer := Result → IO Unit 
 
-def runQuery (query : String) : CoreM Result  := do
+def runQuery (query : String) : CoreM Result  := withCurrHeartbeats do
   match Parser.runParserCategory (← getEnv) `find_patterns query with
   | .error err => pure $ .error err
   | .ok s => do
