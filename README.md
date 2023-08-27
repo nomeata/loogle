@@ -34,7 +34,7 @@ You can also build it with nix. Teh first time this will take several hours as
 it builds all of mathlib:
 
 1. check out this repository
-2. nix run -L ./#loogle -- --help
+2. `nix run -L ./#loogle -- --help`
 
 Usage
 -----
