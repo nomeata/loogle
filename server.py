@@ -59,7 +59,10 @@ class MyHandler(BaseHTTPRequestHandler):
         query = ""
         result = {}
         url = urllib.parse.urlparse(self.path)
-        if url.path != "/":
+        want_json = False
+        if url.path == "/json":
+            want_json = True
+        elif url.path != "/":
             self.send_response(404)
             self.send_header("Content-type", "text/plain")
             self.end_headers()
@@ -69,6 +72,8 @@ class MyHandler(BaseHTTPRequestHandler):
                 # browsers seem to like to close this early
                 pass
             return
+
+
         url_query = url.query
         params = urllib.parse.parse_qs(url_query)
         if "q" in params and len(params["q"]) == 1:
@@ -76,59 +81,66 @@ class MyHandler(BaseHTTPRequestHandler):
             if "\n" in query:
                 return
             result = loogle.query(query)
-        self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.end_headers()
-        self.wfile.write(bytes(f"""
-            <!doctype html>
-            <html lang="de">
-            <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <link rel="stylesheet" href="https://unpkg.com/chota@latest">
-            <title>Loogle!</title>
-            <body>
-            <main class="container">
 
-            <section>
-            <h1>Loogle!</h1>
-            <form method="GET">
-            <p class="grouped">
-            <input type="text" name="q" value="{html.escape(query)}"/>
-            <input type="submit" value="#find"/>
-            </p>
-            </form>
-            </section>
-        """, "utf-8"))
-        if "error" in result:
+        if want_json:
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.end_headers()
+            self.wfile.write(bytes(json.dumps(result), "utf8"))
+        else:
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
             self.wfile.write(bytes(f"""
-                <h2>Error</h2>
-                <pre>{html.escape(result['error'])}</pre>
+                <!doctype html>
+                <html lang="de">
+                <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <link rel="stylesheet" href="https://unpkg.com/chota@latest">
+                <title>Loogle!</title>
+                <body>
+                <main class="container">
+
+                <section>
+                <h1>Loogle!</h1>
+                <form method="GET">
+                <p class="grouped">
+                <input type="text" name="q" value="{html.escape(query)}"/>
+                <input type="submit" value="#find"/>
+                </p>
+                </form>
+                </section>
             """, "utf-8"))
-        if "header" in result:
-            self.wfile.write(b"""
-                <h2>Result</h2>
-            """)
-            self.wfile.write(bytes(f"""
-                <p>{html.escape(result['header'])}</p>
-            """, "utf-8"))
-        if "names" in result:
-            self.wfile.write(bytes(f"""
-                <ul>
-            """, "utf-8"))
-            for name in result["names"]:
+            if "error" in result:
                 self.wfile.write(bytes(f"""
-                    <li><a href="https://leanprover-community.github.io/mathlib4_docs/find/?pattern={html.escape(name)}#doc">{html.escape(name)}</a></li>
+                    <h2>Error</h2>
+                    <pre>{html.escape(result['error'])}</pre>
                 """, "utf-8"))
+            if "header" in result:
+                self.wfile.write(b"""
+                    <h2>Result</h2>
+                """)
+                self.wfile.write(bytes(f"""
+                    <p>{html.escape(result['header'])}</p>
+                """, "utf-8"))
+            if "names" in result:
+                self.wfile.write(bytes(f"""
+                    <ul>
+                """, "utf-8"))
+                for name in result["names"]:
+                    self.wfile.write(bytes(f"""
+                        <li><a href="https://leanprover-community.github.io/mathlib4_docs/find/?pattern={html.escape(name)}#doc">{html.escape(name)}</a></li>
+                    """, "utf-8"))
+                self.wfile.write(b"""
+                    </ul>
+                """)
+            self.wfile.write(blurb)
             self.wfile.write(b"""
-                </ul>
+                </main>
+                </body>
+                </html>
             """)
-        self.wfile.write(blurb)
-        self.wfile.write(b"""
-            </main>
-            </body>
-            </html>
-        """)
 
 if __name__ == "__main__":
     webServer = HTTPServer((hostName, serverPort), MyHandler)

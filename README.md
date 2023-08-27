@@ -68,6 +68,8 @@ SECCOMP (see `./loogle_seccomp.c`).
 You can run this server locally as well, either using `./server.py` if you
 built `loogle` via `lake`, or using `nix run ./#loogle_server` if you use nix.
 
+At the path `/json?q=…` (instead of `/?q=…`), the result is returned in JSOON format. No stability of the format is guaranteed at this point.
+
 Contact
 -------
 
