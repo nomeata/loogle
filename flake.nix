@@ -78,20 +78,21 @@
         };
       };
 
-      mathlib4 = leanPkgs.buildLeanPackage {
+      build_mathlib4 = pruned: leanPkgs.buildLeanPackage {
         name = "Mathlib";
         # src = inputs.mathlib4;
-        # I did not figure out how to build ProofWidgets4 with buildLeanPackage, so I am patching
-        # it out. Unfortunately, the following also puts all sources files into a single
-        # store path, instead of having each source file being its own source (inputs.mathlib4 is a
-        # lazy tree, not derivation!). This mean even more recomputation. Oh well.
-        src = pkgs.applyPatches {
-          name = "mathlib4-patched";
-          src = inputs.mathlib4;
-          postPatch = ''
-            sed -i '/Widget/d' ./Mathlib.lean ./Mathlib/Tactic.lean
-          '';
-        };
+        # To build less, if pruned == true, then only the modules actally
+        # needed by loogle the executable are built
+        src = if pruned
+          then pkgs.applyPatches {
+            name = "mathlib4-${if pruned then "pruned" else "patched"}";
+            src = inputs.mathlib4;
+            postPatch = ''
+              echo "import Mathlib.Tactic.Find"  > Mathlib.lean
+              echo "import Mathlib.Util.Pickle" >> Mathlib.lean
+            '';
+          }
+          else inputs.mathlib4;
         roots = [ { mod = "Mathlib"; glob = "one"; } ];
         leanFlags = [
           "-Dpp.unicode.fun=true"
@@ -108,6 +109,9 @@
           ];
         };
       };
+
+      mathlib4_pruned = build_mathlib4 true;
+      mathlib4 = build_mathlib4 false;
 
       loogle_seccomp = pkgs.runCommandCC "loogle_seccomp"
         { buildInputs = [ leanPkgs.leanc pkgs.pkgsStatic.libseccomp ]; } ''
@@ -128,7 +132,7 @@
         name = "loogle";
         src = ./.;
         roots = [ "Loogle" ];
-        deps = leanPkgs.stdlib ++ [ mathlib4 seccomp ];
+        deps = leanPkgs.stdlib ++ [ mathlib4_pruned seccomp ];
         linkFlags = [ "-lseccomp" ];
       };
 
@@ -161,6 +165,7 @@
       packages.${system} = {
         inherit loogle_seccomp loogle_exe loogle loogle_server;
         mathlib = mathlib4.modRoot;
+        mathlib_pruned = mathlib4_pruned.modRoot;
         default = loogle;
       };
 
