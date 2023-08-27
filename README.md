@@ -68,7 +68,17 @@ SECCOMP (see `./loogle_seccomp.c`).
 You can run this server locally as well, either using `./server.py` if you
 built `loogle` via `lake`, or using `nix run ./#loogle_server` if you use nix.
 
-At the path `/json?q=…` (instead of `/?q=…`), the result is returned in JSOON format. No stability of the format is guaranteed at this point.
+At the path `/json?q=…` (instead of `/?q=…`), the result is returned in JSOON
+format. No stability of the format is guaranteed at this point.
+
+Zulip bot
+---------
+
+The [leanprover Zulip chat](https://leanprover.zulipchat.com/) has a bot called
+`loogle` that will respond to messages with the first two hits from loogle.
+Just write `@**loogle** query` in a public stream.
+
+It is implemented via an outgoing webhook to the above web service.
 
 Contact
 -------

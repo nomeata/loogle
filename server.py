@@ -55,6 +55,56 @@ class Loogle():
 loogle = Loogle()
 
 class MyHandler(BaseHTTPRequestHandler):
+
+    def return404(self):
+        self.send_response(404)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        try:
+            self.wfile.write(b"Not found.\n")
+        except BrokenPipeError:
+            # browsers seem to like to close this early
+            pass
+
+    def returnJSON(self, data):
+        self.send_response(200)
+        self.send_header("Content-type", "application/json")
+        self.end_headers()
+        try:
+            self.wfile.write(bytes(json.dumps(data), "utf8"))
+        except BrokenPipeError:
+            pass
+
+    def do_POST(self):
+        url = urllib.parse.urlparse(self.path)
+        if url.path != "/zulipbot":
+            self.return404()
+            return
+
+        if self.headers.get_content_type() != 'application/json':
+            self.send_response(400)
+            self.end_headers()
+            return
+        length = int(self.headers.get('content-length'))
+        message = json.loads(self.rfile.read(length))
+
+        query = message['data'].removeprefix("@**loogle** ")
+        result = loogle.query(query)
+
+        if "error" in result:
+            reply = f"❗ {result['error']}"
+        elif len(result["names"]) == 0:
+            reply = f"🤷 nothing found"
+        elif len(result["names"]) == 1:
+            reply = f"🔍 docs#{result['names'][0]}"
+        elif len(result["names"]) == 2:
+            reply = f"🔍 docs#{result['names'][0]}, docs#{result['names'][1]}"
+        else:
+            url = f"https://loogle.lean-fro.org/q?={urllib.parse.quote(query)}"
+            n = len(result["names"]) - 2
+            reply = f"🔍 docs#{result['names'][0]}, docs#{result['names'][1]}, [and {n} more]({url})"
+        self.returnJSON({ "content": reply })
+
     def do_GET(self):
         query = ""
         result = {}
@@ -63,16 +113,8 @@ class MyHandler(BaseHTTPRequestHandler):
         if url.path == "/json":
             want_json = True
         elif url.path != "/":
-            self.send_response(404)
-            self.send_header("Content-type", "text/plain")
-            self.end_headers()
-            try:
-                self.wfile.write(b"Not found.\n")
-            except BrokenPipeError:
-                # browsers seem to like to close this early
-                pass
+            self.return404()
             return
-
 
         url_query = url.query
         params = urllib.parse.parse_qs(url_query)
@@ -83,10 +125,7 @@ class MyHandler(BaseHTTPRequestHandler):
             result = loogle.query(query)
 
         if want_json:
-            self.send_response(200)
-            self.send_header("Content-type", "application/json")
-            self.end_headers()
-            self.wfile.write(bytes(json.dumps(result), "utf8"))
+            self.returnJSON(result)
         else:
             self.send_response(200)
             self.send_header("Content-type", "text/html")
