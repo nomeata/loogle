@@ -100,9 +100,9 @@ class MyHandler(BaseHTTPRequestHandler):
         elif len(result["names"]) == 2:
             reply = f"🔍 docs#{result['names'][0]}, docs#{result['names'][1]}"
         else:
-            url = f"https://loogle.lean-fro.org/q?={urllib.parse.quote(query)}"
+            weburl = f"https://loogle.lean-fro.org/?q={urllib.parse.quote(query)}"
             n = len(result["names"]) - 2
-            reply = f"🔍 docs#{result['names'][0]}, docs#{result['names'][1]}, [and {n} more]({url})"
+            reply = f"🔍 docs#{result['names'][0]}, docs#{result['names'][1]}, [and {n} more]({weburl})"
         self.returnJSON({ "content": reply })
 
     def do_GET(self):
