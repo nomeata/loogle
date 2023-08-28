@@ -92,7 +92,10 @@ class MyHandler(BaseHTTPRequestHandler):
         result = loogle.query(query)
 
         if "error" in result:
-            reply = f"❗ {result['error']}"
+            if "\n" in result['error']:
+                reply = f"❗\n```{result['error']}```"
+            else:
+                reply = f"❗ {result['error']}"
         elif len(result["names"]) == 0:
             reply = f"🤷 nothing found"
         elif len(result["names"]) == 1:
