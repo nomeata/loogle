@@ -9,10 +9,10 @@ require mathlib from git "https://github.com/leanprover-community/mathlib4"
   @ "joachim/find"
 
 require std from git "https://github.com/leanprover/std4"
-  @ "8b864260672b21d964d79ecb2376e01d0eab9f5b"
+  @ "7194b6b9b074e15c490e59491843bcd0f0feda68"
 
 require aesop from git "https://github.com/JLimperg/aesop"
-  @ "d13a9666e6f430b940ef8d092f1219e964b52a09"
+  @ "086c98bb129ca856381d4414dc0afd6e3e4ae2ef"
 
 target loogle_seccomp.o pkg : FilePath := do
   let oFile := pkg.buildDir / "loogle_seccomp.o"
