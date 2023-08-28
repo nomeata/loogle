@@ -1,5 +1,5 @@
 {
-  inputs.lean.url = github:leanprover/lean4/39c9e2a4d13dcb5ad76566fe5dda0c80b95171b2;
+  inputs.lean.url = github:leanprover/lean4/f7bff16c9a;
 
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.nixpkgs.follows = "lean/nixpkgs";
@@ -8,7 +8,7 @@
   inputs.mathlib4.flake = false;
   inputs.std4.url = "github:leanprover/std4/8b864260672b21d964d79ecb2376e01d0eab9f5b";
   inputs.std4.flake = false;
-  inputs.quote4.url = "github:gebner/quote4/81cc13c524a68d0072561dbac276cd61b65872a6";
+  inputs.quote4.url = "github:gebner/quote4/99ac78fb6d56fc6191eb8e430ba9521c1da0565b";
   inputs.quote4.flake = false;
   inputs.aesop.url = "github:JLimperg/aesop/d13a9666e6f430b940ef8d092f1219e964b52a09";
   inputs.aesop.flake = false;
