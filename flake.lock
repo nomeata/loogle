@@ -20,17 +20,17 @@
     "aesop": {
       "flake": false,
       "locked": {
-        "lastModified": 1691697619,
-        "narHash": "sha256-3zXzHgK/jMiY/XtHZpEAK1zoJHkVJrBB3yclvUfT29Y=",
+        "lastModified": 1692313406,
+        "narHash": "sha256-rN4yOmaOM69l0t+uEkGGmGGypgo7aQ1hVO/4r3FGhNQ=",
         "owner": "JLimperg",
         "repo": "aesop",
-        "rev": "d13a9666e6f430b940ef8d092f1219e964b52a09",
+        "rev": "086c98bb129ca856381d4414dc0afd6e3e4ae2ef",
         "type": "github"
       },
       "original": {
         "owner": "JLimperg",
         "repo": "aesop",
-        "rev": "d13a9666e6f430b940ef8d092f1219e964b52a09",
+        "rev": "086c98bb129ca856381d4414dc0afd6e3e4ae2ef",
         "type": "github"
       }
     },
@@ -57,16 +57,16 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1693226745,
-        "narHash": "sha256-jrfKLvQf4/LpyWJKcqgzwjEkDKTraQz8yI6dWF8wMtA=",
-        "owner": "leanprover",
+        "lastModified": 1693235993,
+        "narHash": "sha256-uF4PnTfVzGxPVV6pkIj/3oUcOseC4qUC+aYKERdqRgE=",
+        "owner": "nomeata",
         "repo": "lean4",
-        "rev": "f7bff16c9a36baa91847cfb2f609084a43bcc9a1",
+        "rev": "6841d3375ce83799bf173faf368938fbcc3e2918",
         "type": "github"
       },
       "original": {
-        "owner": "leanprover",
-        "ref": "f7bff16c9a",
+        "owner": "nomeata",
+        "ref": "joachim/nix-dir-as-src",
         "repo": "lean4",
         "type": "github"
       }
@@ -191,17 +191,17 @@
     "quote4": {
       "flake": false,
       "locked": {
-        "lastModified": 1692746511,
-        "narHash": "sha256-7ICFsVzGfQrgM7l+Zt5c9VSSz8OfLMDKtTXBI84YH68=",
+        "lastModified": 1690312605,
+        "narHash": "sha256-5LIYh4JAKCSJwMG0SAlWrJsWi7CqJLX/J/d8hOseM20=",
         "owner": "gebner",
         "repo": "quote4",
-        "rev": "99ac78fb6d56fc6191eb8e430ba9521c1da0565b",
+        "rev": "81cc13c524a68d0072561dbac276cd61b65872a6",
         "type": "github"
       },
       "original": {
         "owner": "gebner",
         "repo": "quote4",
-        "rev": "99ac78fb6d56fc6191eb8e430ba9521c1da0565b",
+        "rev": "81cc13c524a68d0072561dbac276cd61b65872a6",
         "type": "github"
       }
     },
@@ -222,17 +222,17 @@
     "std4": {
       "flake": false,
       "locked": {
-        "lastModified": 1692137470,
-        "narHash": "sha256-5L1k6X30ycrB9Vgy37Oa0s1DF9sqru3U2LjZ4b9iX0U=",
+        "lastModified": 1693195252,
+        "narHash": "sha256-HMVX3bAaraN+HscyfGdp8uYIS8u2yJJoCODvl39m61c=",
         "owner": "leanprover",
         "repo": "std4",
-        "rev": "8b864260672b21d964d79ecb2376e01d0eab9f5b",
+        "rev": "7194b6b9b074e15c490e59491843bcd0f0feda68",
         "type": "github"
       },
       "original": {
         "owner": "leanprover",
         "repo": "std4",
-        "rev": "8b864260672b21d964d79ecb2376e01d0eab9f5b",
+        "rev": "7194b6b9b074e15c490e59491843bcd0f0feda68",
         "type": "github"
       }
     }

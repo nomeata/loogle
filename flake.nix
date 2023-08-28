@@ -1,16 +1,16 @@
 {
-  inputs.lean.url = github:leanprover/lean4/f7bff16c9a;
+  inputs.lean.url = github:nomeata/lean4/joachim/nix-dir-as-src;
 
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.nixpkgs.follows = "lean/nixpkgs";
 
   inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find";
   inputs.mathlib4.flake = false;
-  inputs.std4.url = "github:leanprover/std4/8b864260672b21d964d79ecb2376e01d0eab9f5b";
+  inputs.std4.url = "github:leanprover/std4/7194b6b9b074e15c490e59491843bcd0f0feda68";
   inputs.std4.flake = false;
-  inputs.quote4.url = "github:gebner/quote4/99ac78fb6d56fc6191eb8e430ba9521c1da0565b";
+  inputs.quote4.url = "github:gebner/quote4/81cc13c524a68d0072561dbac276cd61b65872a6";
   inputs.quote4.flake = false;
-  inputs.aesop.url = "github:JLimperg/aesop/d13a9666e6f430b940ef8d092f1219e964b52a09";
+  inputs.aesop.url = "github:JLimperg/aesop/086c98bb129ca856381d4414dc0afd6e3e4ae2ef";
   inputs.aesop.flake = false;
   inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/a0c2cd0ac3245a0dade4f925bcfa97e06dd84229";
   inputs.ProofWidgets.flake = false;
@@ -89,7 +89,6 @@
             src = inputs.mathlib4;
             postPatch = ''
               echo "import Mathlib.Tactic.Find"  > Mathlib.lean
-              echo "import Mathlib.Util.Pickle" >> Mathlib.lean
             '';
           }
           else inputs.mathlib4;

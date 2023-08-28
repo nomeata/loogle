@@ -1,49 +1,50 @@
 <h2 id="try-these">Try these:</h2>
 <ul>
 <li><a href="?q=Real.sin"><code>Real.sin</code></a></li>
-<li><a href="?q=Real.sin%20tsum"><code>Real.sin tsum</code></a></li>
+<li><a href="?q=Real.sin,%20tsum"><code>Real.sin, tsum</code></a></li>
 <li><a
-href="?q=(Real.sin%20(_%20%2B%202*Real.pi))"><code>(Real.sin (_ + 2*Real.pi))</code></a></li>
+href="?q=Real.sin%20(_%20%2B%202*Real.pi)"><code>Real.sin (_ + 2*Real.pi)</code></a></li>
 <li><a
-href="?q=(List.replicate%20(_%20%2B%20_)%20_)"><code>(List.replicate (_ + _) _)</code></a></li>
+href="?q=List.replicate%20(_%20%2B%20_)%20_"><code>List.replicate (_ + _) _</code></a></li>
 <li><a
-href="?q=(Real.sqrt%20%3Fa%20*%20Real.sqrt%20%3Fa)"><code>(Real.sqrt ?a * Real.sqrt ?a)</code></a></li>
+href="?q=Real.sqrt%20%3Fa%20*%20Real.sqrt%20%3Fa"><code>Real.sqrt ?a * Real.sqrt ?a</code></a></li>
 </ul>
 <h2 id="documentation">Documentation</h2>
-<p>This website gives access to the <code>#find</code> command to search
-through mathlib for definitions and lemmas in various ways. One can
-search by: the constants involved in the type; a substring of the name;
-a subexpression of the type; or a subexpression located in the return
-type or a hypothesis specifically. All of these search methods can be
-combined in a single query.</p>
+<p>This website gives access to mathlib’s <code>#find</code>
+command:</p>
+<p>The <code>#find</code> command finds definitions and lemmas in
+various ways. One can search by: the constants involved in the type; a
+substring of the name; a subexpression of the type; or a subexpression
+located in the return type or a hypothesis specifically. All of these
+search methods can be combined in a single query, comma-separated.</p>
 <ol type="1">
 <li><p>By constant:</p>
 <pre class="lean"><code>#find Real.sin</code></pre>
 <p>finds all lemmas whose statement somehow mentions the sine
 function.</p></li>
 <li><p>By lemma name substring:</p>
-<pre class="lean"><code>#find Real.sin &quot;two&quot;</code></pre>
+<pre class="lean"><code>#find Real.sin, &quot;two&quot;</code></pre>
 <p>restricts the search above to those lemmas that have
 <code>"two"</code> as part of the lemma <em>name</em>.</p>
 <p>(Currently, substring searches <em>must</em> be combined with other
 kind of queries.)</p></li>
 <li><p>By subexpression:</p>
-<pre class="lean"><code>#find (_ * (_ ^ _))</code></pre>
+<pre class="lean"><code>#find _ * (_ ^ _)</code></pre>
 <p>finds all lemmas whose statements somewhere include a product where
 the second argument is raised to some power. The pattern can also be
 non-linear, as in</p>
-<pre class="lean"><code>#find (Real.sqrt ?a * Real.sqrt ?a)</code></pre></li>
+<pre class="lean"><code>#find Real.sqrt ?a * Real.sqrt ?a</code></pre></li>
 <li><p>By conclusion and/or hypothesis:</p>
-<pre class="lean"><code>#find ⊢ (tsum _ = _ * tsum _)</code></pre>
+<pre class="lean"><code>#find ⊢ tsum _ = _ * tsum _</code></pre>
 <p>finds all lemmas where the conclusion (the subexpression to the right
 of all <code>→</code> and <code>∀</code>) has the given shape. If the
 pattern has hypotheses, they are matched against the hypotheses of the
 lemma in any order; for example,</p>
-<pre class="lean"><code>#find ⊢ (_ &lt; _ → tsum _ &lt; tsum _)</code></pre>
+<pre class="lean"><code>#find ⊢ _ &lt; _ → tsum _ &lt; tsum _</code></pre>
 <p>will find <code>tsum_lt_tsum</code> even though the hypothesis
 <code>f i &lt; g i</code> is not the last.</p></li>
 <li><p>In combination:</p>
-<pre class="lean"><code>#find Real.sin &quot;two&quot; tsum  (_ * _) (_ ^ _) ⊢ (_ &lt; _ → _)</code></pre>
+<pre class="lean"><code>#find Real.sin, &quot;two&quot;, tsum,  _ * _, _ ^ _, ⊢ _ &lt; _ → _</code></pre>
 <p>will find all lemmas which mention the constants
 <code>Real.sin</code> and <code>tsum</code>, have <code>"two"</code> as
 a substring of the lemma name, include a product and a power somewhere
@@ -53,11 +54,7 @@ in the type, <em>and</em> have a hypothesis of the form
 <p>If you pass more than one such search filter, <code>#find</code> will
 only return lemmas which match <em>all</em> of them simultaneously. At
 least some filter must mention a concrete name, because
-<code>#find</code> maintains an index of which lemmas mention which
-other constants. This is also why the <em>first</em> use of
-<code>#find</code> will be somewhat slow (typically less than half a
-minute with all of <code>Mathlib</code> imported), but subsequent uses
-are faster.</p>
+<code>#find</code> maintains</p>
 <h2 id="source-code">Source code</h2>
 <p>You can find the source code for this service at <a
 href="https://github.com/nomeata/loogle"
