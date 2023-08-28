@@ -88,7 +88,7 @@ class MyHandler(BaseHTTPRequestHandler):
         length = int(self.headers.get('content-length'))
         message = json.loads(self.rfile.read(length))
 
-        query = message['data'].removeprefix("@**loogle** ")
+        query = message['data'].split('\n', 1)[0].removeprefix("@**loogle** ")
         result = loogle.query(query)
 
         if "error" in result:
