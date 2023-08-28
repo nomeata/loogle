@@ -39,13 +39,13 @@
     "rev": "086c98bb129ca856381d4414dc0afd6e3e4ae2ef",
     "opts": {},
     "name": "aesop",
-    "inputRev?": "086c98bb129ca856381d4414dc0afd6e3e4ae2ef",
-    "inherited": false}},
+    "inputRev?": "master",
+    "inherited": true}},
   {"git":
    {"url": "https://github.com/leanprover/std4",
     "subDir?": null,
     "rev": "7194b6b9b074e15c490e59491843bcd0f0feda68",
     "opts": {},
     "name": "std",
-    "inputRev?": "7194b6b9b074e15c490e59491843bcd0f0feda68",
-    "inherited": false}}]}
+    "inputRev?": "main",
+    "inherited": true}}]}
