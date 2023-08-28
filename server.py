@@ -93,7 +93,7 @@ class MyHandler(BaseHTTPRequestHandler):
 
         if "error" in result:
             if "\n" in result['error']:
-                reply = f"❗\n```{result['error']}```"
+                reply = f"❗\n```\n{result['error']}\n```"
             else:
                 reply = f"❗ {result['error']}"
         elif len(result["names"]) == 0:
