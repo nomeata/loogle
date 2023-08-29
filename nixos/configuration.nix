@@ -67,19 +67,16 @@
 
   services.nginx.virtualHosts = {
     "loogle.lean-fro.org" = {
-      serverAliases = [ ];
       enableACME = true;
       forceSSL = true;
       locations = {
-        "/" = {
-          proxyPass = "http://localhost:8080";
-          extraConfig =
-            # required when the target is also TLS server with multiple hosts
-            "proxy_ssl_server_name on;" +
-            # required when the server wants to use HTTP Authentication
-            "proxy_pass_header Authorization;";
-        };
+        "/" = { proxyPass = "http://localhost:8080"; };
       };
+    };
+    "loogle.nomeata.de" = {
+      enableACME = true;
+      forceSSL = true;
+      globalRedirect = "loogle.lean-fro.org";
     };
   };
 
