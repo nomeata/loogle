@@ -9,6 +9,25 @@ import Seccomp
 set_option autoImplicit false
 
 
+section RunParser
+open Lean Parser
+
+--- like `Parser.runParserCategory`, but does not need a parser category. H'T Kyle Miller
+def Parser.runParser (env : Environment) (declName : Name) (input : String)
+    (fileName := "<input>") :
+    Except String Syntax :=
+  let p := andthenFn whitespace (evalParserConst declName)
+  let ictx := mkInputContext input fileName
+  let s := p.run ictx { env, options := {} } (getTokenTable env) (mkParserState input)
+  if s.hasError then
+    Except.error (s.toErrorMsg ictx)
+  else if input.atEnd s.pos then
+    Except.ok s.stxStack.back
+  else
+    Except.error ((s.mkError "end of input").toErrorMsg ictx)
+
+end RunParser
+
 open Lean Core Meta Elab Term Command
 
 instance : ToExpr System.FilePath where
@@ -28,12 +47,12 @@ def Result := Except String (String × Array Lean.Name)
 def Printer := Result → IO Unit 
 
 def runQuery (query : String) : CoreM Result  := withCurrHeartbeats do
-  match Parser.runParserCategory (← getEnv) `find_patterns query with
+  match Parser.runParser (← getEnv) `Mathlib.Tactic.Find.find_filters query with
   | .error err => pure $ .error err
   | .ok s => do
     MetaM.run' do
       try
-        let args ← TermElabM.run' $ Mathlib.Tactic.Find.parseFindPatterns (.mk s)
+        let args ← TermElabM.run' $ Mathlib.Tactic.Find.parseFindFilters (.mk s)
         match ← Mathlib.Tactic.Find.find args with
         | .ok (header, names) => do
             pure $ .ok (← header.toString, names.toArray)
