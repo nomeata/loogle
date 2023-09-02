@@ -43,7 +43,7 @@ elab "#compileTimeSearchPath" : term => do
   return toExpr path'
 def compileTimeSearchPath : SearchPath := #compileTimeSearchPath
 
-def Result := Except String (String × Array Lean.Name)
+def Result := Except String Mathlib.Tactic.Find.Result
 def Printer := Result → IO Unit 
 
 def runQuery (query : String) : CoreM Result  := withCurrHeartbeats do
@@ -54,8 +54,7 @@ def runQuery (query : String) : CoreM Result  := withCurrHeartbeats do
       try
         let args ← TermElabM.run' $ Mathlib.Tactic.Find.parseFindFilters (.mk s)
         match ← Mathlib.Tactic.Find.find args with
-        | .ok (header, names) => do
-            pure $ .ok (← header.toString, names.toArray)
+        | .ok result => pure $ .ok result
         | .error err => pure $ .error (← err.toString)
       catch e =>
         pure $ .error (← e.toMessageData.toString)
@@ -63,18 +62,24 @@ def runQuery (query : String) : CoreM Result  := withCurrHeartbeats do
 
 def printPlain : Printer
   | .error err => IO.println err
-  | .ok (header, names) => do
-      IO.println header
-      names.forM (fun name => IO.println name)
+  | .ok result => do
+      IO.println (← result.header.toString)
+      result.hits.forM fun (ci, mod) => IO.println s!"{ci.name} (from {mod})"
 
-def toJson : Result → Json
-  | .error err => .mkObj [("error", .str err)]
-  | .ok (header, names) =>
-      .mkObj [("header", header),
-              ("names", .arr (names.map (fun name => .str name.toString)))]
+def toJson : Result → IO Json -- only in IO for MessageData.toString
+  | .error err => pure $ .mkObj [("error", .str err)]
+  | .ok result => do
+      pure $ .mkObj [
+        ("header", ← result.header.toString),
+        ("count", .num result.count),
+        ("hits", .arr $ result.hits.map fun (ci, mod) => .mkObj [
+            ("name", .str ci.name.toString),
+            ("module", .str mod.toString)
+        ])
+      ]
 
 def printJson : Printer := fun r => do
-  IO.println (toJson r).compress
+  IO.println (← toJson r).compress
   (← IO.getStdout).flush
 
 def single (print : Printer) (query : String) : CoreM Unit := do

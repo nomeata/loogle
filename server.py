@@ -54,6 +54,17 @@ class Loogle():
 
 loogle = Loogle()
 
+# link formatting
+def querylink(query):
+    return f"https://loogle.lean-fro.org/?q={urllib.parse.quote(query)}"
+
+def doclink(hit):
+    modpath = hit["module"].replace(".","/")
+    return f"https://leanprover-community.github.io/mathlib4_docs/{urllib.parse.quote(modpath)}.html#{urllib.parse.quote(hit['name'])}"
+
+def zul(hit):
+    return f"[{hit['name']}]({doclink(hit)})"
+
 class MyHandler(BaseHTTPRequestHandler):
 
     def return404(self):
@@ -96,16 +107,17 @@ class MyHandler(BaseHTTPRequestHandler):
                 reply = f"❗\n```\n{result['error']}\n```"
             else:
                 reply = f"❗ {result['error']}"
-        elif len(result["names"]) == 0:
-            reply = f"🤷 nothing found"
-        elif len(result["names"]) == 1:
-            reply = f"🔍 docs#{result['names'][0]}"
-        elif len(result["names"]) == 2:
-            reply = f"🔍 docs#{result['names'][0]}, docs#{result['names'][1]}"
         else:
-            weburl = f"https://loogle.lean-fro.org/?q={urllib.parse.quote(query)}"
-            n = len(result["names"]) - 2
-            reply = f"🔍 docs#{result['names'][0]}, docs#{result['names'][1]}, [and {n} more]({weburl})"
+            hits = result["hits"]
+            if len(hits) == 0:
+                reply = f"🤷 nothing found"
+            elif len(hits) == 1:
+                reply = f"🔍 {zul(hits[0])}"
+            elif len(hits) == 2:
+                reply = f"🔍 {zul(hits[0])}, {zul(hits[1])}"
+            else:
+                n = result["count"] - 2
+                reply = f"🔍 {zul(hits[0])}, {zul(hits[1])}, and [{n} more]({querylink(query)})"
         self.returnJSON({ "content": reply })
 
     def do_GET(self):
@@ -166,13 +178,15 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.wfile.write(bytes(f"""
                     <p>{html.escape(result['header'])}</p>
                 """, "utf-8"))
-            if "names" in result:
+            if "hits" in result:
                 self.wfile.write(bytes(f"""
                     <ul>
                 """, "utf-8"))
-                for name in result["names"]:
+                for hit in result["hits"]:
+                    name = hit["name"]
+                    mod = hit["module"]
                     self.wfile.write(bytes(f"""
-                        <li><a href="https://leanprover-community.github.io/mathlib4_docs/find/?pattern={html.escape(name)}#doc">{html.escape(name)}</a></li>
+                        <li><a href="{doclink(hit)}">{html.escape(name)}</a> <small>{html.escape(mod)}</small></li>
                     """, "utf-8"))
                 self.wfile.write(b"""
                     </ul>
