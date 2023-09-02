@@ -34,33 +34,47 @@ combined in a single query, comma-separated.
    #find _ * (_ ^ _)
    ```
    finds all lemmas whose statements somewhere include a product where the second argument is
-   raised to some power. The pattern can also be non-linear, as in
+   raised to some power.
+
+   The pattern can also be non-linear, as in
    ```lean
    #find Real.sqrt ?a * Real.sqrt ?a
    ```
 
-4. By conclusion and/or hypothesis:
+   If the pattern has parameters, they are matched in any order. Both of these will find `List.map`:
+   ```
+   #find (?a -> ?b) -> List ?a -> List ?b
+   #find List ?a -> (?a -> ?b) -> List ?b
+   ```
+
+4. By main conclusion:
    ```lean
    #find ⊢ tsum _ = _ * tsum _
    ```
    finds all lemmas where the conclusion (the subexpression to the right of all `→` and `∀`) has the
-   given shape. If the pattern has hypotheses, they are matched against the hypotheses of
+   given shape.
+
+   As before, if the pattern has parameters, they are matched against the hypotheses of
    the lemma in any order; for example,
    ```lean
    #find ⊢ _ < _ → tsum _ < tsum _
    ```
    will find `tsum_lt_tsum` even though the hypothesis `f i < g i` is not the last.
 
-5. In combination:
-   ```lean
-   #find Real.sin, "two", tsum,  _ * _, _ ^ _, ⊢ _ < _ → _
-   ```
-   will find all lemmas which mention the constants `Real.sin` and `tsum`, have `"two"` as a
-   substring of the lemma name, include a product and a power somewhere in the type, *and* have a
-   hypothesis of the form `_ < _`.
 
-If you pass more than one such search filter, `#find` will only return lemmas which match _all_ of
-them simultaneously. At least some filter must mention a concrete name, because `#find` maintains
+If you pass more than one such search filter, `#find` will return lemmas which match _all_ of them.
+The search
+```lean
+#find Real.sin, "two", tsum,  _ * _, _ ^ _, ⊢ _ < _ → _
+```
+will find all lemmas which mention the constants `Real.sin` and `tsum`, have `"two"` as a
+substring of the lemma name, include a product and a power somewhere in the type, *and* have a
+hypothesis of the form `_ < _`.
+
+At least some filter must mention a concrete name, because `#find` maintains an index of which
+lemmas mention which other constants. This is also why the _first_ use of `#find` will be somewhat
+slow (typically less than half a minute with all of `Mathlib` imported), but subsequent uses are
+faster.
 
 ## Source code
 
