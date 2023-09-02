@@ -64,7 +64,9 @@ def printPlain : Printer
   | .error err => IO.println err
   | .ok result => do
       IO.println (← result.header.toString)
-      result.hits.forM fun (ci, mod) => IO.println s!"{ci.name} (from {mod})"
+      result.hits.forM fun (ci, mod) => match mod with
+        | none => IO.println s!"{ci.name}" -- unlikely to happen in CLI usage
+        | some mod => IO.println s!"{ci.name} (from {mod})"
 
 def toJson : Result → IO Json -- only in IO for MessageData.toString
   | .error err => pure $ .mkObj [("error", .str err)]
@@ -74,7 +76,7 @@ def toJson : Result → IO Json -- only in IO for MessageData.toString
         ("count", .num result.count),
         ("hits", .arr $ result.hits.map fun (ci, mod) => .mkObj [
             ("name", .str ci.name.toString),
-            ("module", .str mod.toString)
+            ("module", match mod with | none => .null | some name => .str name.toString)
         ])
       ]
 
