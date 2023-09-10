@@ -4,7 +4,7 @@ import Lake.Util.Cli
 import Std.Util.Pickle
 import Mathlib.Tactic.Find
 
-import Seccomp
+import Loogle.Seccomp
 
 set_option autoImplicit false
 

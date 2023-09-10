@@ -19,8 +19,8 @@ extern_lib libloogle_seccomp pkg := do
   let ffiO ← fetch <| pkg.target ``loogle_seccomp.o
   buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
 
-lean_lib Seccomp where
-   roots := #[`Seccomp]
+lean_lib Loogle where
+   roots := #[`Loogle]
    precompileModules := true
   
 @[default_target]
