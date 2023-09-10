@@ -27,3 +27,9 @@ lean_lib Loogle where
 lean_exe loogle where
   root := `Loogle
   supportInterpreter := true
+
+@[default_target]
+lean_exe testTrie where
+  root := `TestTrie
+  supportInterpreter := true
+
