@@ -7,102 +7,103 @@ Trie for tokenizing the Lean language
 -/
 import Lean.Data.Format
 
+import Loogle.StringByte
+
 set_option autoImplicit false
 
-inductive ByteTrie (α : Type) where
-  | Leaf : Option α → ByteTrie α
-  | Node1 : Option α → UInt8 → ByteTrie α → ByteTrie α
-  | Node : Option α → ByteArray -> Array (ByteTrie α) → ByteTrie α
+inductive Trie (α : Type) where
+  | Leaf : Option α → Trie α
+  | Node1 : Option α → UInt8 → Trie α → Trie α
+  | Node : Option α → ByteArray -> Array (Trie α) → Trie α
 
-namespace ByteTrie
+namespace Trie
 variable {α : Type}
 
-def empty : ByteTrie α := Leaf none
+def empty : Trie α := Leaf none
 
-instance : EmptyCollection (ByteTrie α) :=
+instance : EmptyCollection (Trie α) :=
   ⟨empty⟩
 
-instance : Inhabited (ByteTrie α) where
+instance : Inhabited (Trie α) where
   default := empty
 
-partial def upsert (t : ByteTrie α) (s : ByteArray) (f : Option α → α) : ByteTrie α :=
-  let rec insertEmpty (i : Nat) : ByteTrie α :=
-    match i == ByteArray.size s  with
-    | true => ByteTrie.Node (f .none) .empty .empty
+partial def upsert (t : Trie α) (s : String) (f : Option α → α) : Trie α :=
+  let rec insertEmpty (i : Nat) : Trie α :=
+    match i == s.utf8ByteSize  with
+    | true => Trie.Node (f .none) .empty .empty
     | false =>
-      let c := s.get! i
+      let c := s.getUtf8Byte i
       let t := insertEmpty (i + 1)
-      ByteTrie.Node1 none c t
+      Trie.Node1 none c t
   let rec loop
     | i, Leaf v =>
-      match i == ByteArray.size s  with
-      | true  => ByteTrie.Leaf (f v)
+      match i == s.utf8ByteSize  with
+      | true  => Trie.Leaf (f v)
       | false =>
-          let c := s.get! i
+          let c := s.getUtf8Byte i
           let t := insertEmpty (i + 1)
-          ByteTrie.Node1 v c t
+          Trie.Node1 v c t
     | i, Node1 v c' t' =>
-      match i == ByteArray.size s  with
-      | true  => ByteTrie.Node1 (f v) c' t'
+      match i == s.utf8ByteSize  with
+      | true  => Trie.Node1 (f v) c' t'
       | false =>
-        let c := s.get! i
+        let c := s.getUtf8Byte i
         if c == c'
-        then ByteTrie.Node1 v c' (loop (i + 1) t')
+        then Trie.Node1 v c' (loop (i + 1) t')
         else 
           let t := insertEmpty (i + 1)
-          ByteTrie.Node v (.mk #[c, c']) #[t, t']
-    | i, ByteTrie.Node v cs ts =>
-      match i == ByteArray.size s  with
-      | true  => ByteTrie.Node (f v) cs ts
+          Trie.Node v (.mk #[c, c']) #[t, t']
+    | i, Trie.Node v cs ts =>
+      match i == s.utf8ByteSize  with
+      | true  => Trie.Node (f v) cs ts
       | false =>
-        let c := s.get! i
+        let c := s.getUtf8Byte i
         match cs.findIdx? (· == c) with
           | none   =>
             let t := insertEmpty (i + 1)
-            ByteTrie.Node v (cs.push c) (ts.push t)
+            Trie.Node v (cs.push c) (ts.push t)
           | some idx =>
-            ByteTrie.Node v cs (ts.modify idx (loop (i + 1)))
+            Trie.Node v cs (ts.modify idx (loop (i + 1)))
   loop 0 t
 
-partial def insert (t : ByteTrie α) (s : ByteArray) (val : α) : ByteTrie α :=
+partial def insert (t : Trie α) (s : String) (val : α) : Trie α :=
   upsert t s (fun _ => val)
 
-partial def find? (t : ByteTrie α) (s : ByteArray) : Option α :=
+partial def find? (t : Trie α) (s : String) : Option α :=
   let rec loop
-    | i, ByteTrie.Leaf val =>
-      match i == ByteArray.size s  with
+    | i, Trie.Leaf val =>
+      match i == s.utf8ByteSize  with
       | true  => val
       | false => none
-    | i, ByteTrie.Node1 val c' t' =>
-      match i == ByteArray.size s  with
+    | i, Trie.Node1 val c' t' =>
+      match i == s.utf8ByteSize  with
       | true  => val
       | false =>
-        let c := s.get! i
+        let c := s.getUtf8Byte i
         if c == c'
         then loop (i + 1) t'
         else none
-    | i, ByteTrie.Node val cs ts =>
-      match i == ByteArray.size s  with
+    | i, Trie.Node val cs ts =>
+      match i == s.utf8ByteSize  with
       | true  => val
       | false =>
-        let c := s.get! i
+        let c := s.getUtf8Byte i
         match cs.findIdx? (· == c) with
         | none   => none
         | some idx => loop (i + 1) (ts.get! idx)
   loop 0 t
 
 /-- Return values that match the given `prefix` -/
-partial def findPrefix (t : ByteTrie α) (pre : ByteArray) : Array α :=
+partial def findPrefix (t : Trie α) (pre : String) : Array α :=
   go t 0 |>.run #[] |>.2
 where
-  go (t : ByteTrie α) (i : Nat) : StateM (Array α) Unit :=
-    if i == ByteArray.size pre then
+  go (t : Trie α) (i : Nat) : StateM (Array α) Unit :=
+    if i == pre.utf8ByteSize then
       collect t
     else
-      let c := pre.get! i
+      let c := pre.getUtf8Byte i
       match t with
       | Leaf _val =>
-        dbg_trace "Leaf"
         pure ()
       | Node1 _val c' t' =>
         if c == c'
@@ -113,7 +114,7 @@ where
         | none   => pure ()
         | some idx => go (ts.get! idx) (i + 1)
 
-  collect (t : ByteTrie α) : StateM (Array α) Unit := do
+  collect (t : Trie α) : StateM (Array α) Unit := do
     match t with
     | Leaf a? =>
       if let some a := a? then
@@ -160,16 +161,4 @@ end Parser
 end Lean
 -/
 
-end ByteTrie
-
-
-def Trie := ByteTrie
-abbrev Trie.empty := @ByteTrie.empty
-abbrev Trie.insert {α : Type} (t : Trie α) (s : String) (val : α) : Trie α :=
-  ByteTrie.insert t s.toUTF8 val
-abbrev Trie.findPrefix {α : Type} (t : Trie α) (pre : String) : Array α :=
-  ByteTrie.findPrefix t pre.toUTF8
-abbrev Trie.find?  {α : Type} (t : Trie α) (s : String) : Option α :=
-  ByteTrie.find? t s.toUTF8
-def Trie.upsert {α : Type} (t : Trie α) (s : String) (f : Option α → α) : Trie α  :=
-  ByteTrie.upsert t s.toUTF8 f
+end Trie
