@@ -9,8 +9,31 @@ import Lean.Data.Format
 
 import Loogle.StringByte
 
-set_option autoImplicit false
+/-
+Implementation notes:
+Tries have typically many nodes with small degree, where a linear scan
+through the (compact) `ByteArray` is faster than using binary search or
+search tress.
 
+Moreover, many nodes have degree 1, which justifies the special case `Node1
+constructors.
+
+The code would be a bit less repetitive if we had
+```
+mutual
+def Trie α := (Option α, ByteAssoc α)
+inductive ByteAssoc α where
+  | Leaf : Trie α
+  | Node1 : UInt8 → Trie α → Trie α
+  | Node : ByteArray -> Array (Trie α) → Trie α
+end
+```
+but that would come at the cost of extra indirections.
+-/
+
+/-- A Trie is a key-value store where the keys are of type `String`,
+and the internal structure is a tree that branches on the bytes of the string.
+-/
 inductive Trie (α : Type) where
   | Leaf : Option α → Trie α
   | Node1 : Option α → UInt8 → Trie α → Trie α
@@ -128,8 +151,8 @@ where
         modify (·.push a)
       ts.forM fun t' => collect t'
 
-private def updtAcc (v : Option α) (i : Nat) (acc : String.Pos × Option α) : String.Pos × Option α :=
-  match v, acc with
+private def updtAcc (v? : Option α) (i : Nat) (acc : String.Pos × Option α) : String.Pos × Option α :=
+  match v?, acc with
   | some v, (_, _) => (.mk i, some v)
        -- we pattern match on `acc` to enable memory reuse
        -- by constuction, only valid string positions have entries in the trie
@@ -137,25 +160,25 @@ private def updtAcc (v : Option α) (i : Nat) (acc : String.Pos × Option α) : 
 
 partial def matchPrefix (s : String) (t : Trie α) (i : String.Pos) : String.Pos × Option α :=
   let rec loop
-    | Trie.Leaf v, i, acc =>
-      updtAcc v i acc
-    | Trie.Node1 v c' t', i, acc =>
+    | Trie.Leaf v?, i, acc =>
+      updtAcc v? i acc
+    | Trie.Node1 v? c' t', i, acc =>
+      let acc := updtAcc v? i acc
       match i == s.utf8ByteSize with
-      | true  => updtAcc v i acc
+      | true  => acc
       | false =>
-        let acc := updtAcc v i acc
-        let c   := s.getUtf8Byte i
+        let c := s.getUtf8Byte i
         if c == c'
         then loop t' (i + 1) acc
         else acc
-    | Trie.Node v cs ts, i, acc =>
+    | Trie.Node v? cs ts, i, acc =>
+      let acc := updtAcc v? i acc
       match i == s.utf8ByteSize with
-      | true  => updtAcc v i acc
+      | true  => acc
       | false =>
-        let acc := updtAcc v i acc
-        let c   := s.getUtf8Byte i
+        let c := s.getUtf8Byte i
         match cs.findIdx? (· == c) with
-        | none   => acc
+        | none => acc
         | some idx => loop (ts.get! idx) (i + 1) acc
   loop t i.byteIdx (i, none)
 
@@ -173,11 +196,16 @@ private partial def toStringAux {α : Type} : Trie α → List Format
 instance {α : Type} : ToString (Trie α) :=
   ⟨fun t => (flip Format.joinSep Format.line $ toStringAux t).pretty⟩
 
--- #eval Trie.empty
---   |>.insert "hello" ()
---   |>.insert "heho" ()
---   |>.insert "hella" ()
---   |>.insert "helli" ()
---   |>.insert "xeno" ()
+#eval Trie.empty
+  |>.insert "hell" ()
+  |>.insert "hello" ()
+  |>.insert "heho" ()
+  |>.insert "hella" ()
+  |>.insert "helli" ()
+  |>.insert "xeno" ()
+  |>.insert "äba" ()
+  |>.insert "äka" ()
+  |>.insert "ä" ()
+  |>.findPrefix ""
 
 end Trie

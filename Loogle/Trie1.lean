@@ -11,3 +11,17 @@ abbrev Trie.find?  {α : Type} (t : Trie α) (s : String) : Option α :=
 
 def Trie.upsert {α : Type} (t : Trie α) (s : String) (f : Option α → α) : Trie α  :=
   t.insert s (f (t.find? s))
+
+#eval Trie.empty
+  |>.insert "hell" ()
+  |>.insert "hello" ()
+  |>.insert "heho" ()
+  |>.insert "hella" ()
+  |>.insert "helli" ()
+  |>.insert "xeno" ()
+  |>.insert "äba" ()
+  |>.insert "äka" ()
+  |>.insert "ä" ()
+  |>.insert "" ()
+  |>.matchPrefix "äka" 0
+
