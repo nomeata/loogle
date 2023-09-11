@@ -6,7 +6,7 @@ import Lean.Data.Trie
 import Mathlib.Lean.Expr.Basic
 
 import Loogle.Seccomp
-import Loogle.Trie2
+import Loogle.Trie4
 
 set_option autoImplicit false
 

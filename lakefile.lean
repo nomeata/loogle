@@ -19,6 +19,17 @@ extern_lib libloogle_seccomp pkg := do
   let ffiO ← fetch <| pkg.target ``loogle_seccomp.o
   buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
 
+target loogle_string.o pkg : FilePath := do
+  let oFile := pkg.buildDir / "loogle_string.o"
+  let srcJob ← inputFile <| pkg.dir / "loogle_string.c"
+  let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
+  buildO "String c shim (.o)" oFile srcJob flags "cc"
+
+extern_lib libloogle_string pkg := do
+  let name := nameToStaticLib "loogle_string"
+  let ffiO ← fetch <| pkg.target ``loogle_string.o
+  buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
+
 lean_lib Loogle where
    roots := #[`Loogle]
    precompileModules := true

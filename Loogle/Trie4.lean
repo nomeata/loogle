@@ -3,7 +3,7 @@ Copyright (c) 2018 Microsoft Corporation. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Author: Sebastian Ullrich, Leonardo de Moura, Joachim Breitner
 
-Trie for tokenizing the Lean language
+A string trie data strucuture, used for tokenizing the Lean language
 -/
 import Lean.Data.Format
 
@@ -128,37 +128,56 @@ where
         modify (·.push a)
       ts.forM fun t' => collect t'
 
-/-
-
-private def updtAcc (v : Option α) (i : String.Pos) (acc : String.Pos × Option α) : String.Pos × Option α :=
+private def updtAcc (v : Option α) (i : Nat) (acc : String.Pos × Option α) : String.Pos × Option α :=
   match v, acc with
-  | some v, (_, _) => (i, some v)  -- we pattern match on `acc` to enable memory reuse
+  | some v, (_, _) => (.mk i, some v)
+       -- we pattern match on `acc` to enable memory reuse
+       -- by constuction, only valid string positions have entries in the trie
   | none,   acc    => acc
 
 partial def matchPrefix (s : String) (t : Trie α) (i : String.Pos) : String.Pos × Option α :=
   let rec loop
-    | Trie.Node v m, i, acc =>
-      match s.atEnd i with
+    | Trie.Leaf v, i, acc =>
+      updtAcc v i acc
+    | Trie.Node1 v c' t', i, acc =>
+      match i == s.utf8ByteSize with
       | true  => updtAcc v i acc
       | false =>
         let acc := updtAcc v i acc
-        let c   := s.get i
-        let i   := s.next i
-        match RBNode.find compare m c with
-        | some t => loop t i acc
+        let c   := s.getUtf8Byte i
+        if c == c'
+        then loop t' (i + 1) acc
+        else acc
+    | Trie.Node v cs ts, i, acc =>
+      match i == s.utf8ByteSize with
+      | true  => updtAcc v i acc
+      | false =>
+        let acc := updtAcc v i acc
+        let c   := s.getUtf8Byte i
+        match cs.findIdx? (· == c) with
         | none   => acc
-  loop t i (i, none)
+        | some idx => loop (ts.get! idx) (i + 1) acc
+  loop t i.byteIdx (i, none)
+
+open Lean
 
 private partial def toStringAux {α : Type} : Trie α → List Format
-  | Trie.Node _ map => map.fold (fun Fs c t =>
-   format (repr c) :: (Format.group $ Format.nest 2 $ flip Format.joinSep Format.line $ toStringAux t) :: Fs) []
+  | Trie.Leaf _ => []
+  | Trie.Node1 _ c t =>
+    [ format (repr c), Format.group $ Format.nest 4 $ flip Format.joinSep Format.line $ toStringAux t ]
+  | Trie.Node _ cs ts =>
+    List.join $ List.zipWith (fun c t =>
+      [ format (repr c), (Format.group $ Format.nest 4 $ flip Format.joinSep Format.line $ toStringAux t) ]
+    ) cs.toList ts.toList
 
 instance {α : Type} : ToString (Trie α) :=
   ⟨fun t => (flip Format.joinSep Format.line $ toStringAux t).pretty⟩
-end Trie
 
-end Parser
-end Lean
--/
+#eval Trie.empty
+  |>.insert "hello" ()
+  |>.insert "heho" ()
+  |>.insert "hella" ()
+  |>.insert "helli" ()
+  |>.insert "xeno" ()
 
 end Trie
