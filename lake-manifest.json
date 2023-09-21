@@ -2,13 +2,13 @@
  "packagesDir": "lake-packages",
  "packages":
  [{"git":
-   {"url": "https://github.com/EdAyers/ProofWidgets4",
+   {"url": "https://github.com/leanprover-community/mathlib4",
     "subDir?": null,
-    "rev": "65bba7286e2395f3163fd0277110578f19b8170f",
+    "rev": "037d5564fd785141e1796b363ce707f90f017dcd",
     "opts": {},
-    "name": "proofwidgets",
-    "inputRev?": "v0.0.16",
-    "inherited": true}},
+    "name": "mathlib",
+    "inputRev?": "joachim/find",
+    "inherited": false}},
   {"git":
    {"url": "https://github.com/mhuisi/lean4-cli.git",
     "subDir?": null,
@@ -17,14 +17,6 @@
     "name": "Cli",
     "inputRev?": "nightly",
     "inherited": true}},
-  {"git":
-   {"url": "https://github.com/leanprover-community/mathlib4",
-    "subDir?": null,
-    "rev": "b7854e3e43525b9784f97276970f865b8a7314fb",
-    "opts": {},
-    "name": "mathlib",
-    "inputRev?": "joachim/find",
-    "inherited": false}},
   {"git":
    {"url": "https://github.com/gebner/quote4",
     "subDir?": null,
@@ -48,4 +40,12 @@
     "opts": {},
     "name": "std",
     "inputRev?": "main",
+    "inherited": true}},
+  {"git":
+   {"url": "https://github.com/EdAyers/ProofWidgets4",
+    "subDir?": null,
+    "rev": "65bba7286e2395f3163fd0277110578f19b8170f",
+    "opts": {},
+    "name": "proofwidgets",
+    "inputRev?": "v0.0.16",
     "inherited": true}}]}
