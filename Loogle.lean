@@ -120,11 +120,10 @@ unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Un
     | some path => do
       let (index, _) ← unpickle (NameRel × NameRel) path
       Find.Index.mkFromCache index
-    | none => do
-      -- warm up cache eagerly
-      let index ← Find.Index.mk
-      if let some path := opts.writeIndex then pickle path index.getImported
-      pure index
+    | none => Find.Index.mk
+    -- warm up cache eagerly
+    let _ ← index.cache.get
+    if let some path := opts.writeIndex then pickle path (← index.getImported)
     Seccomp.enable
     act index
 
