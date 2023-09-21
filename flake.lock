@@ -57,11 +57,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1695312326,
-        "narHash": "sha256-KqFr22ABT+XSnrfcNI0Wa8ovTN2oFjbbHezv7Zg/bCQ=",
+        "lastModified": 1695313408,
+        "narHash": "sha256-VfVN74+5eAUUd0VsdbdazHgBkLBLnm3B8Url/ROZ07I=",
         "owner": "nomeata",
         "repo": "lean4",
-        "rev": "273145626562517c64907b236c166d9265d296c2",
+        "rev": "72140b099a0a0ed52218bcf26d6c21176e48b454",
         "type": "github"
       },
       "original": {
