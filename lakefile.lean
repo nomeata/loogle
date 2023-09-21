@@ -12,7 +12,7 @@ target loogle_seccomp.o pkg : FilePath := do
   let oFile := pkg.buildDir / "loogle_seccomp.o"
   let srcJob ← inputFile <| pkg.dir / "loogle_seccomp.c"
   let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
-  buildO "Seccomp c shim (.o)" oFile srcJob flags "cc"
+  buildO "Seccomp c shim (.o)" oFile srcJob flags #[] "cc"
 
 extern_lib libloogle_seccomp pkg := do
   let name := nameToStaticLib "loogle_seccomp"

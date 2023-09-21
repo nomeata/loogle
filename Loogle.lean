@@ -29,6 +29,7 @@ def Parser.runParser (env : Environment) (declName : Name) (input : String)
 end RunParser
 
 open Lean Core Meta Elab Term Command
+open Mathlib.Tactic
 
 instance : ToExpr System.FilePath where
   toTypeExpr := Lean.mkConst ``System.FilePath
@@ -43,17 +44,17 @@ elab "#compileTimeSearchPath" : term => do
   return toExpr path'
 def compileTimeSearchPath : SearchPath := #compileTimeSearchPath
 
-def Result := Except String Mathlib.Tactic.Find.Result
+def Result := Except String Find.Result
 def Printer := Result → IO Unit 
 
-def runQuery (query : String) : CoreM Result  := withCurrHeartbeats do
+def runQuery (index : Find.Index) (query : String) : CoreM Result  := withCurrHeartbeats do
   match Parser.runParser (← getEnv) `Mathlib.Tactic.Find.find_filters query with
   | .error err => pure $ .error err
   | .ok s => do
     MetaM.run' do
       try
-        let args ← TermElabM.run' $ Mathlib.Tactic.Find.parseFindFilters (.mk s)
-        match ← Mathlib.Tactic.Find.find args with
+        let args ← TermElabM.run' $ Find.parseFindFilters (.mk s)
+        match ← Mathlib.Tactic.Find.find index args with
         | .ok result => pure $ .ok result
         | .error err => pure $ .error (← err.toString)
       catch e =>
@@ -84,15 +85,15 @@ def printJson : Printer := fun r => do
   IO.println (← toJson r).compress
   (← IO.getStdout).flush
 
-def single (print : Printer) (query : String) : CoreM Unit := do
-  let r ← runQuery query
+def single (index : Find.Index) (print : Printer) (query : String) : CoreM Unit := do
+  let r ← runQuery index query
   print r
 
-def interactive (print : Printer) : CoreM Unit := do
+def interactive (index : Find.Index) (print : Printer) : CoreM Unit := do
   while true do
     let query := (← (← IO.getStdin).getLine).trim
     if query.isEmpty then break
-    single print query
+    single index print query
 
 structure LoogleOptions where
   interactive : Bool := false
@@ -104,7 +105,7 @@ structure LoogleOptions where
   readIndex : Option String := none
   wantsHelp : Bool := false
 
-unsafe def work (opts : LoogleOptions) (act : CoreM Unit) : IO Unit := do
+unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Unit := do
   if let some p := opts.searchPath
   then searchPathRef.set [p]
   else searchPathRef.set compileTimeSearchPath
@@ -115,17 +116,17 @@ unsafe def work (opts : LoogleOptions) (act : CoreM Unit) : IO Unit := do
     let state := {env}
     Prod.fst <$> act'.toIO ctx state
   where act' : CoreM Unit := do
-    match opts.readIndex with
+    let index ← match opts.readIndex with
     | some path => do
       let (index, _) ← unpickle (NameRel × NameRel) path
-      Mathlib.Tactic.Find.findDeclsByConsts.cache.set $
-        Sum.inr (Task.pure (.ok index))
+      Find.Index.mkFromCache index
     | none => do
       -- warm up cache eagerly
-      let index ← Mathlib.Tactic.Find.findDeclsByConsts.cache.get
-      if let some path := opts.writeIndex then pickle path index
+      let index ← Find.Index.mk
+      if let some path := opts.writeIndex then pickle path index.getImported
+      pure index
     Seccomp.enable
-    act
+    act index
 
 abbrev CliMainM := ExceptT Lake.CliError IO
 abbrev CliStateM := StateT LoogleOptions CliMainM
@@ -187,10 +188,10 @@ unsafe def loogleCli : CliM PUnit := do
     if opts.wantsHelp ||
       queries.isEmpty && not opts.interactive && opts.writeIndex.isNone
     then IO.println usage
-    else work opts do
-      queries.forM (single print)
+    else work opts  fun index => do
+      queries.forM (single index print)
       if opts.interactive
-      then interactive print
+      then interactive index print
 
 unsafe def main (args : List String) : IO Unit := do
   match (← (loogleCli.run args |>.run' {}).run) with
