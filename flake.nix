@@ -119,7 +119,8 @@
       loogle_seccomp = pkgs.runCommandCC "loogle_seccomp"
         { buildInputs = [ leanPkgs.leanc pkgs.pkgsStatic.libseccomp ]; } ''
         mkdir -p $out
-        leanc -c -o $out/loogle_seccomp.o ${./loogle_seccomp.c} -fPIC
+        cp ${./loogle_seccomp.c} ./loogle_seccomp.c
+        leanc -c -o $out/loogle_seccomp.o ./loogle_seccomp.c -fPIC
         ar Trcs $out/loogle_seccomp.a $out/loogle_seccomp.o
       '';
 
