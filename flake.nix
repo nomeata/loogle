@@ -1,18 +1,18 @@
 {
-  inputs.lean.url = github:nomeata/lean4/joachim/nix-dir-as-src;
+  inputs.lean.url = github:leanprover/lean4/v4.1.0-rc1;
 
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.nixpkgs.follows = "lean/nixpkgs";
 
   inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find";
   inputs.mathlib4.flake = false;
-  inputs.std4.url = "github:leanprover/std4/7194b6b9b074e15c490e59491843bcd0f0feda68";
+  inputs.std4.url = "github:leanprover/std4/67855403d60daf181775fa1ec63b04e70bcc3921";
   inputs.std4.flake = false;
-  inputs.quote4.url = "github:gebner/quote4/81cc13c524a68d0072561dbac276cd61b65872a6";
+  inputs.quote4.url = "github:gebner/quote4/e75daed95ad1c92af4e577fea95e234d7a8401c1";
   inputs.quote4.flake = false;
-  inputs.aesop.url = "github:JLimperg/aesop/086c98bb129ca856381d4414dc0afd6e3e4ae2ef";
+  inputs.aesop.url = "github:JLimperg/aesop/1a0cded2be292b5496e659b730d2accc742de098";
   inputs.aesop.flake = false;
-  inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/a0c2cd0ac3245a0dade4f925bcfa97e06dd84229";
+  inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/65bba7286e2395f3163fd0277110578f19b8170f";
   inputs.ProofWidgets.flake = false;
 
   outputs = { self, nixpkgs, ...}@inputs:
@@ -71,7 +71,10 @@
           "ProofWidgets.Component.GoalTypePanel" = [ "build/js/goalTypePanel.js" ];
           "ProofWidgets.Component.Recharts" = [ "build/js/recharts.js" ];
           "ProofWidgets.Component.PenroseDiagram" = [ "build/js/penroseDisplay.js" ];
-          "ProofWidgets.Component.SelectionPanel" = [ "build/js/presentSelection.js" ];
+          "ProofWidgets.Component.Panel.SelectionPanel" = [ "build/js/presentSelection.js" ];
+          "ProofWidgets.Component.Panel.GoalTypePanel" = [ "build/js/goalTypePanel.js" ];
+          "ProofWidgets.Component.MakeEditLink" = [ "build/js/makeEditLink.js" ];
+          "ProofWidgets.Component.OfRpcMethod" = [ "build/js/ofRpcMethod.js" ];
           "ProofWidgets.Component.HtmlDisplay" =
             [ "build/js/htmlDisplay.js" "build/js/htmlDisplayPanel.js"];
           "ProofWidgets.Presentation.Expr" = [ "build/js/exprPresentation.js" ];

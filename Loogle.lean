@@ -109,7 +109,7 @@ unsafe def work (opts : LoogleOptions) (act : CoreM Unit) : IO Unit := do
   then searchPathRef.set [p]
   else searchPathRef.set compileTimeSearchPath
 
-  let imports := [{module := opts.module.toName}, {module := `Mathlib.Tactic.Find}]
+  let imports := #[{module := opts.module.toName}, {module := `Mathlib.Tactic.Find}]
   withImportModules imports {} 0 fun env => do
     let ctx := {fileName := "/", fileMap := Inhabited.default}
     let state := {env}
