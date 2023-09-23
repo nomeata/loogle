@@ -23,11 +23,9 @@ combined in a single query, comma-separated.
 
 2. By lemma name substring:
    ```lean
-   #find Real.sin, "two"
+   #find "differ"
    ```
-   restricts the search above to those lemmas that have `"two"` as part of the lemma _name_.
-
-   (Currently, substring searches _must_ be combined with other kind of queries.)
+   finds all lemmas that have `"differ"` somewhere in their lemma _name_.
 
 3. By subexpression:
    ```lean

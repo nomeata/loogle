@@ -23,11 +23,9 @@ search methods can be combined in a single query, comma-separated.</p>
 <p>finds all lemmas whose statement somehow mentions the sine
 function.</p></li>
 <li><p>By lemma name substring:</p>
-<pre class="lean"><code>#find Real.sin, &quot;two&quot;</code></pre>
-<p>restricts the search above to those lemmas that have
-<code>"two"</code> as part of the lemma <em>name</em>.</p>
-<p>(Currently, substring searches <em>must</em> be combined with other
-kind of queries.)</p></li>
+<pre class="lean"><code>#find &quot;differ&quot;</code></pre>
+<p>finds all lemmas that have <code>"differ"</code> somewhere in their
+lemma <em>name</em>.</p></li>
 <li><p>By subexpression:</p>
 <pre class="lean"><code>#find _ * (_ ^ _)</code></pre>
 <p>finds all lemmas whose statements somewhere include a product where
