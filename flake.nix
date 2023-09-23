@@ -167,7 +167,7 @@
     in
     {
       packages.${system} = {
-        inherit loogle_seccomp loogle_exe loogle loogle_server;
+        inherit loogle_seccomp loogle_exe loogle loogle_server loogle_index;
         mathlib = mathlib4.modRoot;
         mathlib_pruned = mathlib4_pruned.modRoot;
         default = loogle;
