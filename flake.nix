@@ -1,5 +1,5 @@
 {
-  inputs.lean.url = github:nomeata/lean4/nix-no-depRoot;
+  inputs.lean.url = github:nomeata/lean4/for-loogle;
   #inputs.lean.url = github:leanprover/lean4/v4.1.0-rc1;
 
   inputs.nixpkgs.url = github:NixOS/nixpkgs;

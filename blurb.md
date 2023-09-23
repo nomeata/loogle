@@ -71,11 +71,6 @@ will find all lemmas which mention the constants `Real.sin` and `tsum`, have `"t
 substring of the lemma name, include a product and a power somewhere in the type, *and* have a
 hypothesis of the form `_ < _`.
 
-At least some filter must mention a concrete name, because `#find` maintains an index of which
-lemmas mention which other constants. This is also why the _first_ use of `#find` will be somewhat
-slow (typically less than half a minute with all of `Mathlib` imported), but subsequent uses are
-faster.
-
 ## Source code
 
 You can find the source code for this service at <https://github.com/nomeata/loogle>.
