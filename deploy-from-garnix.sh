@@ -8,7 +8,7 @@ path="$(nix show-derivation "$drv" | jq -r '.[].outputs.out.path')"
 echo "Output path: $path"
 
 echo "Checking if it is avaliable on garnix"
-curl -f "https://cache.garnix.io/$(echo "$path" | cut -c12-43).narinfo"
+curl -o /dev/null -s --head --fail "https://cache.garnix.io/$(echo "$path" | cut -c12-43).narinfo"
 
 
 ssh root@loogle.nomeata.de nix-env -p /nix/var/nix/profiles/system --set "$path" --narinfo-cache-negative-ttl 0

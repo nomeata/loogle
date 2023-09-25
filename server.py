@@ -11,8 +11,8 @@ import time
 hostName = "localhost"
 serverPort = 8080
 
-blurb = open("blurb.html","rb").read()
-icon = open("loogle.png","rb").read()
+blurb = open("./blurb.html","rb").read()
+icon = open("./loogle.png","rb").read()
 
 class Loogle():
     def start(self):
