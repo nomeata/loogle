@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -e
+
+drv="$(nix path-info --derivation .#nixosConfigurations.loogle.config.system.build.toplevel)"
+echo "Derivation: $drv"
+path="$(nix show-derivation "$drv" | jq -r '.[].outputs.out.path')"
+echo "Output path: $path"
+
+echo "Checking if it is avaliable on garnix"
+curl -f "https://cache.garnix.io/$(echo "$path" | cut -c12-43).narinfo"
+
+
+ssh root@loogle.nomeata.de nix-env -p /nix/var/nix/profiles/system --set "$path" --narinfo-cache-negative-ttl 0
+ssh root@loogle.nomeata.de "$path"/bin/switch-to-configuration switch
+ssh root@loogle.nomeata.de nix profile wipe-history --profile /nix/var/nix/profiles/system
+ssh root@loogle.nomeata.de nix store gc
