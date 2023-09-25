@@ -12,6 +12,7 @@ hostName = "localhost"
 serverPort = 8080
 
 blurb = open("blurb.html","rb").read()
+icon = open("loogle.png","rb").read()
 
 class Loogle():
     def start(self):
@@ -86,6 +87,15 @@ class MyHandler(BaseHTTPRequestHandler):
         except BrokenPipeError:
             pass
 
+    def returnIcon(self):
+        self.send_response(200)
+        self.send_header("Content-type", "image/png")
+        self.end_headers()
+        try:
+            self.wfile.write(icon)
+        except BrokenPipeError:
+            pass
+
     def do_POST(self):
         url = urllib.parse.urlparse(self.path)
         if url.path != "/zulipbot":
@@ -125,6 +135,10 @@ class MyHandler(BaseHTTPRequestHandler):
         result = {}
         url = urllib.parse.urlparse(self.path)
         want_json = False
+
+        if url.path == "/loogle.png":
+           self.returnIcon()
+           return
         if url.path == "/json":
             want_json = True
         elif url.path != "/":
@@ -152,6 +166,7 @@ class MyHandler(BaseHTTPRequestHandler):
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
                 <link rel="stylesheet" href="https://unpkg.com/chota@latest">
+                <link rel="icon" type="image/png" href="/loogle.png" />
                 <title>Loogle!</title>
                 <body>
                 <main class="container">

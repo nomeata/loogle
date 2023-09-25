@@ -162,6 +162,7 @@
           install -Dm755 ${./server.py} $out/bin/loogle_server
           substituteInPlace $out/bin/loogle_server --replace ./build/bin/loogle ${loogle}/bin/loogle
           substituteInPlace $out/bin/loogle_server --replace blurb.html ${./blurb.html}
+          substituteInPlace $out/bin/loogle_server --replace loogle.png ${./loogle.png}
         '';
       };
     in
