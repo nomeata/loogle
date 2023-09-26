@@ -1,11 +1,3 @@
-## Try these:
-
-* [`Real.sin`](?q=Real.sin)
-* [`Real.sin, tsum`](?q=Real.sin, tsum)
-* [`Real.sin (_ + 2*Real.pi)`](?q=Real.sin (_ %2B 2*Real.pi))
-* [`List.replicate (_ + _) _`](?q=List.replicate (_ %2B _) _)
-* [`Real.sqrt ?a * Real.sqrt ?a`](?q=Real.sqrt %3Fa * Real.sqrt %3Fa)
-
 ## Documentation
 
 This website gives access to mathlib's `#find` command:

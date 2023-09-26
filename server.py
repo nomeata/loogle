@@ -14,24 +14,54 @@ serverPort = 8080
 blurb = open("./blurb.html","rb").read()
 icon = open("./loogle.png","rb").read()
 
+examples = [
+    "Real.sin",
+    "Real.sin, tsum",
+    "Real.sin (_ + 2*Real.pi)",
+    "List.replicate (_ + _) _",
+    "Real.sqrt ?a * Real.sqrt ?a",
+]
+
 class Loogle():
+    def __init__(self):
+        self.start()
+        self.recent_queries = []
+
     def start(self):
         self.loogle = subprocess.Popen(
-            ["./build/bin/loogle","--json", "--interactive"],
+            ["./build/bin/loogle","--json", "--interactive", "--module", "Std.Data.List.Lemmas"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
 
-    def __init__(self):
-        self.start()
+    def remember(self, query, result):
+        self.recent_queries = self.recent_queries[:10]
+        icon = ""
+        status = ""
+        if "error" in result:
+            icon = "❗"
+        elif len(result["hits"]) == 0:
+            icon = "🤷"
+        elif len(result["hits"]) == 1:
+            icon = "🔍"
+            status = "1 hit"
+        else:
+            icon = "🔍"
+            status = f"{result['count']} hits"
+        self.recent_queries.append({
+            "query": query,
+            "icon" : icon,
+            "status" : status,
+        })
 
-    def query(self, query):
+    def runquery(self, query):
         try:
             self.loogle.stdin.write(bytes(query, "utf8"));
             self.loogle.stdin.write(b"\n");
             self.loogle.stdin.flush();
-            output = self.loogle.stdout.readline()
-            return json.loads(output)
+            output_json = self.loogle.stdout.readline()
+            output = json.loads(output_json)
+            return output
         except (IOError, json.JSONDecodeError) as e:
             time.sleep(5) # to allow the process to die
             code = self.loogle.poll()
@@ -52,6 +82,11 @@ class Loogle():
                 self.loogle.kill() # just to be sure
                 self.start()
                 return {"error": "The backend process did not respond, killing and restarting..."}
+
+    def query(self, query):
+        output = self.runquery(query)
+        self.remember(query, output)
+        return output
 
 loogle = Loogle()
 
@@ -206,7 +241,30 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.wfile.write(b"""
                     </ul>
                 """)
+
+            self.wfile.write(b'<div class="row">')
+            self.wfile.write(b'<div class="col-12 col-6-lg">')
+            self.wfile.write(b'<h2>Recent queries</h2><ul>')
+            for rq in loogle.recent_queries:
+                link = querylink(rq["query"])
+                self.wfile.write(bytes(f'<li><a href={link}><code>{html.escape(rq["query"])}</code></a> {rq["icon"]}', "utf-8"))
+                if "status" in rq:
+                    self.wfile.write(bytes(f"""<small>{rq["status"]}</small>""", "utf-8"))
+                self.wfile.write(b"</li>")
+            self.wfile.write(b'</ul>')
+            self.wfile.write(b'</div>')
+
+            self.wfile.write(b'<div class="col-12 col-6-lg">')
+            self.wfile.write(b'<h2>Try these</h2><ul>')
+            for ex in examples:
+                link = querylink(ex)
+                self.wfile.write(bytes(f'<li><a href={link}><code>{html.escape(ex)}</code></a></li>', "utf-8"))
+            self.wfile.write(b'</ul>')
+            self.wfile.write(b'</div>')
+            self.wfile.write(b'</div>')
+
             self.wfile.write(blurb)
+
             self.wfile.write(b"""
                 </main>
                 </body>
