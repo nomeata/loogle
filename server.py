@@ -29,7 +29,7 @@ class Loogle():
 
     def start(self):
         self.loogle = subprocess.Popen(
-            ["./build/bin/loogle","--json", "--interactive", "--module", "Std.Data.List.Lemmas"],
+            ["./build/bin/loogle","--json", "--interactive"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
