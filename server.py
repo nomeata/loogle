@@ -249,7 +249,7 @@ class MyHandler(BaseHTTPRequestHandler):
                 link = querylink(rq["query"])
                 self.wfile.write(bytes(f'<li><a href={link}><code>{html.escape(rq["query"])}</code></a> {rq["icon"]}', "utf-8"))
                 if "status" in rq:
-                    self.wfile.write(bytes(f"""<small>{rq["status"]}</small>""", "utf-8"))
+                    self.wfile.write(bytes(f""" <small>{rq["status"]}</small>""", "utf-8"))
                 self.wfile.write(b"</li>")
             self.wfile.write(b'</ul>')
             self.wfile.write(b'</div>')
