@@ -64,6 +64,6 @@ hypothesis of the form `_ < _`.
 ## Source code
 
 You can find the source code for this service at <https://github.com/nomeata/loogle>.
-The <https://loogle.lean-fro.org/> service is curently provided by Joachim Breitner <<mail@joachim-breitner.de>>.
+The <https://loogle.lean-fro.org/> service is currently provided by Joachim Breitner <<mail@joachim-breitner.de>>.
 
 
