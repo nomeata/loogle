@@ -52,6 +52,7 @@
 
   services.openssh = {
     enable = true;
+    ports = [ 2722 ];
     settings.PasswordAuthentication = false;
   };
 
