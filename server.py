@@ -113,6 +113,16 @@ class MyHandler(BaseHTTPRequestHandler):
             # browsers seem to like to close this early
             pass
 
+    def return400(self):
+        self.send_response(400)
+        self.send_header("Content-type", "text/plain")
+        self.end_headers()
+        try:
+            self.wfile.write(b"Invalid request.\n")
+        except BrokenPipeError:
+            # browsers seem to like to close this early
+            pass
+
     def returnJSON(self, data):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
@@ -190,6 +200,7 @@ class MyHandler(BaseHTTPRequestHandler):
         if "q" in params and len(params["q"]) == 1:
             query = params["q"][0].removeprefix("#find ")
             if "\n" in query:
+                self.return400()
                 return
             result = loogle.query(query)
 
