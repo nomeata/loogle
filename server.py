@@ -35,7 +35,6 @@ class Loogle():
         )
 
     def remember(self, query, result):
-        self.recent_queries = self.recent_queries[:10]
         icon = ""
         status = ""
         if "error" in result:
@@ -48,11 +47,11 @@ class Loogle():
         else:
             icon = "🔍"
             status = f"{result['count']} hits"
-        self.recent_queries.append({
+        self.recent_queries = [{
             "query": query,
             "icon" : icon,
             "status" : status,
-        })
+        }] + self.recent_queries[:9]
 
     def runquery(self, query):
         try:
