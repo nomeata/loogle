@@ -52,7 +52,7 @@ class Loogle():
             "query": query,
             "icon" : icon,
             "status" : status,
-        }] + self.recent_queries[:9]
+        }] + [ r for r in self.recent_queries if r["query"] != query ][:9]
 
     def runquery(self, query):
         try:
@@ -91,6 +91,9 @@ class Loogle():
 loogle = Loogle()
 
 # link formatting
+def locallink(query):
+    return f"/?q={urllib.parse.quote(query)}"
+
 def querylink(query):
     return f"https://loogle.lean-fro.org/?q={urllib.parse.quote(query)}"
 
@@ -263,7 +266,7 @@ class MyHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'<div class="col-12 col-6-lg">')
             self.wfile.write(b'<h2>Recent queries</h2><ul>')
             for rq in loogle.recent_queries:
-                link = querylink(rq["query"])
+                link = locallink(rq["query"])
                 self.wfile.write(bytes(f'<li><a href={link}><code>{html.escape(rq["query"])}</code></a> {rq["icon"]}', "utf-8"))
                 if "status" in rq:
                     self.wfile.write(bytes(f""" <small>{rq["status"]}</small>""", "utf-8"))
@@ -274,7 +277,7 @@ class MyHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'<div class="col-12 col-6-lg">')
             self.wfile.write(b'<h2>Try these</h2><ul>')
             for ex in examples:
-                link = querylink(ex)
+                link = locallink(ex)
                 self.wfile.write(bytes(f'<li><a href={link}><code>{html.escape(ex)}</code></a></li>', "utf-8"))
             self.wfile.write(b'</ul>')
             self.wfile.write(b'</div>')
