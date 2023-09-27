@@ -26,7 +26,6 @@ examples = [
 class Loogle():
     def __init__(self):
         self.start()
-        self.recent_queries = []
 
     def start(self):
         self.loogle = subprocess.Popen(
@@ -35,26 +34,7 @@ class Loogle():
             stdout=subprocess.PIPE,
         )
 
-    def remember(self, query, result):
-        icon = ""
-        status = ""
-        if "error" in result:
-            icon = "❗"
-        elif len(result["hits"]) == 0:
-            icon = "🤷"
-        elif len(result["hits"]) == 1:
-            icon = "🔍"
-            status = "1 hit"
-        else:
-            icon = "🔍"
-            status = f"{result['count']} hits"
-        self.recent_queries = [{
-            "query": query,
-            "icon" : icon,
-            "status" : status,
-        }] + [ r for r in self.recent_queries if r["query"] != query ][:9]
-
-    def runquery(self, query):
+    def query(self, query):
         try:
             self.loogle.stdin.write(bytes(query, "utf8"));
             self.loogle.stdin.write(b"\n");
@@ -82,11 +62,6 @@ class Loogle():
                 self.loogle.kill() # just to be sure
                 self.start()
                 return {"error": "The backend process did not respond, killing and restarting..."}
-
-    def query(self, query):
-        output = self.runquery(query)
-        self.remember(query, output)
-        return output
 
 loogle = Loogle()
 
@@ -262,26 +237,11 @@ class MyHandler(BaseHTTPRequestHandler):
                     </ul>
                 """)
 
-            self.wfile.write(b'<div class="row">')
-            self.wfile.write(b'<div class="col-12 col-6-lg">')
-            self.wfile.write(b'<h2>Recent queries</h2><ul>')
-            for rq in loogle.recent_queries:
-                link = locallink(rq["query"])
-                self.wfile.write(bytes(f'<li><a href={link}><code>{html.escape(rq["query"])}</code></a> {rq["icon"]}', "utf-8"))
-                if "status" in rq:
-                    self.wfile.write(bytes(f""" <small>{rq["status"]}</small>""", "utf-8"))
-                self.wfile.write(b"</li>")
-            self.wfile.write(b'</ul>')
-            self.wfile.write(b'</div>')
-
-            self.wfile.write(b'<div class="col-12 col-6-lg">')
             self.wfile.write(b'<h2>Try these</h2><ul>')
             for ex in examples:
                 link = locallink(ex)
                 self.wfile.write(bytes(f'<li><a href={link}><code>{html.escape(ex)}</code></a></li>', "utf-8"))
             self.wfile.write(b'</ul>')
-            self.wfile.write(b'</div>')
-            self.wfile.write(b'</div>')
 
             self.wfile.write(blurb)
 
