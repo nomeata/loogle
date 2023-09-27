@@ -198,11 +198,12 @@ class MyHandler(BaseHTTPRequestHandler):
         url_query = url.query
         params = urllib.parse.parse_qs(url_query)
         if "q" in params and len(params["q"]) == 1:
-            query = params["q"][0].removeprefix("#find ")
-            if "\n" in query:
-                self.return400()
-                return
-            result = loogle.query(query)
+            query = params["q"][0].strip().removeprefix("#find ").strip()
+            if query:
+                if "\n" in query:
+                    self.return400()
+                    return
+                result = loogle.query(query)
 
         if want_json:
             self.returnJSON(result)
