@@ -7,6 +7,7 @@ import json
 import html
 import sys
 import time
+import re
 
 hostName = "localhost"
 serverPort = 8080
@@ -143,7 +144,12 @@ class MyHandler(BaseHTTPRequestHandler):
         length = int(self.headers.get('content-length'))
         message = json.loads(self.rfile.read(length))
 
-        query = message['data'].split('\n', 1)[0].removeprefix("@**loogle** ")
+        m = re.search('@\*\*loogle\*\*[:,\?]?\s*(.*)$', message['data'], flags = re.MULTILINE)
+        if m:
+            query = m.group(1)
+        else:
+            query = message['data'].split('\n', 1)[0]
+
         result = loogle.query(query)
 
         if "error" in result:
