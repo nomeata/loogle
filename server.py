@@ -202,7 +202,8 @@ class MyHandler(BaseHTTPRequestHandler):
                 <main class="container">
 
                 <section>
-                <h1>Loogle!</h1>
+                <h1><a href="/" style="color:#333;">Loogle!</a></h1>
+
                 <form method="GET">
                 <p class="grouped">
                 <input type="text" name="q" value="{html.escape(query)}"/>
