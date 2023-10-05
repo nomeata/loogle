@@ -8,6 +8,7 @@ import html
 import sys
 import time
 import re
+import os
 
 hostName = "localhost"
 serverPort = 8080
@@ -245,6 +246,12 @@ class MyHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'</ul>')
 
             self.wfile.write(blurb)
+
+            rev = os.getenv("LOOGLE_REV", default = "dirty")
+            if rev != "dirty":
+                self.wfile.write(bytes(f"""
+                    <p><small>This is Loogle revision <a href="https://github.com/nomeata/loogle/commit/{rev}"><code>{rev[:7]}</code></a></small></p>
+                """, "utf-8"))
 
             self.wfile.write(b"""
                 </main>
