@@ -1,4 +1,4 @@
-{ config, pkgs, modulesPath, lib, environment, loogle_server, nixpkgs, ... }:
+{ config, self, pkgs, modulesPath, lib, environment, loogle_server, nixpkgs, ... }:
 {
   imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
 
@@ -98,7 +98,12 @@
       Type = "simple";
       User = "loogle";
       Restart = "always";
+      WorkingDirectory = "${loogle_server}";
       ExecStart = "${loogle_server}/bin/loogle_server";
+      NoNewPrivileges = true;
+      ProtectSystem = "strict";
+      ProtectHome = "read-only";
+      Environment = "LOOGLE_REV=${self.rev or "dirty"}";
     };
   };
 

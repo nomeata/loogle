@@ -161,8 +161,7 @@
         installPhase = ''
           install -Dm755 ${./server.py} $out/bin/loogle_server
           substituteInPlace $out/bin/loogle_server --replace ./build/bin/loogle ${loogle}/bin/loogle
-          substituteInPlace $out/bin/loogle_server --replace ./blurb.html ${./blurb.html}
-          substituteInPlace $out/bin/loogle_server --replace ./loogle.png ${./loogle.png}
+          cp -v ${./blurb.html} ${./loogle.png} $out/
         '';
       };
     in
@@ -176,7 +175,7 @@
 
       nixosConfigurations.loogle = nixpkgs.lib.nixosSystem {
         inherit system;
-        specialArgs = { inherit loogle_server nixpkgs; };
+        specialArgs = { inherit loogle_server nixpkgs self; };
         modules = [ ./nixos/configuration.nix ];
       };
 
