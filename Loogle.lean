@@ -53,7 +53,7 @@ def runQuery (index : Find.Index) (query : String) : CoreM Result  := withCurrHe
   | .ok s => do
     MetaM.run' do
       try
-        let args ← TermElabM.run' $ Find.parseFindFilters (.mk s)
+        let args ← TermElabM.run' $ Find.parseFindFilters index (.mk s)
         match ← Mathlib.Tactic.Find.find index args with
         | .ok result => pure $ .ok result
         | .error err => pure $ .error (← err.toString)
