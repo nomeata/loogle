@@ -2,6 +2,7 @@ import Lean.Meta
 import Lake.CLI.Error
 import Lake.Util.Cli
 import Std.Util.Pickle
+import Std.Lean.HashSet
 import Mathlib.Tactic.Find
 
 import Seccomp
@@ -103,18 +104,57 @@ structure LoogleOptions where
   searchPath : Option String := none
   writeIndex : Option String := none
   readIndex : Option String := none
+  dumpEnv : Bool := false
   wantsHelp : Bool := false
+
+def pruneConstantInfo : Lean.ConstantInfo → Lean.ConstantInfo
+  | .thmInfo tv => .thmInfo {tv with value := .lit (.natVal 42)}
+  | .defnInfo tv => .axiomInfo {name := tv.name, levelParams := tv.levelParams, type := tv.type, isUnsafe := true }
+  | .opaqueInfo tv => .axiomInfo {name := tv.name, levelParams := tv.levelParams, type := tv.type, isUnsafe := true }
+  | ci => ci
+
+def pruneModuleData (md : Lean.ModuleData) : Lean.ModuleData :=
+  { md with constants := md.constants.map pruneConstantInfo }
+
+def dumpEnvTo (fn : System.FilePath) : CoreM Unit := do
+  let env ← getEnv
+  pickle fn (env.header.moduleNames, env.header.moduleData.map pruneModuleData)
+
+unsafe def readEnvFrom (fn : System.FilePath) (root : Lean.Name) : IO Lean.Environment := do
+  let ((modNames, modData), _) ← unpickle (Array Lean.Name × Array ModuleData) fn
+  let s : ImportState := {
+    moduleNames := modNames
+    moduleNameSet := HashSet.ofArray modNames
+    moduleData := modData
+    regions := #[]
+  }
+  let imports := #[{module := root}, {module := `Mathlib.Tactic.Find}]
+  finalizeImport s imports {} 0
+
+
+def dumpEnv : CoreM Unit := do
+  IO.println "Pickling env"
+  dumpEnvTo "full-env.pickle"
+  IO.println "Done"
+
 
 unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Unit := do
   if let some p := opts.searchPath
   then searchPathRef.set [p]
   else searchPathRef.set compileTimeSearchPath
 
-  let imports := #[{module := opts.module.toName}, {module := `Mathlib.Tactic.Find}]
-  withImportModules imports {} 0 fun env => do
+  if opts.dumpEnv then
+    let imports := #[{module := opts.module.toName}, {module := `Mathlib.Tactic.Find}]
+    withImportModules imports {} 0 fun env => do
+      let ctx := {fileName := "/", fileMap := Inhabited.default}
+      let state := {env}
+      Prod.fst <$> dumpEnv.toIO ctx state
+  else
+    let env ← readEnvFrom "full-env.pickle" opts.module.toName
     let ctx := {fileName := "/", fileMap := Inhabited.default}
     let state := {env}
     Prod.fst <$> act'.toIO ctx state
+
   where act' : CoreM Unit := do
     let index ← match opts.readIndex with
     | some path => do
@@ -125,8 +165,9 @@ unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Un
     let _ ← index.1.cache.get
     let _ ← index.2.cache.get
     if let some path := opts.writeIndex then pickle path (← index.getCache)
-    Seccomp.enable
+    -- Seccomp.enable
     act index
+
 
 abbrev CliMainM := ExceptT Lake.CliError IO
 abbrev CliStateM := StateT LoogleOptions CliMainM
@@ -151,6 +192,7 @@ def lakeLongOption : (opt : String) → CliM PUnit
 | "--module" => do modifyThe LoogleOptions ({· with module := ← takeArg "--module"})
 | "--write-index" => do modifyThe LoogleOptions ({· with writeIndex := ← takeArg "--write-index"})
 | "--read-index" => do modifyThe LoogleOptions ({· with readIndex := ← takeArg "--read-index"})
+| "--dump-env" => do modifyThe LoogleOptions ({· with dumpEnv := true})
 | opt         => throw <| Lake.CliError.unknownLongOption opt
 
 def lakeOption :=
@@ -185,8 +227,8 @@ unsafe def loogleCli : CliM PUnit := do
     let opts ← getThe LoogleOptions
     let queries ← Lake.takeArgs
     let print := if opts.json then printJson else printPlain
-    if opts.wantsHelp ||
-      queries.isEmpty && not opts.interactive && opts.writeIndex.isNone
+    if opts.wantsHelp || 
+      queries.isEmpty && not opts.interactive && opts.writeIndex.isNone && not opts.dumpEnv
     then IO.println usage
     else work opts  fun index => do
       queries.forM (single index print)
