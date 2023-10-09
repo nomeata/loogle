@@ -106,11 +106,11 @@
     "mathlib4": {
       "flake": false,
       "locked": {
-        "lastModified": 1696846387,
-        "narHash": "sha256-JV3EpsfceqXHjkJ0RsqVqWvyrN85bLvWcrHiY9/LzGU=",
+        "lastModified": 1696862290,
+        "narHash": "sha256-vsoAj20XPtp5PoE3PTt/UH5Psz7S1twYOvJYoDkCIJE=",
         "owner": "leanprover-community",
         "repo": "mathlib4",
-        "rev": "bbf31037b2cf5f7b2fde0fd275fbd68d2418733d",
+        "rev": "3db42e3ab4bfe8f6dfa4d83b6c58c1fb0d14026d",
         "type": "github"
       },
       "original": {
