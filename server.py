@@ -30,6 +30,7 @@ class Loogle():
 
     def start(self):
         self.loogle = subprocess.Popen(
+            #["./build/bin/loogle","--json", "--interactive", "--module","Std.Data.List.Lemmas"],
             ["./build/bin/loogle","--json", "--interactive"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -146,6 +147,14 @@ class MyHandler(BaseHTTPRequestHandler):
                 reply = f"❗\n```\n{result['error']}\n```"
             else:
                 reply = f"❗ {result['error']}"
+            if "suggestions" in result:
+                reply += "\n"
+                sugg0 = result["suggestions"][0]
+                reply += f"Did you mean [{sugg0}]({querylink(sugg0)})"
+                if len(result["suggestions"]) > 1:
+                    reply += f" or [something else]({querylink(query)})"
+                reply += "?"
+
         else:
             hits = result["hits"]
             if len(hits) == 0:
@@ -218,6 +227,12 @@ class MyHandler(BaseHTTPRequestHandler):
                     <h2>Error</h2>
                     <pre>{html.escape(result['error'])}</pre>
                 """, "utf-8"))
+            if "suggestions" in result:
+                self.wfile.write(b'<h2>Did you maybe mean</h2><ul>')
+                for sugg in result["suggestions"]:
+                    link = locallink(sugg)
+                    self.wfile.write(bytes(f'<li><a href={link}><code>{html.escape(sugg)}</code></a></li>', "utf-8"))
+                self.wfile.write(b'</ul>')
             if "header" in result:
                 self.wfile.write(b"""
                     <h2>Result</h2>

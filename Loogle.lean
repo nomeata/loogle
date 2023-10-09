@@ -44,33 +44,45 @@ elab "#compileTimeSearchPath" : term => do
   return toExpr path'
 def compileTimeSearchPath : SearchPath := #compileTimeSearchPath
 
-def Result := Except String Find.Result
+/-- Like `Find.Failure`, but without syntax references and with syntax pretty-printed -/
+def Failure := String × Array String
+
+def Result := Except Failure Find.Result
 def Printer := Result → IO Unit 
 
 def runQuery (index : Find.Index) (query : String) : CoreM Result  := withCurrHeartbeats do
   match Parser.runParser (← getEnv) `Mathlib.Tactic.Find.find_filters query with
-  | .error err => pure $ .error err
+  | .error err => pure $ .error (err, #[])
   | .ok s => do
     MetaM.run' do
       try
-        let args ← TermElabM.run' $ Find.parseFindFilters index (.mk s)
-        match ← Mathlib.Tactic.Find.find index args with
+        match ← TermElabM.run' $ Mathlib.Tactic.Find.find index (.mk s) with
         | .ok result => pure $ .ok result
-        | .error err => pure $ .error (← err.toString)
+        | .error err => do
+          let suggs ← err.suggestions.mapM fun sugg => do
+            return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty
+          pure $ .error (← err.message.toString, suggs)
       catch e =>
-        pure $ .error (← e.toMessageData.toString)
-
+        pure $ .error (← e.toMessageData.toString, #[])
 
 def printPlain : Printer
-  | .error err => IO.println err
+  | .error (err, suggs) => do
+    IO.println err
+    unless suggs.isEmpty do
+    IO.println "Maybe you meant:"
+    suggs.forM (fun s => IO.println ("* " ++ s))
   | .ok result => do
-      IO.println (← result.header.toString)
-      result.hits.forM fun (ci, mod) => match mod with
-        | none => IO.println s!"{ci.name}" -- unlikely to happen in CLI usage
-        | some mod => IO.println s!"{ci.name} (from {mod})"
+    IO.println (← result.header.toString)
+    result.hits.forM fun (ci, mod) => match mod with
+      | none => IO.println s!"{ci.name}" -- unlikely to happen in CLI usage
+      | some mod => IO.println s!"{ci.name} (from {mod})"
 
 def toJson : Result → IO Json -- only in IO for MessageData.toString
-  | .error err => pure $ .mkObj [("error", .str err)]
+  | .error (err, suggs) => do
+      if suggs.isEmpty then
+        pure $ .mkObj [ ("error", .str err) ]
+      else
+        pure $ .mkObj [ ("error", .str err), ("suggestions", .arr (suggs.map .str)) ]
   | .ok result => do
       pure $ .mkObj [
         ("header", ← result.header.toString),
