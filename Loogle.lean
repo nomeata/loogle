@@ -102,6 +102,8 @@ def single (index : Find.Index) (print : Printer) (query : String) : CoreM Unit 
   print r
 
 def interactive (index : Find.Index) (print : Printer) : CoreM Unit := do
+  IO.println "Loogle is ready."
+  (← IO.getStdout).flush
   while true do
     let query := (← (← IO.getStdin).getLine).trim
     if query.isEmpty then break

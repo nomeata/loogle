@@ -9,6 +9,7 @@ import sys
 import time
 import re
 import os
+import select
 
 hostName = "localhost"
 serverPort = 8080
@@ -29,6 +30,7 @@ class Loogle():
         self.start()
 
     def start(self):
+        self.starting = True
         self.loogle = subprocess.Popen(
             #["./build/bin/loogle","--json", "--interactive", "--module","Std.Data.List.Lemmas"],
             ["./build/bin/loogle","--json", "--interactive"],
@@ -37,6 +39,18 @@ class Loogle():
         )
 
     def query(self, query):
+        if self.starting:
+            r, w, e = select.select([ self.loogle.stdout ], [], [], 0)
+            if self.loogle.stdout in r:
+                greeting = self.loogle.stdout.readline()
+                if greeting != b"Loogle is ready.\n":
+                    self.loogle.kill() # just to be sure
+                    self.start()
+                    return {"error": "The backend process did not send greeting, killing and restarting..."}
+                else:
+                    self.starting = False
+            else:
+                return {"error": "The backend process is starting up, please try again later..."}
         try:
             self.loogle.stdin.write(bytes(query, "utf8"));
             self.loogle.stdin.write(b"\n");
