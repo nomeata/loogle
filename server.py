@@ -215,7 +215,7 @@ class MyHandler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(bytes(f"""
                 <!doctype html>
-                <html lang="de">
+                <html lang="en">
                 <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
