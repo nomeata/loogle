@@ -2,7 +2,7 @@ loogle
 ======
 
 Loogle is a search tool for [Lean]/[Mathlib]. It wraps the `#find` command as a
-command line tool or web service. Try it at <https://loogle.lean-fro.org/>!
+command line tool or web service. Try it at <https://loogle.lean-lang.org/>!
 
     $ loogle '(List.replicate (_ + _) _ = _)'
     Found 5 definitions mentioning List.replicate, HAdd.hAdd and Eq.
@@ -59,7 +59,7 @@ the nix setup, the index is built as part of the build process.
 Web service
 -----------
 
-This tools is the backend of <https://loogle.lean-fro.org/>. This is currently
+This tools is the backend of <https://loogle.lean-lang.org/>. This is currently
 running on a 2GB Hetzner virtual host with a nixos system (see `./nixos`) with
 a ngingx reverse proxy (for SSL) in front of a small python HTTP server (see
 `./server.py`) that uses `loogle`. The query processing is locked down using

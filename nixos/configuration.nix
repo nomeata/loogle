@@ -67,17 +67,22 @@
   };
 
   services.nginx.virtualHosts = {
-    "loogle.lean-fro.org" = {
+    "loogle.lean-lang.org" = {
       enableACME = true;
       forceSSL = true;
       locations = {
         "/" = { proxyPass = "http://localhost:8080"; };
       };
     };
+    "loogle.lean-fro.org" = {
+      enableACME = true;
+      forceSSL = true;
+      globalRedirect = "loogle.lean-lang.org";
+    };
     "loogle.nomeata.de" = {
       enableACME = true;
       forceSSL = true;
-      globalRedirect = "loogle.lean-fro.org";
+      globalRedirect = "loogle.lean-lang.org";
     };
   };
 

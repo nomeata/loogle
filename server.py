@@ -86,7 +86,7 @@ def locallink(query):
     return f"/?q={urllib.parse.quote(query)}"
 
 def querylink(query):
-    return f"https://loogle.lean-fro.org/?q={urllib.parse.quote(query)}"
+    return f"https://loogle.lean-lang.org/?q={urllib.parse.quote(query)}"
 
 def doclink(hit):
     modpath = hit["module"].replace(".","/")
