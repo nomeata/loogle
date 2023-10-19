@@ -1,4 +1,4 @@
-{ config, self, pkgs, modulesPath, lib, environment, loogle_server, nixpkgs, ... }:
+{ config, self, inputs, pkgs, modulesPath, lib, environment, loogle_server, nixpkgs, ... }:
 {
   imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
 
@@ -108,7 +108,7 @@
       NoNewPrivileges = true;
       ProtectSystem = "strict";
       ProtectHome = "read-only";
-      Environment = "LOOGLE_REV=${self.rev or "dirty"}";
+      Environment = "LOOGLE_REV=${self.rev or "dirty"} MATHLIB_REV=${inputs.mathlib4.rev or "dirty"}";
     };
   };
 

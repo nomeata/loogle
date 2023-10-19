@@ -276,10 +276,11 @@ class MyHandler(BaseHTTPRequestHandler):
 
             self.wfile.write(blurb)
 
-            rev = os.getenv("LOOGLE_REV", default = "dirty")
-            if rev != "dirty":
+            rev1 = os.getenv("LOOGLE_REV", default = "dirty")
+            rev2 = os.getenv("MATHLIB_REV", default = "dirty")
+            if rev1 != "dirty" and rev2 != "dirty"
                 self.wfile.write(bytes(f"""
-                    <p><small>This is Loogle revision <a href="https://github.com/nomeata/loogle/commit/{rev}"><code>{rev[:7]}</code></a></small></p>
+                    <p><small>This is Loogle revision <a href="https://github.com/nomeata/loogle/commit/{rev1}"><code>{rev1[:7]}</code></a> serving mathlib revision <a href="https://github.com/leanprover-community/mathlib4/commit/{rev2}"><code>{rev2[:7]}</code></a></small></p>
                 """, "utf-8"))
 
             self.wfile.write(b"""
