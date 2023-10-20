@@ -1,4 +1,6 @@
 {
+
+
   inputs.lean.url = github:nomeata/lean4/for-loogle;
   #inputs.lean.url = github:leanprover/lean4/v4.1.0-rc1;
 
@@ -7,13 +9,13 @@
 
   inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find";
   inputs.mathlib4.flake = false;
-  inputs.std4.url = "github:leanprover/std4/67855403d60daf181775fa1ec63b04e70bcc3921";
-  inputs.std4.flake = false;
-  inputs.quote4.url = "github:gebner/quote4/e75daed95ad1c92af4e577fea95e234d7a8401c1";
+  inputs.std.url = "github:leanprover/std4/dd2549f76ff763c897fe997061e2625a7d628eaf";
+  inputs.std.flake = false;
+  inputs.quote4.url = "github:gebner/quote4/a387c0eb611857e2460cf97a8e861c944286e6b2";
   inputs.quote4.flake = false;
-  inputs.aesop.url = "github:JLimperg/aesop/1a0cded2be292b5496e659b730d2accc742de098";
+  inputs.aesop.url = "github:JLimperg/aesop/b601328752091a1cfcaebdd6b6b7c30dc5ffd946";
   inputs.aesop.flake = false;
-  inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/65bba7286e2395f3163fd0277110578f19b8170f";
+  inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/27715d1daf32b9657dc38cd52172d77b19bde4ba";
   inputs.ProofWidgets.flake = false;
 
   outputs = { self, nixpkgs, ...}@inputs:
@@ -22,9 +24,9 @@
       pkgs = nixpkgs.legacyPackages.${system};
       leanPkgs = inputs.lean.packages.${system};
 
-      std4 = leanPkgs.buildLeanPackage {
+      std = leanPkgs.buildLeanPackage {
         name = "Std";
-        src = inputs.std4;
+        src = inputs.std;
         roots = [ { mod = "Std"; glob = "one"; } ];
       };
 
@@ -38,7 +40,7 @@
         name = "Aesop";
         src = inputs.aesop;
         roots = [ "Aesop" ];
-        deps = [std4];
+        deps = [std];
       };
 
       # addFakeFile can plug into buildLeanPackage’s overrideBuildModAttrs
@@ -65,7 +67,7 @@
         name = "ProofWidgets";
         src = inputs.ProofWidgets;
         roots = [ "ProofWidgets" ];
-        deps = [std4];
+        deps = [std];
         overrideBuildModAttrs = addFakeFiles {
           "ProofWidgets.Compat" = [ "build/js/compat.js" ];
           "ProofWidgets.Component.Basic" = [ "build/js/interactiveExpr.js" ];
@@ -102,7 +104,7 @@
           "-DautoImplicit=false"
           "-DrelaxedAutoImplicit=false"
         ];
-        deps = [std4 quote4 aesop ProofWidgets];
+        deps = [std quote4 aesop ProofWidgets];
         overrideBuildModAttrs = addFakeFiles {
           "Mathlib.Tactic.Widget.CommDiag" = [
             "widget/src/penrose/commutative.dsl"
