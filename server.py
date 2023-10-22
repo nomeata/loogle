@@ -245,7 +245,7 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.wfile.write(b'<h2>Did you maybe mean</h2><ul>')
                 for sugg in result["suggestions"]:
                     link = locallink(sugg)
-                    self.wfile.write(bytes(f'<li><a href={link}><code>{html.escape(sugg)}</code></a></li>', "utf-8"))
+                    self.wfile.write(bytes(f'<li>🔍 <a href={link}><code>{html.escape(sugg)}</code></a></li>', "utf-8"))
                 self.wfile.write(b'</ul>')
             if "header" in result:
                 self.wfile.write(b"""
@@ -271,7 +271,7 @@ class MyHandler(BaseHTTPRequestHandler):
             self.wfile.write(b'<h2>Try these</h2><ul>')
             for ex in examples:
                 link = locallink(ex)
-                self.wfile.write(bytes(f'<li><a href={link}><code>{html.escape(ex)}</code></a></li>', "utf-8"))
+                self.wfile.write(bytes(f'<li>🔍 <a href={link}><code>{html.escape(ex)}</code></a></li>', "utf-8"))
             self.wfile.write(b'</ul>')
 
             self.wfile.write(blurb)
