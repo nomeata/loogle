@@ -9,11 +9,11 @@
 
   inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find";
   inputs.mathlib4.flake = false;
-  inputs.std.url = "github:leanprover/std4/dd2549f76ff763c897fe997061e2625a7d628eaf";
+  inputs.std.url = "github:leanprover/std4/b35ae7244d3372031b56646689117a3e4edf19b7";
   inputs.std.flake = false;
   inputs.quote4.url = "github:gebner/quote4/a387c0eb611857e2460cf97a8e861c944286e6b2";
   inputs.quote4.flake = false;
-  inputs.aesop.url = "github:JLimperg/aesop/b601328752091a1cfcaebdd6b6b7c30dc5ffd946";
+  inputs.aesop.url = "github:JLimperg/aesop/9dc4a1097a690216eaa7cf2d2290efd447e60d7a";
   inputs.aesop.flake = false;
   inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/27715d1daf32b9657dc38cd52172d77b19bde4ba";
   inputs.ProofWidgets.flake = false;
