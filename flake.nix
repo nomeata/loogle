@@ -117,6 +117,11 @@
 
       mathlib4_pruned = build_mathlib4 true;
       mathlib4 = build_mathlib4 false;
+      mathlib4_modRoot = pkgs.runCommandCC "Mathlib" {} ''
+        mkdir -p $out
+        cp -r --reflink=auto --dereference ${mathlib4.modRoot}/* $out/
+        ls -l $out
+      '';
 
       loogle_seccomp = pkgs.runCommandCC "loogle_seccomp"
         { buildInputs = [ leanPkgs.leanc pkgs.pkgsStatic.libseccomp ]; } ''
@@ -147,13 +152,13 @@
       });
 
       loogle_index = pkgs.runCommand "loogle.index" { buildInputs = [ loogle_exe ]; } ''
-        loogle --path ${mathlib4.modRoot} --write-index $out
+        loogle --path ${mathlib4_modRoot} --write-index $out
       '';
 
       loogle = pkgs.runCommand "loogle" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
         mkdir -p $out/bin
         makeWrapper ${loogle_exe}/bin/loogle $out/bin/loogle --add-flags \
-          '--path ${mathlib4.modRoot} --read-index ${loogle_index}'
+          '--path ${mathlib4_modRoot} --read-index ${loogle_index}'
       '';
 
       loogle_server = pkgs.stdenv.mkDerivation {
@@ -171,7 +176,7 @@
     {
       packages.${system} = {
         inherit loogle_seccomp loogle_exe loogle loogle_server loogle_index;
-        mathlib = mathlib4.modRoot;
+        mathlib = mathlib4_modRoot;
         mathlib_pruned = mathlib4_pruned.modRoot;
         default = loogle;
       };
