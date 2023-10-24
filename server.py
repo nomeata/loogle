@@ -162,12 +162,15 @@ class MyHandler(BaseHTTPRequestHandler):
             else:
                 reply = f"❗ {result['error']}"
             if "suggestions" in result:
+                suggs = result["suggestions"]
                 reply += "\n"
-                sugg0 = result["suggestions"][0]
-                reply += f"Did you mean [{sugg0}]({querylink(sugg0)})"
-                if len(result["suggestions"]) > 1:
-                    reply += f" or [something else]({querylink(query)})"
-                reply += "?"
+
+                if len(hits) == 1:
+                    reply += f"Did you mean {zul(hits[0])}?"
+                elif len(hits) == 2:
+                    reply += f"Did you mean {zul(hits[0])} or {zul(hits[1])}?"
+                else:
+                    reply += f"Did you mean {zul(hits[0])}, {zul(hits[1])}, or [something else]({querylink(query)})?"
 
         else:
             hits = result["hits"]
