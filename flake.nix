@@ -9,13 +9,13 @@
 
   inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find";
   inputs.mathlib4.flake = false;
-  inputs.std.url = "github:leanprover/std4/b35ae7244d3372031b56646689117a3e4edf19b7";
+  inputs.std.url = "github:leanprover/std4/fb56324020c8e4f3d451e8901b290dea82c072ae";
   inputs.std.flake = false;
   inputs.quote4.url = "github:gebner/quote4/a387c0eb611857e2460cf97a8e861c944286e6b2";
   inputs.quote4.flake = false;
   inputs.aesop.url = "github:JLimperg/aesop/9dc4a1097a690216eaa7cf2d2290efd447e60d7a";
   inputs.aesop.flake = false;
-  inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/27715d1daf32b9657dc38cd52172d77b19bde4ba";
+  inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/5382e38eca1e2537d75d4c4705a9e744424b0037";
   inputs.ProofWidgets.flake = false;
 
   outputs = { self, nixpkgs, ...}@inputs:
