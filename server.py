@@ -92,8 +92,11 @@ def doclink(hit):
     modpath = hit["module"].replace(".","/")
     return f"https://leanprover-community.github.io/mathlib4_docs/{urllib.parse.quote(modpath)}.html#{urllib.parse.quote(hit['name'])}"
 
-def zul(hit):
+def zulHit(hit):
     return f"[{hit['name']}]({doclink(hit)})"
+
+def zulQuery(sugg):
+    return f"[`sugg`]({querylink(sugg)})"
 
 class MyHandler(BaseHTTPRequestHandler):
 
@@ -165,24 +168,24 @@ class MyHandler(BaseHTTPRequestHandler):
                 suggs = result["suggestions"]
                 reply += "\n"
 
-                if len(hits) == 1:
-                    reply += f"Did you mean {zul(hits[0])}?"
-                elif len(hits) == 2:
-                    reply += f"Did you mean {zul(hits[0])} or {zul(hits[1])}?"
+                if len(suggs) == 1:
+                    reply += f"Did you mean {zulQuery(suggs[0])}?"
+                elif len(suggs) == 2:
+                    reply += f"Did you mean {zulQuery(suggs[0])} or {zulQuery(suggs[1])}?"
                 else:
-                    reply += f"Did you mean {zul(hits[0])}, {zul(hits[1])}, or [something else]({querylink(query)})?"
+                    reply += f"Did you mean {zulQuery(suggs[0])}, {zulQuery(suggs[1])}, or [something else]({querylink(query)})?"
 
         else:
             hits = result["hits"]
             if len(hits) == 0:
                 reply = f"🤷 nothing found"
             elif len(hits) == 1:
-                reply = f"🔍 {zul(hits[0])}"
+                reply = f"🔍 {zulHit(hits[0])}"
             elif len(hits) == 2:
-                reply = f"🔍 {zul(hits[0])}, {zul(hits[1])}"
+                reply = f"🔍 {zulHit(hits[0])}, {zulHit(hits[1])}"
             else:
                 n = result["count"] - 2
-                reply = f"🔍 {zul(hits[0])}, {zul(hits[1])}, and [{n} more]({querylink(query)})"
+                reply = f"🔍 {zulHit(hits[0])}, {zulHit(hits[1])}, and [{n} more]({querylink(query)})"
         self.returnJSON({ "content": reply })
 
     def do_GET(self):
