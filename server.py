@@ -96,7 +96,7 @@ def zulHit(hit):
     return f"[{hit['name']}]({doclink(hit)})"
 
 def zulQuery(sugg):
-    return f"[`sugg`]({querylink(sugg)})"
+    return f"[`{sugg}`]({querylink(sugg)})"
 
 class MyHandler(BaseHTTPRequestHandler):
 
