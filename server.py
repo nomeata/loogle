@@ -267,8 +267,9 @@ class MyHandler(BaseHTTPRequestHandler):
                 for hit in result["hits"]:
                     name = hit["name"]
                     mod = hit["module"]
+                    type = hit["type"]
                     self.wfile.write(bytes(f"""
-                        <li><a href="{doclink(hit)}">{html.escape(name)}</a> <small>{html.escape(mod)}</small></li>
+                        <li><a href="{doclink(hit)}">{html.escape(name)}</a> <small>{html.escape(mod)}</small><br>{html.escape(type)}</li>
                     """, "utf-8"))
                 self.wfile.write(b"""
                     </ul>
