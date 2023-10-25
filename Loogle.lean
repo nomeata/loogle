@@ -48,7 +48,7 @@ def compileTimeSearchPath : SearchPath := #compileTimeSearchPath
 def Failure := String × Array String
 
 def Result := Except Failure Find.Result
-def Printer := Result → IO Unit 
+def Printer := Result → CoreM Unit
 
 def runQuery (index : Find.Index) (query : String) : CoreM Result  := withCurrHeartbeats do
   match Parser.runParser (← getEnv) `Mathlib.Tactic.Find.find_filters query with
@@ -77,7 +77,7 @@ def printPlain : Printer
       | none => IO.println s!"{ci.name}" -- unlikely to happen in CLI usage
       | some mod => IO.println s!"{ci.name} (from {mod})"
 
-def toJson : Result → IO Json -- only in IO for MessageData.toString
+def toJson : Result → CoreM Json -- only in IO for MessageData.toString
   | .error (err, suggs) => do
       if suggs.isEmpty then
         pure $ .mkObj [ ("error", .str err) ]
@@ -87,10 +87,19 @@ def toJson : Result → IO Json -- only in IO for MessageData.toString
       pure $ .mkObj [
         ("header", ← result.header.toString),
         ("count", .num result.count),
-        ("hits", .arr $ result.hits.map fun (ci, mod) => .mkObj [
+        ("hits", .arr $ ← result.hits.mapM fun (ci, mod) => do
+          let ty := (← (ppExpr ci.type).run').pretty
+          let ds := match ← findDocString? (← getEnv) ci.name false with
+            | some s => .str s
+            | none => .null
+          let mod := match mod with | none => .null | some name => .str name.toString
+          return .mkObj [
             ("name", .str ci.name.toString),
-            ("module", match mod with | none => .null | some name => .str name.toString)
-        ])
+            ("type", .str ty),
+            ("module", mod ),
+            ("doc", ds )
+          ]
+        )
       ]
 
 def printJson : Printer := fun r => do
