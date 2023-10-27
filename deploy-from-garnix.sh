@@ -2,7 +2,7 @@
 
 set -e
 
-drv="$(nix path-info --derivation .#nixosConfigurations.loogle.config.system.build.toplevel)"
+drv="$(nix path-info -j 0 --derivation .#nixosConfigurations.loogle.config.system.build.toplevel)"
 echo "Derivation: $drv"
 path="$(nix show-derivation "$drv" | jq -r '.[].outputs.out.path')"
 echo "Output path: $path"
