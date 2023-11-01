@@ -64,6 +64,7 @@
     recommendedGzipSettings = true;
     recommendedOptimisation = true;
     recommendedTlsSettings = true;
+    proxyTimeout = "300s";
   };
 
   services.nginx.virtualHosts = {
@@ -71,7 +72,9 @@
       enableACME = true;
       forceSSL = true;
       locations = {
-        "/" = { proxyPass = "http://localhost:8080"; };
+        "/" = {
+          proxyPass = "http://localhost:8080";
+        };
       };
     };
     "loogle.lean-fro.org" = {
