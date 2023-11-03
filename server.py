@@ -89,8 +89,9 @@ def querylink(query):
     return f"https://loogle.lean-lang.org/?q={urllib.parse.quote(query)}"
 
 def doclink(hit):
+    name = hit["name"]
     modpath = hit["module"].replace(".","/")
-    return f"https://leanprover-community.github.io/mathlib4_docs/{urllib.parse.quote(modpath)}.html#{urllib.parse.quote(hit['name'])}"
+    return f"https://leanprover-community.github.io/mathlib4_docs/{urllib.parse.quote(modpath)}.html#{urllib.parse.quote(name)}"
 
 def zulHit(hit):
     return f"[{hit['name']}]({doclink(hit)})"
@@ -119,6 +120,11 @@ class MyHandler(BaseHTTPRequestHandler):
         except BrokenPipeError:
             # browsers seem to like to close this early
             pass
+
+    def returnRedirect(self, url):
+        self.send_response(302)
+        self.send_header("Location", url)
+        self.end_headers()
 
     def returnJSON(self, data):
         self.send_response(200)
@@ -213,88 +219,95 @@ class MyHandler(BaseHTTPRequestHandler):
                     return
                 result = loogle.query(query)
 
+            if "lucky" in params:
+                if "hits" in result and len(result["hits"]) > 1:
+                    self.returnRedirect(doclink(result["hits"][0]))
+                    return
+
         if want_json:
             self.returnJSON(result)
-        else:
-            self.send_response(200)
-            self.send_header("Content-type", "text/html")
-            self.end_headers()
+            return
+
+        self.send_response(200)
+        self.send_header("Content-type", "text/html")
+        self.end_headers()
+        self.wfile.write(bytes(f"""
+            <!doctype html>
+            <html lang="en">
+            <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <link rel="stylesheet" href="https://unpkg.com/chota@latest">
+            <link rel="icon" type="image/png" href="/loogle.png" />
+            <title>Loogle!</title>
+            <body>
+            <main class="container">
+
+            <section>
+            <h1><a href="/" style="color:#333;">Loogle!</a></h1>
+
+            <form method="GET">
+            <p class="grouped">
+            <input type="text" name="q" value="{html.escape(query)}"/>
+            <button type="submit">#find</button>
+            <button type="submit" name="lucky" value="yes" title="Directly jump to the documentation of the first hit.">#lucky</button>
+            </p>
+            </form>
+            </section>
+        """, "utf-8"))
+        if "error" in result:
             self.wfile.write(bytes(f"""
-                <!doctype html>
-                <html lang="en">
-                <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                <link rel="stylesheet" href="https://unpkg.com/chota@latest">
-                <link rel="icon" type="image/png" href="/loogle.png" />
-                <title>Loogle!</title>
-                <body>
-                <main class="container">
-
-                <section>
-                <h1><a href="/" style="color:#333;">Loogle!</a></h1>
-
-                <form method="GET">
-                <p class="grouped">
-                <input type="text" name="q" value="{html.escape(query)}"/>
-                <input type="submit" value="#find"/>
-                </p>
-                </form>
-                </section>
+                <h2>Error</h2>
+                <pre>{html.escape(result['error'])}</pre>
             """, "utf-8"))
-            if "error" in result:
-                self.wfile.write(bytes(f"""
-                    <h2>Error</h2>
-                    <pre>{html.escape(result['error'])}</pre>
-                """, "utf-8"))
-            if "suggestions" in result:
-                self.wfile.write(b'<h2>Did you maybe mean</h2><ul>')
-                for sugg in result["suggestions"]:
-                    link = locallink(sugg)
-                    self.wfile.write(bytes(f'<li>🔍 <a href={link}><code>{html.escape(sugg)}</code></a></li>', "utf-8"))
-                self.wfile.write(b'</ul>')
-            if "header" in result:
-                self.wfile.write(b"""
-                    <h2>Result</h2>
-                """)
-                self.wfile.write(bytes(f"""
-                    <p>{html.escape(result['header'])}</p>
-                """, "utf-8"))
-            if "hits" in result:
-                self.wfile.write(bytes(f"""
-                    <ul>
-                """, "utf-8"))
-                for hit in result["hits"]:
-                    name = hit["name"]
-                    mod = hit["module"]
-                    type = hit["type"]
-                    self.wfile.write(bytes(f"""
-                        <li><a href="{doclink(hit)}">{html.escape(name)}</a> <small>{html.escape(mod)}</small><br>{html.escape(type)}</li>
-                    """, "utf-8"))
-                self.wfile.write(b"""
-                    </ul>
-                """)
-
-            self.wfile.write(b'<h2>Try these</h2><ul>')
-            for ex in examples:
-                link = locallink(ex)
-                self.wfile.write(bytes(f'<li>🔍 <a href={link}><code>{html.escape(ex)}</code></a></li>', "utf-8"))
+        if "suggestions" in result:
+            self.wfile.write(b'<h2>Did you maybe mean</h2><ul>')
+            for sugg in result["suggestions"]:
+                link = locallink(sugg)
+                self.wfile.write(bytes(f'<li>🔍 <a href={link}><code>{html.escape(sugg)}</code></a></li>', "utf-8"))
             self.wfile.write(b'</ul>')
-
-            self.wfile.write(blurb)
-
-            rev1 = os.getenv("LOOGLE_REV", default = "dirty")
-            rev2 = os.getenv("MATHLIB_REV", default = "dirty")
-            if rev1 != "dirty" and rev2 != "dirty":
-                self.wfile.write(bytes(f"""
-                    <p><small>This is Loogle revision <a href="https://github.com/nomeata/loogle/commit/{rev1}"><code>{rev1[:7]}</code></a> serving mathlib revision <a href="https://github.com/leanprover-community/mathlib4/commit/{rev2}"><code>{rev2[:7]}</code></a></small></p>
-                """, "utf-8"))
-
+        if "header" in result:
             self.wfile.write(b"""
-                </main>
-                </body>
-                </html>
+                <h2>Result</h2>
             """)
+            self.wfile.write(bytes(f"""
+                <p>{html.escape(result['header'])}</p>
+            """, "utf-8"))
+        if "hits" in result:
+            self.wfile.write(bytes(f"""
+                <ul>
+            """, "utf-8"))
+            for hit in result["hits"]:
+                name = hit["name"]
+                mod = hit["module"]
+                type = hit["type"]
+                self.wfile.write(bytes(f"""
+                    <li><a href="{doclink(hit)}">{html.escape(name)}</a> <small>{html.escape(mod)}</small><br>{html.escape(type)}</li>
+                """, "utf-8"))
+            self.wfile.write(b"""
+                </ul>
+            """)
+
+        self.wfile.write(b'<h2>Try these</h2><ul>')
+        for ex in examples:
+            link = locallink(ex)
+            self.wfile.write(bytes(f'<li>🔍 <a href={link}><code>{html.escape(ex)}</code></a></li>', "utf-8"))
+        self.wfile.write(b'</ul>')
+
+        self.wfile.write(blurb)
+
+        rev1 = os.getenv("LOOGLE_REV", default = "dirty")
+        rev2 = os.getenv("MATHLIB_REV", default = "dirty")
+        if rev1 != "dirty" and rev2 != "dirty":
+            self.wfile.write(bytes(f"""
+                <p><small>This is Loogle revision <a href="https://github.com/nomeata/loogle/commit/{rev1}"><code>{rev1[:7]}</code></a> serving mathlib revision <a href="https://github.com/leanprover-community/mathlib4/commit/{rev2}"><code>{rev2[:7]}</code></a></small></p>
+            """, "utf-8"))
+
+        self.wfile.write(b"""
+            </main>
+            </body>
+            </html>
+        """)
 
 if __name__ == "__main__":
     webServer = HTTPServer((hostName, serverPort), MyHandler)
