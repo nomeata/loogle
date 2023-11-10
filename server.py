@@ -11,11 +11,17 @@ import re
 import os
 import select
 
+
 hostName = "localhost"
 serverPort = 8080
 
 blurb = open("./blurb.html","rb").read()
 icon = open("./loogle.png","rb").read()
+
+# Prometheus setup
+
+from prometheus_client import Counter, MetricsHandler
+m_queries = Counter('queries', 'Total number of queries')
 
 examples = [
     "Real.sin",
@@ -52,6 +58,7 @@ class Loogle():
             else:
                 return {"error": "The backend process is starting up, please try again later..."}
         try:
+            m_queries.inc()
             self.loogle.stdin.write(bytes(query, "utf8"));
             self.loogle.stdin.write(b"\n");
             self.loogle.stdin.flush();
@@ -99,7 +106,7 @@ def zulHit(hit):
 def zulQuery(sugg):
     return f"[`{sugg}`]({querylink(sugg)})"
 
-class MyHandler(BaseHTTPRequestHandler):
+class MyHandler(MetricsHandler):
 
     def return404(self):
         self.send_response(404)
@@ -205,6 +212,8 @@ class MyHandler(BaseHTTPRequestHandler):
            return
         if url.path == "/json":
             want_json = True
+        elif url.path == "/metrics":
+            return super(MyHandler, self).do_GET()
         elif url.path != "/":
             self.return404()
             return

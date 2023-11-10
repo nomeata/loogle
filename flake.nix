@@ -161,9 +161,11 @@
           '--path ${mathlib4_modRoot} --read-index ${loogle_index}'
       '';
 
+      my_python = pkgs.python3.withPackages(p: with p; [prometheus-client]);
+
       loogle_server = pkgs.stdenv.mkDerivation {
         name = "loogle_server";
-        buildInputs = [ pkgs.python3 ];
+        buildInputs = [ my_python ];
         dontUnpack = true;
         installPhase = ''
           install -Dm755 ${./server.py} $out/bin/loogle_server
@@ -192,7 +194,7 @@
           [ elan
             pkgsStatic.libseccomp
             pkgconfig
-            python3
+            my_python
           ];
       };
     };
