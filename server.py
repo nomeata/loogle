@@ -231,13 +231,19 @@ class MyHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-        self.wfile.write(bytes(f"""
+        self.wfile.write(bytes("""
             <!doctype html>
             <html lang="en">
             <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <link rel="stylesheet" href="https://unpkg.com/chota@latest">
+            <style>
+              @import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro&family=Source+Code+Pro:wght@600&display=swap');
+              :root {
+                --font-family-mono: 'Source Code Pro', monospace;
+              }
+            </style>
             <link rel="icon" type="image/png" href="/loogle.png" />
             <title>Loogle!</title>
             <body>
@@ -245,7 +251,8 @@ class MyHandler(BaseHTTPRequestHandler):
 
             <section>
             <h1><a href="/" style="color:#333;">Loogle!</a></h1>
-
+        """, "utf-8"))
+        self.wfile.write(bytes(f"""
             <form method="GET">
             <p class="grouped">
             <input type="text" name="q" value="{html.escape(query)}"/>
@@ -282,7 +289,7 @@ class MyHandler(BaseHTTPRequestHandler):
                 mod = hit["module"]
                 type = hit["type"]
                 self.wfile.write(bytes(f"""
-                    <li><a href="{doclink(hit)}">{html.escape(name)}</a> <small>{html.escape(mod)}</small><br>{html.escape(type)}</li>
+                    <li><a href="{doclink(hit)}">{html.escape(name)}</a> <small>{html.escape(mod)}</small><br><tt>{html.escape(type)}</tt></li>
                 """, "utf-8"))
             self.wfile.write(b"""
                 </ul>
