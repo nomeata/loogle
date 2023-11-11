@@ -9,7 +9,7 @@
 
   inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find";
   inputs.mathlib4.flake = false;
-  inputs.std.url = "github:leanprover/std4/2bb93246d4fd2466a4e8a092015de7d2825e23ef";
+  inputs.std.url = "github:leanprover/std4";
   inputs.std.flake = false;
   inputs.quote4.url = "github:gebner/quote4/a387c0eb611857e2460cf97a8e861c944286e6b2";
   inputs.quote4.flake = false;
@@ -84,20 +84,9 @@
         };
       };
 
-      build_mathlib4 = pruned: leanPkgs.buildLeanPackage {
+      mathlib4 = leanPkgs.buildLeanPackage {
         name = "Mathlib";
-        # src = inputs.mathlib4;
-        # To build less, if pruned == true, then only the modules actally
-        # needed by loogle the executable are built
-        src = if pruned
-          then pkgs.applyPatches {
-            name = "mathlib4-${if pruned then "pruned" else "patched"}";
-            src = inputs.mathlib4;
-            postPatch = ''
-              echo "import Mathlib.Tactic.Find"  > Mathlib.lean
-            '';
-          }
-          else inputs.mathlib4;
+        src = inputs.mathlib4;
         roots = [ { mod = "Mathlib"; glob = "one"; } ];
         leanFlags = [
           "-Dpp.unicode.fun=true"
@@ -115,8 +104,6 @@
         };
       };
 
-      mathlib4_pruned = build_mathlib4 true;
-      mathlib4 = build_mathlib4 false;
       mathlib4_modRoot = pkgs.runCommandCC "Mathlib" {} ''
         mkdir -p $out
         cp -r --reflink=auto --dereference ${mathlib4.modRoot}/* $out/
@@ -143,7 +130,7 @@
         name = "loogle";
         src = ./.;
         roots = [ "Loogle" ];
-        deps = leanPkgs.stdlib ++ [ mathlib4_pruned seccomp ];
+        deps = leanPkgs.stdlib ++ [ std seccomp ];
         linkFlags = [ "-lseccomp" ];
       };
 
@@ -179,7 +166,6 @@
       packages.${system} = {
         inherit loogle_seccomp loogle_exe loogle loogle_server loogle_index;
         mathlib = mathlib4_modRoot;
-        mathlib_pruned = mathlib4_pruned.modRoot;
         default = loogle;
       };
 

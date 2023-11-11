@@ -7,6 +7,8 @@ package «loogle» {
 
 require std from git "https://github.com/leanprover/std4" @ "main"
 
+require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "master"
+
 target loogle_seccomp.o pkg : FilePath := do
   let oFile := pkg.buildDir / "loogle_seccomp.o"
   let srcJob ← inputFile <| pkg.dir / "loogle_seccomp.c"
@@ -25,6 +27,9 @@ lean_lib Seccomp where
 lean_lib Loogle where
   roots := #[`Loogle]
   globs := #[.andSubmodules `Loogle]
+
+lean_lib LoogleMathlibCache where
+  roots := #[`MathlibCache]
 
 @[default_target]
 lean_exe loogle where

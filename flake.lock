@@ -57,11 +57,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1697798547,
-        "narHash": "sha256-S69iGVavgc3DPPobf59rljZOvNIgOZEAV45E8KOWa6U=",
+        "lastModified": 1699703009,
+        "narHash": "sha256-pqYntAMilZmnxC9DZp1jtc2MZ8jkyHuM62D9Naw+4HY=",
         "owner": "nomeata",
         "repo": "lean4",
-        "rev": "bc6789dc6427e0668a1d2a27c449335db642eb34",
+        "rev": "504352e1e714d109ad2085337bd550a21cfb9616",
         "type": "github"
       },
       "original": {
@@ -222,17 +222,16 @@
     "std": {
       "flake": false,
       "locked": {
-        "lastModified": 1698302218,
-        "narHash": "sha256-cjo+wlhSsaQRB46FLlbcefwnyPjTN6A8+Q+jz8QFtmQ=",
+        "lastModified": 1699568497,
+        "narHash": "sha256-5PCRdtTmvhB2jHJ+Edrg84kaN8TGDWMazbTvzVj5FYo=",
         "owner": "leanprover",
         "repo": "std4",
-        "rev": "2bb93246d4fd2466a4e8a092015de7d2825e23ef",
+        "rev": "fb07d160aff0e8bdf403a78a5167fc7acf9c8227",
         "type": "github"
       },
       "original": {
         "owner": "leanprover",
         "repo": "std4",
-        "rev": "2bb93246d4fd2466a4e8a092015de7d2825e23ef",
         "type": "github"
       }
     }

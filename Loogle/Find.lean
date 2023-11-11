@@ -12,6 +12,7 @@ import Std.Util.Pickle
 import Loogle.Cache
 import Loogle.NameRel
 import Loogle.RBTree
+import Loogle.BlackListed
 
 /-!
 # The `#find` command and tactic.
@@ -164,7 +165,7 @@ of lemma names.
 /-- For all names `n` mentioned in the type of the constant `c`, add a mapping from
 `n` to `c.name` to the relation. -/
 private def addDecl (name : Lean.Name) (c : ConstantInfo) (m : NameRel) : MetaM NameRel := do
-  if ← name.isBlackListed then
+  if ← Loogle.isBlackListed name then
     return m
   let consts := c.type.foldConsts {} (flip NameSet.insert)
   return consts.fold (init := m) fun m n => m.insert n name
@@ -187,7 +188,7 @@ def SuffixTrie.insert (t : SuffixTrie) (n : Lean.Name) : SuffixTrie := Id.run $ 
 @[nolint unusedArguments]
 def SuffixTrie.addDecl (name : Lean.Name) (_ : ConstantInfo) (t : SuffixTrie) :
     MetaM SuffixTrie := do
-  if ← name.isBlackListed then
+  if ← Loogle.isBlackListed name then
     return t
   return t.insert name
 

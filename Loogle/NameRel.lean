@@ -6,7 +6,6 @@ Authors: Joachim Breitner
 
 import Lean.Data.NameMap
 import Lean.Declaration
-import Loogle.BlackListed
 
 /-!
 ## A data structure for a relation on names
