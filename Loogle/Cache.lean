@@ -15,9 +15,11 @@ A type synonym for a `DeclCache` containing a pair of elements.
 The first will store declarations in the current file,
 the second will store declarations from imports (and will hopefully be "read-only" after creation).
 -/
-def DeclCache2 (α : Type) := DeclCache (α × α)
+def DeclCache2 (α : Type) : Type := DeclCache (α × α)
 
 instance (α : Type) [h : Nonempty α] : Nonempty (DeclCache2 α) :=
+  -- inferInstanceAs (Nonempty (DeclCache (α × α)))
+  -- work around lack of Prod.nonempty in std/core:
   h.elim fun x => @instNonemptyDeclCache _ ⟨x,x⟩
 
 /--

@@ -39,8 +39,8 @@ def MessageData.andList (xs : Array MessageData) : MessageData :=
 /-- Formats a list of names, as you would expect from a lemma-searching command.  -/
 def MessageData.bulletListOfConsts {m} [Monad m] [MonadEnv m] [MonadError m]
     (names : Array Name) : m MessageData := do
-    let es ← names.mapM mkConstWithLevelParams
-    pure (MessageData.bulletList (es.map ppConst))
+  let es ← names.mapM mkConstWithLevelParams
+  pure (MessageData.bulletList (es.map ppConst))
 
 /-!
 ## Name sorting
@@ -595,7 +595,7 @@ the distributed cache, it may be useful to open a scratch file, `import Mathlib`
 there, this way you will find lemmas that you have not yet imported, and the
 cache will stay up-to-date.
 -/
-elab "#find " args:find_filters : command => liftTermElabM do
+elab(name := findSyntax) "#find " args:find_filters : command => liftTermElabM do
   profileitM Exception "find" (← getOptions) do
     match ← find cachedIndex args with
     | .error ⟨s, warn, suggestions⟩ => do

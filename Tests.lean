@@ -27,11 +27,9 @@ Of these, 0 have a name containing "namefragmentsearch".
 including the statistics about how many lemas were found in the index. -/
 def my_true : Bool := true
 
-theorem my_true_eq_true:
-  my_true = true := rfl
+theorem my_true_eq_true : my_true = true := rfl
 
-theorem my_true_eq_True: -- intentionally capitalized
-  my_true = true := rfl
+theorem my_true_eq_True : my_true = true := rfl -- intentionally capitalized
 
 /--
 info: Found 3 definitions mentioning my_true.
