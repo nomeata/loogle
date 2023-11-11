@@ -7,7 +7,7 @@
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.nixpkgs.follows = "lean/nixpkgs";
 
-  inputs.mathlib4.url = "github:leanprover-community/mathlib4/joachim/find";
+  inputs.mathlib4.url = "github:leanprover-community/mathlib4/d8a661e5774c5f19bfcd4c896ca839ced394e1ee";
   inputs.mathlib4.flake = false;
   inputs.std.url = "github:leanprover/std4/fb07d160aff0e8bdf403a78a5167fc7acf9c8227";
   inputs.std.flake = false;
