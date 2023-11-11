@@ -124,15 +124,15 @@ structure LoogleOptions where
   json : Bool := false
   query : Option String := none
   module : String := "Mathlib"
-  searchPath : Option String := none
+  searchPath : List System.FilePath := []
   writeIndex : Option String := none
   readIndex : Option String := none
   wantsHelp : Bool := false
 
 unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Unit := do
-  if let some p := opts.searchPath
-  then searchPathRef.set [p]
-  else searchPathRef.set compileTimeSearchPath
+  if opts.searchPath.isEmpty
+  then searchPathRef.set compileTimeSearchPath
+  else searchPathRef.set opts.searchPath
 
   let imports := #[{module := opts.module.toName}, {module := `Loogle.Find}]
   withImportModules imports {} 0 fun env => do
@@ -175,7 +175,9 @@ def lakeLongOption : (opt : String) → CliM PUnit
 | "--help" => lakeShortOption 'h'
 | "--interactive" => lakeShortOption 'i'
 | "--json" => lakeShortOption 'j'
-| "--path" => do modifyThe LoogleOptions ({· with searchPath := ← takeArg "--path"})
+| "--path" => do
+    let path : System.FilePath ← takeArg "--path"
+    modifyThe LoogleOptions fun opts => {opts with searchPath := opts.searchPath ++ [path]}
 | "--module" => do modifyThe LoogleOptions ({· with module := ← takeArg "--module"})
 | "--write-index" => do modifyThe LoogleOptions ({· with writeIndex := ← takeArg "--write-index"})
 | "--read-index" => do modifyThe LoogleOptions ({· with readIndex := ← takeArg "--read-index"})

@@ -140,14 +140,22 @@
         buildInputs = super.buildInputs ++ [ pkgs.pkgsStatic.libseccomp ];
       });
 
+      # Loogle also needs the Loogle.Find olean at runtime, for the syntax parser
+      loogle_modRoot = pkgs.runCommandCC "Mathlib" {} ''
+        mkdir -p $out
+        cp -r --reflink=auto --dereference ${looglePkg.modRoot}/Loogle $out/
+        ls -l $out
+      '';
+
+
       loogle_index = pkgs.runCommand "loogle.index" { buildInputs = [ loogle_exe ]; } ''
-        loogle --path ${mathlib4_modRoot} --write-index $out
+        loogle --path ${mathlib4_modRoot} --path ${loogle_modRoot} --write-index $out
       '';
 
       loogle = pkgs.runCommand "loogle" { nativeBuildInputs = [ pkgs.makeWrapper ]; } ''
         mkdir -p $out/bin
         makeWrapper ${loogle_exe}/bin/loogle $out/bin/loogle --add-flags \
-          '--path ${mathlib4_modRoot} --read-index ${loogle_index}'
+          '--path ${mathlib4_modRoot} --path ${loogle_modRoot} --read-index ${loogle_index}'
       '';
 
       my_python = pkgs.python3.withPackages(p: with p; [prometheus-client]);
