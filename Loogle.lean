@@ -40,7 +40,7 @@ elab "#compileTimeSearchPath" : term => do
   let path ← searchPathRef.get
   let path' :=
     -- A little hack to not embed the searchpath when building under nix
-    if path.any (fun p => p.toString.endsWith "Loogle-depRoot")
+    if path.any (fun p => p.toString.startsWith "/nix/store")
     then [] else path
   return toExpr path'
 def compileTimeSearchPath : SearchPath := #compileTimeSearchPath
