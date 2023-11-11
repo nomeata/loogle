@@ -512,7 +512,7 @@ open System (FilePath)
 /-- Where to search for the cached index -/
 def cachePath : IO FilePath :=
   try
-    return (← findOLean `MathlibExtras.Find).withExtension "extra"
+    return (← findOLean `LoogleMathlibCache).withExtension "extra"
   catch _ =>
     return "build" / "lib" / "MathlibExtras" / "Find.extra"
 

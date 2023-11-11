@@ -20,17 +20,17 @@
     "aesop": {
       "flake": false,
       "locked": {
-        "lastModified": 1698234469,
-        "narHash": "sha256-cITtZhkS1sv4jAsMJHpL+19pqjmmq6J+eRz2t8Fi8dA=",
+        "lastModified": 1699009992,
+        "narHash": "sha256-7XqHh9DMY7E1z7cY1oYUCu3IV5AXf3Iv8YUXUiuTRH8=",
         "owner": "JLimperg",
         "repo": "aesop",
-        "rev": "d859b2465200f9067091ac88faf9786eaa02472b",
+        "rev": "cb87803274405db79ec578fc07c4730c093efb90",
         "type": "github"
       },
       "original": {
         "owner": "JLimperg",
         "repo": "aesop",
-        "rev": "d859b2465200f9067091ac88faf9786eaa02472b",
+        "rev": "cb87803274405db79ec578fc07c4730c093efb90",
         "type": "github"
       }
     },
@@ -191,17 +191,17 @@
     "quote4": {
       "flake": false,
       "locked": {
-        "lastModified": 1695270865,
-        "narHash": "sha256-9iXl2dBYqqc6gcr8xdVL19fy+1VNMlaozDyFDEsrusg=",
+        "lastModified": 1699162668,
+        "narHash": "sha256-B+le3M9yslIZJL25yb8Q6LjYWs9q+fDxwJX7XGHVDpo=",
         "owner": "gebner",
         "repo": "quote4",
-        "rev": "a387c0eb611857e2460cf97a8e861c944286e6b2",
+        "rev": "511eb96eca98a7474683b8ae55193a7e7c51bc39",
         "type": "github"
       },
       "original": {
         "owner": "gebner",
         "repo": "quote4",
-        "rev": "a387c0eb611857e2460cf97a8e861c944286e6b2",
+        "rev": "511eb96eca98a7474683b8ae55193a7e7c51bc39",
         "type": "github"
       }
     },
@@ -232,6 +232,7 @@
       "original": {
         "owner": "leanprover",
         "repo": "std4",
+        "rev": "fb07d160aff0e8bdf403a78a5167fc7acf9c8227",
         "type": "github"
       }
     }

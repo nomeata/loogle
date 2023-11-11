@@ -5,8 +5,7 @@ package «loogle» {
   moreLinkArgs := #[ "-lseccomp" ]
 }
 
-require std from git "https://github.com/leanprover/std4" @ "main"
-
+-- require std from git "https://github.com/leanprover/std4" @ "main"
 require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "master"
 
 target loogle_seccomp.o pkg : FilePath := do
@@ -29,7 +28,7 @@ lean_lib Loogle where
   globs := #[.andSubmodules `Loogle]
 
 lean_lib LoogleMathlibCache where
-  roots := #[`MathlibCache]
+  roots := #[`LoogleMathlibCache]
 
 @[default_target]
 lean_exe loogle where
