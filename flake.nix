@@ -141,7 +141,8 @@
       });
 
       # Loogle also needs the Loogle.Find olean at runtime, for the syntax parser
-      loogle_modRoot = pkgs.runCommandCC "Mathlib" {} ''
+      # Only copy the Loogle package; the dependencies (std) are included in mathlib4_modRoot.
+      loogle_modRoot = pkgs.runCommandCC "Loogle" {} ''
         mkdir -p $out
         cp -r --reflink=auto --dereference ${looglePkg.modRoot}/Loogle $out/
         ls -l $out
