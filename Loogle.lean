@@ -2,7 +2,8 @@ import Lean.Meta
 import Lake.CLI.Error
 import Lake.Util.Cli
 import Std.Util.Pickle
-import Mathlib.Tactic.Find
+
+import Loogle.Find
 
 import Seccomp
 
@@ -20,7 +21,7 @@ def Parser.runParser (env : Environment) (declName : Name) (input : String)
   let ictx := mkInputContext input fileName
   let s := p.run ictx { env, options := {} } (getTokenTable env) (mkParserState input)
   if s.hasError then
-    Except.error (s.toErrorMsg ictx)
+     Except.error (s.toErrorMsg ictx)
   else if input.atEnd s.pos then
     Except.ok s.stxStack.back
   else
@@ -29,7 +30,7 @@ def Parser.runParser (env : Environment) (declName : Name) (input : String)
 end RunParser
 
 open Lean Core Meta Elab Term Command
-open Mathlib.Tactic
+open Loogle
 
 instance : ToExpr System.FilePath where
   toTypeExpr := Lean.mkConst ``System.FilePath
@@ -51,12 +52,12 @@ def Result := Except Failure Find.Result
 def Printer := Result → CoreM Unit
 
 def runQuery (index : Find.Index) (query : String) : CoreM Result  := withCurrHeartbeats do
-  match Parser.runParser (← getEnv) `Mathlib.Tactic.Find.find_filters query with
+  match Parser.runParser (← getEnv) `Loogle.Find.find_filters query with
   | .error err => pure $ .error (err, #[])
   | .ok s => do
     MetaM.run' do
       try
-        match ← TermElabM.run' $ Mathlib.Tactic.Find.find index (.mk s) with
+        match ← TermElabM.run' $ Loogle.Find.find index (.mk s) with
         | .ok result => pure $ .ok result
         | .error err => do
           let suggs ← err.suggestions.mapM fun sugg => do
@@ -133,7 +134,7 @@ unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Un
   then searchPathRef.set [p]
   else searchPathRef.set compileTimeSearchPath
 
-  let imports := #[{module := opts.module.toName}, {module := `Mathlib.Tactic.Find}]
+  let imports := #[{module := opts.module.toName}, {module := `Loogle.Find}]
   withImportModules imports {} 0 fun env => do
     let ctx := {fileName := "/", fileMap := Inhabited.default}
     let state := {env}

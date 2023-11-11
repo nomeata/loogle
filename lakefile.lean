@@ -5,8 +5,7 @@ package «loogle» {
   moreLinkArgs := #[ "-lseccomp" ]
 }
 
-require mathlib from git "https://github.com/leanprover-community/mathlib4"
-  @ "joachim/find"
+require std from git "https://github.com/leanprover/std4" @ "main"
 
 target loogle_seccomp.o pkg : FilePath := do
   let oFile := pkg.buildDir / "loogle_seccomp.o"
@@ -22,7 +21,11 @@ extern_lib libloogle_seccomp pkg := do
 lean_lib Seccomp where
    roots := #[`Seccomp]
    precompileModules := true
-  
+
+lean_lib Loogle where
+  roots := #[`Loogle]
+  globs := #[.andSubmodules `Loogle]
+
 @[default_target]
 lean_exe loogle where
   root := `Loogle
