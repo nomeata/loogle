@@ -104,6 +104,8 @@
         };
       };
 
+      # This creates a self-contained path, so that we don't have to juggle
+      # thousands of derivations
       mathlib4_modRoot = pkgs.runCommandCC "Mathlib" {} ''
         mkdir -p $out
         cp -r --reflink=auto --dereference ${mathlib4.modRoot}/* $out/
@@ -129,7 +131,7 @@
       looglePkg = leanPkgs.buildLeanPackage {
         name = "loogle";
         src = ./.;
-        roots = [ "Loogle" ];
+        roots = [ "Loogle" "Tests" ];
         deps = leanPkgs.stdlib ++ [ std seccomp ];
         linkFlags = [ "-lseccomp" ];
       };

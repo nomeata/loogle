@@ -30,6 +30,9 @@ lean_lib Loogle where
 lean_lib LoogleMathlibCache where
   roots := #[`LoogleMathlibCache]
 
+lean_lib Tests where
+  roots := #[`Tests]
+
 @[default_target]
 lean_exe loogle where
   root := `Loogle

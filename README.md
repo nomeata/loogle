@@ -1,8 +1,11 @@
 loogle
 ======
 
-Loogle is a search tool for [Lean]/[Mathlib]. It wraps the `#find` command as a
-command line tool or web service. Try it at <https://loogle.lean-lang.org/>!
+Loogle is a search tool for [Lean]/[Mathlib], and can be used on the web, via a
+zulip bot, via APIs, from VSCode or nvim extensions as a Lean command or a command line tool.
+
+Try it at <https://loogle.lean-lang.org/>!
+
 
     $ loogle '(List.replicate (_ + _) _ = _)'
     Found 5 definitions mentioning List.replicate, HAdd.hAdd and Eq.
@@ -25,19 +28,27 @@ To use `loogle` locally:
 3. run `lake exe cache get`
 4. run `lake exe loogle --help` (or other options)
 
+If you use `loogle` on a large repository like Mathlib, the startup-time will
+be rather large. Run `lake build LoogleMathlibCache` if you want to pre-compute
+the index for Mathlib.
+
 [elan]: https://github.com/leanprover/elan
 
 Running locally (with nix)
 --------------------------
 
-You can also build it with nix. Teh first time this will take several hours as
+You can also build it with nix. The first time this will take several hours as
 it builds all of mathlib:
 
 1. check out this repository
 2. `nix run -L ./#loogle -- --help`
 
-Usage
------
+If you configure nix to use the [Garnix cache](https://garnix.io/docs/caching)
+it will be faster.
+
+
+CLI Usage
+---------
 
     USAGE:
       loogle [OPTIONS] [QUERY]
@@ -52,7 +63,7 @@ Usage
       --read-index file     read the search index from a file. This file is blindly trusted!
 
 By default, it will create an internal index upon starting,  which takes a bit.
-You can use `--write-index` and `--read-index` to cache that, but it it is your
+You can use `--write-index` and `--read-index` to cache that, but it is your
 responsibility to pass the right index for the given module and search path. In
 the nix setup, the index is built as part of the build process.
 
@@ -79,6 +90,14 @@ The [leanprover Zulip chat](https://leanprover.zulipchat.com/) has a bot called
 Just write `@**loogle** query` in a public stream.
 
 It is implemented via an outgoing webhook to the above web service.
+
+Editor integration
+------------------
+
+These are created by their respective maintainers; reach out to them if you have questions
+
+* [VS Code extension “Loogle Lean”](https://marketplace.visualstudio.com/items?itemName=ShreyasSrinivas.loogle-lean)
+* [`lean.nvim`](https://github.com/Julian/lean.nvim#features) has built-in support for loogle.
 
 Contact
 -------

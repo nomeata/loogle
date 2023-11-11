@@ -144,7 +144,11 @@ unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Un
     | some path => do
       let (index, _) ← unpickle _ path
       Find.Index.mkFromCache index
-    | none => Find.Index.mk
+    | none =>
+      -- Special-case Mathlib and use the cached index if present
+      if opts.module.toName = `Mathlib
+      then pure Find.cachedIndex
+      else Find.Index.mk
     -- warm up cache eagerly
     let _ ← index.1.cache.get
     let _ ← index.2.cache.get
