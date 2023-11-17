@@ -229,7 +229,7 @@ class MyHandler(MetricsHandler):
                 result = loogle.query(query)
 
             if "lucky" in params:
-                if "hits" in result and len(result["hits"]) > 1:
+                if "hits" in result and len(result["hits"]) >= 1:
                     self.returnRedirect(doclink(result["hits"][0]))
                     return
 
