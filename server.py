@@ -304,12 +304,6 @@ class MyHandler(MetricsHandler):
                 </ul>
             """)
 
-        self.wfile.write(b'<h2>Try these</h2><ul>')
-        for ex in examples:
-            link = locallink(ex)
-            self.wfile.write(bytes(f'<li>🔍 <a href={link}><code>{html.escape(ex)}</code></a></li>', "utf-8"))
-        self.wfile.write(b'</ul>')
-
         self.wfile.write(blurb)
 
         rev1 = os.getenv("LOOGLE_REV", default = "dirty")
