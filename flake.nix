@@ -70,18 +70,18 @@
         roots = [ "ProofWidgets" ];
         deps = [std];
         overrideBuildModAttrs = addFakeFiles {
-          "ProofWidgets.Compat" = [ "build/js/compat.js" ];
-          "ProofWidgets.Component.Basic" = [ "build/js/interactiveExpr.js" ];
-          "ProofWidgets.Component.GoalTypePanel" = [ "build/js/goalTypePanel.js" ];
-          "ProofWidgets.Component.Recharts" = [ "build/js/recharts.js" ];
-          "ProofWidgets.Component.PenroseDiagram" = [ "build/js/penroseDisplay.js" ];
-          "ProofWidgets.Component.Panel.SelectionPanel" = [ "build/js/presentSelection.js" ];
-          "ProofWidgets.Component.Panel.GoalTypePanel" = [ "build/js/goalTypePanel.js" ];
-          "ProofWidgets.Component.MakeEditLink" = [ "build/js/makeEditLink.js" ];
-          "ProofWidgets.Component.OfRpcMethod" = [ "build/js/ofRpcMethod.js" ];
+          "ProofWidgets.Compat" = [ ".lake/build/js/compat.js" ];
+          "ProofWidgets.Component.Basic" = [ ".lake/build/js/interactiveExpr.js" ];
+          "ProofWidgets.Component.GoalTypePanel" = [ ".lake/build/js/goalTypePanel.js" ];
+          "ProofWidgets.Component.Recharts" = [ ".lake/build/js/recharts.js" ];
+          "ProofWidgets.Component.PenroseDiagram" = [ ".lake/build/js/penroseDisplay.js" ];
+          "ProofWidgets.Component.Panel.SelectionPanel" = [ ".lake/build/js/presentSelection.js" ];
+          "ProofWidgets.Component.Panel.GoalTypePanel" = [ ".lake/build/js/goalTypePanel.js" ];
+          "ProofWidgets.Component.MakeEditLink" = [ ".lake/build/js/makeEditLink.js" ];
+          "ProofWidgets.Component.OfRpcMethod" = [ ".lake/build/js/ofRpcMethod.js" ];
           "ProofWidgets.Component.HtmlDisplay" =
-            [ "build/js/htmlDisplay.js" "build/js/htmlDisplayPanel.js"];
-          "ProofWidgets.Presentation.Expr" = [ "build/js/exprPresentation.js" ];
+            [ ".lake/build/js/htmlDisplay.js" ".lake/build/js/htmlDisplayPanel.js"];
+          "ProofWidgets.Presentation.Expr" = [ ".lake/build/js/exprPresentation.js" ];
         };
       };
 
