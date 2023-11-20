@@ -3,19 +3,20 @@
 
   inputs.lean.url = github:nomeata/lean4/for-loogle;
   #inputs.lean.url = github:leanprover/lean4/v4.1.0-rc1;
+  # too bad it's too hard to apply a patch to a nix flake input
 
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.nixpkgs.follows = "lean/nixpkgs";
 
-  inputs.mathlib4.url = "github:leanprover-community/mathlib4/d8a661e5774c5f19bfcd4c896ca839ced394e1ee";
+  inputs.mathlib4.url = "github:leanprover-community/mathlib4/0f76a69bf023c58dfd2201fcd61d48a4e6d32452";
   inputs.mathlib4.flake = false;
-  inputs.std.url = "github:leanprover/std4/fb07d160aff0e8bdf403a78a5167fc7acf9c8227";
+  inputs.std.url = "github:leanprover/std4/a3b80114adc0948ff493f9acb6ee250f76922d80";
   inputs.std.flake = false;
-  inputs.quote4.url = "github:gebner/quote4/511eb96eca98a7474683b8ae55193a7e7c51bc39";
+  inputs.quote4.url = "github:gebner/quote4/d3a1d25f3eba0d93a58d5d3d027ffa78ece07755";
   inputs.quote4.flake = false;
-  inputs.aesop.url = "github:JLimperg/aesop/cb87803274405db79ec578fc07c4730c093efb90";
+  inputs.aesop.url = "github:JLimperg/aesop/bf5ab42a58e71de7ebad399ce3f90d29aae7fca9";
   inputs.aesop.flake = false;
-  inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/f1a5c7808b001305ba07d8626f45ee054282f589";
+  inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/c3b9f0d4ebedc43635d3f7e764e277b1010844b7";
   inputs.ProofWidgets.flake = false;
 
   outputs = { self, nixpkgs, ...}@inputs:

@@ -3,34 +3,34 @@
     "ProofWidgets": {
       "flake": false,
       "locked": {
-        "lastModified": 1698166338,
-        "narHash": "sha256-R0Dk8RRPdGScXu9yGyF9/a6tivjPbsvwHOzykojX4J4=",
+        "lastModified": 1699650575,
+        "narHash": "sha256-xhvIZSbbRycZ4guNCpdrwRjjL2gz0hHFtfLh4G4dBC8=",
         "owner": "EdAyers",
         "repo": "ProofWidgets4",
-        "rev": "f1a5c7808b001305ba07d8626f45ee054282f589",
+        "rev": "c3b9f0d4ebedc43635d3f7e764e277b1010844b7",
         "type": "github"
       },
       "original": {
         "owner": "EdAyers",
         "repo": "ProofWidgets4",
-        "rev": "f1a5c7808b001305ba07d8626f45ee054282f589",
+        "rev": "c3b9f0d4ebedc43635d3f7e764e277b1010844b7",
         "type": "github"
       }
     },
     "aesop": {
       "flake": false,
       "locked": {
-        "lastModified": 1699009992,
-        "narHash": "sha256-7XqHh9DMY7E1z7cY1oYUCu3IV5AXf3Iv8YUXUiuTRH8=",
+        "lastModified": 1699896148,
+        "narHash": "sha256-Gd7YS/n5KkcpYq6RMG23M1mkmYn0oeLJk/pmyHfako0=",
         "owner": "JLimperg",
         "repo": "aesop",
-        "rev": "cb87803274405db79ec578fc07c4730c093efb90",
+        "rev": "bf5ab42a58e71de7ebad399ce3f90d29aae7fca9",
         "type": "github"
       },
       "original": {
         "owner": "JLimperg",
         "repo": "aesop",
-        "rev": "cb87803274405db79ec578fc07c4730c093efb90",
+        "rev": "bf5ab42a58e71de7ebad399ce3f90d29aae7fca9",
         "type": "github"
       }
     },
@@ -57,11 +57,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1699707065,
-        "narHash": "sha256-yojsYYxkXUo8HZlJBFV8QESbBOw4lmYRg9hWVKDt7T0=",
+        "lastModified": 1700474827,
+        "narHash": "sha256-+OkmqoaB2d2KxcxzAQbQp5NRL3jui25xlffTYkLP+Q0=",
         "owner": "nomeata",
         "repo": "lean4",
-        "rev": "3303aec3f30b5b6c548f6b1a8c4ee14591b13440",
+        "rev": "7b31903a02dbac055cbb1366d30836c67380f074",
         "type": "github"
       },
       "original": {
@@ -106,17 +106,17 @@
     "mathlib4": {
       "flake": false,
       "locked": {
-        "lastModified": 1699701643,
-        "narHash": "sha256-2l2iqVQ1RekamG0fqBx87VlmbqqIZEab96ZPJhQ0Xho=",
+        "lastModified": 1700467345,
+        "narHash": "sha256-ztFBSj64kBM5nR3yx8G+c5v2pIstlSK6tF9KrRL5mgw=",
         "owner": "leanprover-community",
         "repo": "mathlib4",
-        "rev": "d8a661e5774c5f19bfcd4c896ca839ced394e1ee",
+        "rev": "0f76a69bf023c58dfd2201fcd61d48a4e6d32452",
         "type": "github"
       },
       "original": {
         "owner": "leanprover-community",
         "repo": "mathlib4",
-        "rev": "d8a661e5774c5f19bfcd4c896ca839ced394e1ee",
+        "rev": "0f76a69bf023c58dfd2201fcd61d48a4e6d32452",
         "type": "github"
       }
     },
@@ -191,17 +191,17 @@
     "quote4": {
       "flake": false,
       "locked": {
-        "lastModified": 1699162668,
-        "narHash": "sha256-B+le3M9yslIZJL25yb8Q6LjYWs9q+fDxwJX7XGHVDpo=",
+        "lastModified": 1700012235,
+        "narHash": "sha256-oL1I+Ri1jj1NLG/9a2V0pawl3qm7ouLGFXH3owRjd1c=",
         "owner": "gebner",
         "repo": "quote4",
-        "rev": "511eb96eca98a7474683b8ae55193a7e7c51bc39",
+        "rev": "d3a1d25f3eba0d93a58d5d3d027ffa78ece07755",
         "type": "github"
       },
       "original": {
         "owner": "gebner",
         "repo": "quote4",
-        "rev": "511eb96eca98a7474683b8ae55193a7e7c51bc39",
+        "rev": "d3a1d25f3eba0d93a58d5d3d027ffa78ece07755",
         "type": "github"
       }
     },
@@ -222,17 +222,17 @@
     "std": {
       "flake": false,
       "locked": {
-        "lastModified": 1699568497,
-        "narHash": "sha256-5PCRdtTmvhB2jHJ+Edrg84kaN8TGDWMazbTvzVj5FYo=",
+        "lastModified": 1700462492,
+        "narHash": "sha256-C5VZjQnNpVEua2eThm3ttIsE/hjnkYfgKKJV4lXK8dQ=",
         "owner": "leanprover",
         "repo": "std4",
-        "rev": "fb07d160aff0e8bdf403a78a5167fc7acf9c8227",
+        "rev": "a3b80114adc0948ff493f9acb6ee250f76922d80",
         "type": "github"
       },
       "original": {
         "owner": "leanprover",
         "repo": "std4",
-        "rev": "fb07d160aff0e8bdf403a78a5167fc7acf9c8227",
+        "rev": "a3b80114adc0948ff493f9acb6ee250f76922d80",
         "type": "github"
       }
     }
