@@ -8,7 +8,7 @@ import Std.Util.Cache
 open Lean Meta
 
 -- Odd to have that namespace in std4
-namespace Mathlib.Tactic
+namespace Std.Tactic
 
 /--
 A type synonym for a `DeclCache` containing a pair of elements.

@@ -200,7 +200,7 @@ def SuffixTrie.find (t : SuffixTrie) (s : String) : Array Name :=
 def SuffixTrie.findSuffix (t : SuffixTrie) (s : String) : Array Name :=
   (Lean.Data.Trie.find? t s.toLower).getD #[]
 
-open Mathlib.Tactic
+open Std.Tactic
 
 /-- The index used by `#find`: A declaration cache with a `NameRel` mapping names to the name
 of constants they are mentinend in, and a declaration cache storing a suffix trie. -/
