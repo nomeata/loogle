@@ -8,6 +8,8 @@
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.nixpkgs.follows = "lean/nixpkgs";
 
+  inputs.flake-utils.url = "github:numtide/flake-utils";
+
   inputs.mathlib4.url = "github:leanprover-community/mathlib4/727562596474ad7ecb60549f8b6f77b4510dd917";
   inputs.mathlib4.flake = false;
   inputs.std.url = "github:leanprover/std4/a3b80114adc0948ff493f9acb6ee250f76922d80";
@@ -19,9 +21,8 @@
   inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/909febc72b4f64628f8d35cd0554f8a90b6e0749";
   inputs.ProofWidgets.flake = false;
 
-  outputs = { self, nixpkgs, ...}@inputs:
+  outputs = { self, nixpkgs, flake-utils, ...}@inputs: flake-utils.lib.eachDefaultSystem (system:
     let
-      system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
       leanPkgs = inputs.lean.packages.${system};
 
@@ -175,19 +176,13 @@
       };
     in
     {
-      packages.${system} = {
+      packages = {
         inherit loogle_seccomp loogle_exe loogle loogle_server loogle_index;
         mathlib = mathlib4_modRoot;
         default = loogle;
       };
 
-      nixosConfigurations.loogle = nixpkgs.lib.nixosSystem {
-        inherit system;
-        specialArgs = { inherit loogle_server nixpkgs self inputs; };
-        modules = [ ./nixos/configuration.nix ];
-      };
-
-      devShells.${system}.default = (pkgs.mkShell.override { stdenv = pkgs.llvmPackages_15.stdenv; }) {
+      devShells.default = (pkgs.mkShell.override { stdenv = pkgs.llvmPackages_15.stdenv; }) {
         packages = with pkgs;
           [ elan
             pkgsStatic.libseccomp
@@ -195,5 +190,15 @@
             my_python
           ];
       };
-    };
+    }) // (let system = "x86_64-linux"; in
+    {
+      nixosConfigurations.loogle = nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = {
+          inherit nixpkgs self inputs;
+          loogle_server = self.packages.${system}.loogle_server;
+        };
+        modules = [ ./nixos/configuration.nix ];
+      };
+    });
 }
