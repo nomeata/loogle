@@ -112,10 +112,10 @@ private partial def matchHyps : List Expr → List Expr → List Expr → MetaM 
 
 /-- Like defEq, but the pattern is a function type, matches parameters up to reordering -/
 def matchUpToHyps (pat: AbstractMVarsResult) (head : HeadIndex) (e : Expr) : MetaM Bool := do
-  forallTelescopeReducing e fun e_params e_concl ↦ do
+  forallTelescope e fun e_params e_concl ↦ do
     if canMatch head e_concl.toHeadIndex then
       let (_, _, pat_e) ← openAbstractMVarsResult pat
-      let (pat_params, _, pat_concl) ← forallMetaTelescopeReducing pat_e
+      let (pat_params, _, pat_concl) ← forallMetaTelescope pat_e
       isDefEq e_concl pat_concl <&&> matchHyps pat_params.toList [] e_params.toList
     else
       pure false
@@ -124,7 +124,7 @@ def matchUpToHyps (pat: AbstractMVarsResult) (head : HeadIndex) (e : Expr) : Met
 lemma matches the pattern.  If the pattern is a function type, it matches up to parameter
 reordering. -/
 def matchConclusion (t : Expr) : MetaM ConstMatcher := withReducible do
-  let head := (← forallMetaTelescopeReducing t).2.2.toHeadIndex
+  let head := (← forallMetaTelescope t).2.2.toHeadIndex
   let pat ← abstractMVars (← instantiateMVars t)
   pure fun (c : ConstantInfo) => withReducible do
     let cTy := c.instantiateTypeLevelParams (← mkFreshLevelMVars c.numLevelParams)
@@ -143,7 +143,7 @@ def Lean.Meta.anyExpr (input : Expr) (pred : Expr → MetaM Bool) : MetaM Bool :
 /-- Takes a pattern (of type `Expr`), and returns a matcher that succeeds if _any_ subexpression
 matches that patttern. If the pattern is a function type, it matches up to parameter reordering. -/
 def matchAnywhere (t : Expr) : MetaM ConstMatcher := withReducible do
-  let head := (← forallMetaTelescopeReducing t).2.2.toHeadIndex
+  let head := (← forallMetaTelescope t).2.2.toHeadIndex
   let pat ← abstractMVars (← instantiateMVars t)
   pure fun (c : ConstantInfo) => withReducible do
     let cTy := c.instantiateTypeLevelParams (← mkFreshLevelMVars c.numLevelParams)
