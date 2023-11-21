@@ -514,7 +514,7 @@ def cachePath : IO FilePath :=
   try
     return (← findOLean `LoogleMathlibCache).withExtension "extra"
   catch _ =>
-    return "build" / "lib" / "LoogleMathlibCache.extra"
+    return ".lake" / "build" / "lib" / "LoogleMathlibCache.extra"
 
 /-- The `DeclCache` used by `#find` -/
 initialize cachedIndex : Index ← unsafe do
