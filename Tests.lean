@@ -421,3 +421,13 @@ Of these, one matches your pattern(s).
 -/
 #guard_msgs in
 #find ↑A.A1 = B.mk
+
+
+def this_peculiar_name_repeats_a_peculiar_substring := true
+/--
+info: Found one definition whose name contains "peculiar".
+Of these, one has a name containing "peculiar".
+• this_peculiar_name_repeats_a_peculiar_substring
+-/
+#guard_msgs in
+#find "peculiar"

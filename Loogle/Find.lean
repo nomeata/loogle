@@ -192,9 +192,9 @@ def SuffixTrie.addDecl (name : Lean.Name) (_ : ConstantInfo) (t : SuffixTrie) :
     return t
   return t.insert name
 
-/-- Search the suffix trie, returning an empty array if nothing matches -/
-def SuffixTrie.find (t : SuffixTrie) (s : String) : Array Name :=
-  Array.flatten (t.findPrefix s.toLower)
+-- /-- Search the suffix trie, returning an empty array if nothing matches -/
+def SuffixTrie.find (t : SuffixTrie) (s : String) : NameSet :=
+  t.findPrefix s.toLower |>.map (RBTree.fromArray (cmp := _)) |>.foldl (init := {}) NameSet.append
 
 /-- Search the suffix trie, returning an empty array if nothing matches -/
 def SuffixTrie.findSuffix (t : SuffixTrie) (s : String) : Array Name :=
@@ -458,11 +458,11 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
           message := message ++ m!"Found one definition mentioning {needlesList}.\n"
         else
           message := message ++ m!"Found {hits.size} definitions mentioning {needlesList}.\n"
-        pure hits.toArray
+        pure hits
 
     -- Filter by name patterns
     let nameMatchers := namePats.map (String.Matcher.ofString ·.toLower)
-    let hits2 := indexHits.filter fun n => nameMatchers.all fun m =>
+    let hits2 := indexHits.toArray.filter fun n => nameMatchers.all fun m =>
       m.find? n.toString.toLower |>.isSome
     unless (namePats.isEmpty) do
       let nameList := MessageData.andList <| namePats.map fun s => m!"\"{s}\""
