@@ -2,6 +2,7 @@ import Lean.Meta
 import Lake.CLI.Error
 import Lake.Util.Cli
 import Std.Util.Pickle
+import Std.Lean.CoreM
 
 import Loogle.Find
 
@@ -48,46 +49,50 @@ def compileTimeSearchPath : SearchPath := #compileTimeSearchPath
 /-- Like `Find.Failure`, but without syntax references and with syntax pretty-printed -/
 def Failure := String × Array String
 
-def Result := Except Failure Find.Result
+def Result := (Except Failure Find.Result × Nat)
 def Printer := Result → CoreM Unit
 
 def runQuery (index : Find.Index) (query : String) : CoreM Result :=
-  withCurrHeartbeats do withCatchingRuntimeEx do
-    try
-      match Parser.runParser (← getEnv) `Loogle.Find.find_filters query with
-      | .error err => pure $ .error (err, #[])
-      | .ok s => do
-        MetaM.run' do
-          match ← TermElabM.run' $ Loogle.Find.find index (.mk s) with
-          | .ok result => pure $ .ok result
-          | .error err => do
-            let suggs ← err.suggestions.mapM fun sugg => do
-              return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty
-            return .error (← err.message.toString, suggs)
-    catch e =>
-      return .error (← e.toMessageData.toString, #[])
+  withCurrHeartbeats do
+    let r ← withCatchingRuntimeEx do
+      try
+        match Parser.runParser (← getEnv) `Loogle.Find.find_filters query with
+        | .error err => pure $ .error (err, #[])
+        | .ok s => do
+          MetaM.run' do
+            match ← TermElabM.run' $ Loogle.Find.find index (.mk s) with
+            | .ok result => pure $ .ok result
+            | .error err => do
+              let suggs ← err.suggestions.mapM fun sugg => do
+                return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty
+              return .error (← err.message.toString, suggs)
+      catch e =>
+        return .error (← e.toMessageData.toString, #[])
+    let heartbeats := ((← IO.getNumHeartbeats) - (← getInitHeartbeats )) / 1000
+    return (r, heartbeats)
 
 def printPlain : Printer
-  | .error (err, suggs) => do
+  | (.error (err, suggs), _) => do
     IO.println err
     unless suggs.isEmpty do
     IO.println "Maybe you meant:"
     suggs.forM (fun s => IO.println ("* " ++ s))
-  | .ok result => do
+  | (.ok result, _) => do
     IO.println (← result.header.toString)
     result.hits.forM fun (ci, mod) => match mod with
       | none => IO.println s!"{ci.name}" -- unlikely to happen in CLI usage
       | some mod => IO.println s!"{ci.name} (from {mod})"
 
 def toJson : Result → CoreM Json -- only in IO for MessageData.toString
-  | .error (err, suggs) => do
+  | (.error (err, suggs), heartbeats) => do
       if suggs.isEmpty then
-        pure $ .mkObj [ ("error", .str err) ]
+        pure $ .mkObj [ ("error", .str err), ("heartbeats", heartbeats) ]
       else
-        pure $ .mkObj [ ("error", .str err), ("suggestions", .arr (suggs.map .str)) ]
-  | .ok result => do
+        pure $ .mkObj [ ("error", .str err), ("suggestions", .arr (suggs.map .str)), ("heartbeats", heartbeats)]
+  | (.ok result, heartbeats) => do
       pure $ .mkObj [
         ("header", ← result.header.toString),
+        ("heartbeats", heartbeats),
         ("count", .num result.count),
         ("hits", .arr $ ← result.hits.mapM fun (ci, mod) => do
           let ty := (← (ppExpr ci.type).run').pretty

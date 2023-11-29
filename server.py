@@ -28,6 +28,7 @@ m_info.info({'loogle': rev1, 'mathlib': rev2})
 m_queries = prometheus_client.Counter('queries', 'Total number of queries')
 m_errors = prometheus_client.Counter('errors', 'Total number of failing queries')
 m_results = prometheus_client.Summary('results', 'Results per query')
+m_heartbeats = prometheus_client.Summary('heartbeats', 'Heartbeats per query')
 
 examples = [
     "Real.sin",
@@ -99,6 +100,8 @@ class Loogle():
             m_errors.inc()
         if "count" in output:
             m_results.observe(output["count"])
+        if "heartbeats" in output:
+            m_heartbeats.observe(output["heartbeats"])
         return output
 
 
