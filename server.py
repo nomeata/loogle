@@ -18,10 +18,16 @@ serverPort = 8080
 blurb = open("./blurb.html","rb").read()
 icon = open("./loogle.png","rb").read()
 
-# Prometheus setup
+rev1 = os.getenv("LOOGLE_REV", default = "dirty")
+rev2 = os.getenv("MATHLIB_REV", default = "dirty")
 
-from prometheus_client import Counter, MetricsHandler
-m_queries = Counter('queries', 'Total number of queries')
+# Prometheus setup
+import prometheus_client
+m_info = prometheus_client.Info('versions', 'Lean and mathlib versions')
+m_info.info({'lean': rev1, 'mathlib': rev2})
+m_queries = prometheus_client.Counter('queries', 'Total number of queries')
+m_errors = prometheus_client.Counter('errors', 'Total number of failing queries')
+m_results = prometheus_client.Summary('results', 'Results per query')
 
 examples = [
     "Real.sin",
@@ -38,13 +44,13 @@ class Loogle():
     def start(self):
         self.starting = True
         self.loogle = subprocess.Popen(
-            #["./build/bin/loogle","--json", "--interactive", "--module","Std.Data.List.Lemmas"],
-            ["./build/bin/loogle","--json", "--interactive"],
+            #[".lake/build/bin/loogle","--json", "--interactive", "--module","Std.Data.List.Lemmas"],
+            [".lake/build/bin/loogle","--json", "--interactive"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
 
-    def query(self, query):
+    def do_query(self, query):
         if self.starting:
             r, w, e = select.select([ self.loogle.stdout ], [], [], 0)
             if self.loogle.stdout in r:
@@ -86,6 +92,17 @@ class Loogle():
                 self.start()
                 return {"error": "The backend process did not respond, killing and restarting..."}
 
+    def query(self, query):
+        output = self.do_query(query)
+        # Update metrics
+        if "error" in output:
+            m_errors.inc()
+        if "hits" in output:
+            m_results.observe(len(output["hits"]))
+        return output
+
+
+
 loogle = Loogle()
 
 # link formatting
@@ -106,7 +123,7 @@ def zulHit(hit):
 def zulQuery(sugg):
     return f"[`{sugg}`]({querylink(sugg)})"
 
-class MyHandler(MetricsHandler):
+class MyHandler(prometheus_client.MetricsHandler):
 
     def return404(self):
         self.send_response(404)
@@ -306,8 +323,6 @@ class MyHandler(MetricsHandler):
 
         self.wfile.write(blurb)
 
-        rev1 = os.getenv("LOOGLE_REV", default = "dirty")
-        rev2 = os.getenv("MATHLIB_REV", default = "dirty")
         if rev1 != "dirty" and rev2 != "dirty":
             self.wfile.write(bytes(f"""
                 <p><small>This is Loogle revision <a href="https://github.com/nomeata/loogle/commit/{rev1}"><code>{rev1[:7]}</code></a> serving mathlib revision <a href="https://github.com/leanprover-community/mathlib4/commit/{rev2}"><code>{rev2[:7]}</code></a></small></p>

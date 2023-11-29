@@ -168,7 +168,7 @@
         dontUnpack = true;
         installPhase = ''
           install -Dm755 ${./server.py} $out/bin/loogle_server
-          substituteInPlace $out/bin/loogle_server --replace ./build/bin/loogle ${loogle}/bin/loogle
+          substituteInPlace $out/bin/loogle_server --replace .lake/build/bin/loogle ${loogle}/bin/loogle
           cp -v ${./blurb.html} $out/blurb.html
           cp -v ${./loogle.png} $out/loogle.png
         '';
