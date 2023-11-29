@@ -51,20 +51,21 @@ def Failure := String × Array String
 def Result := Except Failure Find.Result
 def Printer := Result → CoreM Unit
 
-def runQuery (index : Find.Index) (query : String) : CoreM Result  := withCurrHeartbeats do
-  match Parser.runParser (← getEnv) `Loogle.Find.find_filters query with
-  | .error err => pure $ .error (err, #[])
-  | .ok s => do
-    MetaM.run' do
-      try
-        match ← TermElabM.run' $ Loogle.Find.find index (.mk s) with
-        | .ok result => pure $ .ok result
-        | .error err => do
-          let suggs ← err.suggestions.mapM fun sugg => do
-            return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty
-          pure $ .error (← err.message.toString, suggs)
-      catch e =>
-        pure $ .error (← e.toMessageData.toString, #[])
+def runQuery (index : Find.Index) (query : String) : CoreM Result :=
+  withCurrHeartbeats do withCatchingRuntimeEx do
+    try
+      match Parser.runParser (← getEnv) `Loogle.Find.find_filters query with
+      | .error err => pure $ .error (err, #[])
+      | .ok s => do
+        MetaM.run' do
+          match ← TermElabM.run' $ Loogle.Find.find index (.mk s) with
+          | .ok result => pure $ .ok result
+          | .error err => do
+            let suggs ← err.suggestions.mapM fun sugg => do
+              return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty
+            return .error (← err.message.toString, suggs)
+    catch e =>
+      return .error (← e.toMessageData.toString, #[])
 
 def printPlain : Printer
   | .error (err, suggs) => do
