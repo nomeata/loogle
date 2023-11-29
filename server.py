@@ -24,7 +24,7 @@ rev2 = os.getenv("MATHLIB_REV", default = "dirty")
 # Prometheus setup
 import prometheus_client
 m_info = prometheus_client.Info('versions', 'Lean and mathlib versions')
-m_info.info({'lean': rev1, 'mathlib': rev2})
+m_info.info({'loogle': rev1, 'mathlib': rev2})
 m_queries = prometheus_client.Counter('queries', 'Total number of queries')
 m_errors = prometheus_client.Counter('errors', 'Total number of failing queries')
 m_results = prometheus_client.Summary('results', 'Results per query')
