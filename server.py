@@ -97,8 +97,8 @@ class Loogle():
         # Update metrics
         if "error" in output:
             m_errors.inc()
-        if "hits" in output:
-            m_results.observe(len(output["hits"]))
+        if "count" in output:
+            m_results.observe(output["count"])
         return output
 
 
