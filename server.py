@@ -65,7 +65,6 @@ class Loogle():
             else:
                 return {"error": "The backend process is starting up, please try again later..."}
         try:
-            m_queries.inc()
             self.loogle.stdin.write(bytes(query, "utf8"));
             self.loogle.stdin.write(b"\n");
             self.loogle.stdin.flush();
@@ -94,6 +93,7 @@ class Loogle():
                 return {"error": "The backend process did not respond, killing and restarting..."}
 
     def query(self, query):
+        m_queries.inc()
         output = self.do_query(query)
         # Update metrics
         if "error" in output:
