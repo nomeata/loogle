@@ -27,8 +27,8 @@ m_info = prometheus_client.Info('versions', 'Lean and mathlib versions')
 m_info.info({'loogle': rev1, 'mathlib': rev2})
 m_queries = prometheus_client.Counter('queries', 'Total number of queries')
 m_errors = prometheus_client.Counter('errors', 'Total number of failing queries')
-m_results = prometheus_client.Summary('results', 'Results per query')
-m_heartbeats = prometheus_client.Summary('heartbeats', 'Heartbeats per query')
+m_results = prometheus_client.Histogram('results', 'Results per query', buckets=(0,1,2,5,10,50,100,200,500,1000))
+m_heartbeats = prometheus_client.Histogram('heartbeats', 'Heartbeats per query', buckets=(1e1,1e2,1e3,1e4,1e5,1e6))
 
 examples = [
     "Real.sin",
