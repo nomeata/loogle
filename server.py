@@ -296,12 +296,6 @@ class MyHandler(prometheus_client.MetricsHandler):
                 <h2>Error</h2>
                 <pre>{html.escape(result['error'])}</pre>
             """, "utf-8"))
-        if "suggestions" in result:
-            self.wfile.write(b'<h2>Did you maybe mean</h2><ul>')
-            for sugg in result["suggestions"]:
-                link = locallink(sugg)
-                self.wfile.write(bytes(f'<li>🔍 <a href={link}><code>{html.escape(sugg)}</code></a></li>', "utf-8"))
-            self.wfile.write(b'</ul>')
         if "header" in result:
             self.wfile.write(b"""
                 <h2>Result</h2>
@@ -323,6 +317,12 @@ class MyHandler(prometheus_client.MetricsHandler):
             self.wfile.write(b"""
                 </ul>
             """)
+        if "suggestions" in result:
+            self.wfile.write(b'<h2>Did you maybe mean</h2><ul>')
+            for sugg in result["suggestions"]:
+                link = locallink(sugg)
+                self.wfile.write(bytes(f'<li>🔍 <a href={link}><code>{html.escape(sugg)}</code></a></li>', "utf-8"))
+            self.wfile.write(b'</ul>')
 
         self.wfile.write(blurb)
 

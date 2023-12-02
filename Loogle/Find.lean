@@ -369,6 +369,8 @@ structure Result where
   count : Nat
   /-- Matching definition (with defining module, if imported)  -/
   hits : Array (ConstantInfo × Option Name)
+  /-- Alternative suggestions  -/
+  suggestions : Array (TSyntax ``find_filters)
 
 /-- Negative result  of `find` -/
 structure Failure where
@@ -501,7 +503,15 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
       let modName : Option Name := do env.header.moduleNames[(← mi).toNat]!
       (ci, modName)
 
-    return .ok ⟨message, hits4.size, hits7⟩
+    -- If searching by names had hits, but searching by patterns does not,
+    -- suggest search just by names
+    let mut suggestions := #[]
+    if !needles.isEmpty && !indexHits.isEmpty && hits7.isEmpty then
+      let is := needles.toArray.map Lean.mkIdent
+      let sugg ← `(find_filters| $[$is:ident],*)
+      suggestions := suggestions.push sugg
+
+    return .ok ⟨message, hits4.size, hits7, suggestions⟩
 
 /-
 ###  The per-module cache used by the `#find` command

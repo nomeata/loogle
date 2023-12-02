@@ -47,32 +47,35 @@ elab "#compileTimeSearchPath" : term => do
 def compileTimeSearchPath : SearchPath := #compileTimeSearchPath
 
 /-- Like `Find.Failure`, but without syntax references and with syntax pretty-printed -/
-def Failure := String × Array String
+abbrev Failure := String
 
-def Result := (Except Failure Find.Result × Nat)
+def Result := (Except Failure Find.Result × Array String × Nat)
 def Printer := Result → CoreM Unit
 
 def runQuery (index : Find.Index) (query : String) : CoreM Result :=
   withCurrHeartbeats do
-    let r ← withCatchingRuntimeEx do
+    let (r, suggs) ← withCatchingRuntimeEx do
       try
         match Parser.runParser (← getEnv) `Loogle.Find.find_filters query with
-        | .error err => pure $ .error (err, #[])
+        | .error err => pure $ (.error err, #[])
         | .ok s => do
           MetaM.run' do
             match ← TermElabM.run' $ Loogle.Find.find index (.mk s) with
-            | .ok result => pure $ .ok result
+            | .ok result => do
+              let suggs ← result.suggestions.mapM fun sugg => do
+                return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty
+              pure $ (.ok result, suggs)
             | .error err => do
               let suggs ← err.suggestions.mapM fun sugg => do
                 return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty
-              return .error (← err.message.toString, suggs)
+              return (.error (← err.message.toString), suggs)
       catch e =>
-        return .error (← e.toMessageData.toString, #[])
+        return (.error (← e.toMessageData.toString), #[])
     let heartbeats := ((← IO.getNumHeartbeats) - (← getInitHeartbeats )) / 1000
-    return (r, heartbeats)
+    return (r, suggs, heartbeats)
 
 def printPlain : Printer
-  | (.error (err, suggs), _) => do
+  | (.error err, suggs, _) => do
     IO.println err
     unless suggs.isEmpty do
     IO.println "Maybe you meant:"
@@ -84,12 +87,12 @@ def printPlain : Printer
       | some mod => IO.println s!"{ci.name} (from {mod})"
 
 def toJson : Result → CoreM Json -- only in IO for MessageData.toString
-  | (.error (err, suggs), heartbeats) => do
+  | (.error err, suggs, heartbeats) => do
       if suggs.isEmpty then
         pure $ .mkObj [ ("error", .str err), ("heartbeats", heartbeats) ]
       else
         pure $ .mkObj [ ("error", .str err), ("suggestions", .arr (suggs.map .str)), ("heartbeats", heartbeats)]
-  | (.ok result, heartbeats) => do
+  | (.ok result, suggs, heartbeats) => do
       pure $ .mkObj [
         ("header", ← result.header.toString),
         ("heartbeats", heartbeats),
@@ -106,7 +109,8 @@ def toJson : Result → CoreM Json -- only in IO for MessageData.toString
             ("module", mod ),
             ("doc", ds )
           ]
-        )
+        ),
+        ("suggestions", .arr (suggs.map .str))
       ]
 
 def printJson : Printer := fun r => do
