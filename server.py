@@ -29,6 +29,8 @@ m_queries = prometheus_client.Counter('queries', 'Total number of queries')
 m_errors = prometheus_client.Counter('errors', 'Total number of failing queries')
 m_results = prometheus_client.Histogram('results', 'Results per query', buckets=(0,1,2,5,10,50,100,200,500,1000))
 m_heartbeats = prometheus_client.Histogram('heartbeats', 'Heartbeats per query', buckets=(0,2e0,2e1,2e2,2e3,2e4))
+m_client = prometheus_client.Counter('clients', 'Clients used', ["client"])
+for l in ("web", "zulip", "json", "nvim", "vscode"): m_client.labels(l)
 
 examples = [
     "Real.sin",
@@ -181,6 +183,8 @@ class MyHandler(prometheus_client.MetricsHandler):
             self.send_response(400)
             self.end_headers()
             return
+        m_client.labels("zulip").inc()
+
         length = int(self.headers.get('content-length'))
         message = json.loads(self.rfile.read(length))
 
@@ -241,6 +245,16 @@ class MyHandler(prometheus_client.MetricsHandler):
         url_query = url.query
         params = urllib.parse.parse_qs(url_query)
         if "q" in params and len(params["q"]) == 1:
+            if want_json:
+                if "vscode" in self.headers["user-agent"]:
+                    m_client.labels("vscode").inc()
+                elif "nvim.lean" in self.headers["user-agent"]:
+                    m_client.lables("nvim").inc()
+                else:
+                    m_client.labels("json").inc()
+            else:
+                m_client.labels("web").inc()
+
             query = params["q"][0].strip().removeprefix("#find ").strip()
             if query:
                 if "\n" in query:
@@ -252,6 +266,7 @@ class MyHandler(prometheus_client.MetricsHandler):
                 if "hits" in result and len(result["hits"]) >= 1:
                     self.returnRedirect(doclink(result["hits"][0]))
                     return
+
 
         if want_json:
             self.returnJSON(result)
