@@ -3,34 +3,34 @@
     "ProofWidgets": {
       "flake": false,
       "locked": {
-        "lastModified": 1700451233,
-        "narHash": "sha256-cjwj5sWhfPROh0MWorpvSfTqyqF1+/RE682Gt0mlZLE=",
+        "lastModified": 1703210782,
+        "narHash": "sha256-cr1iMZuDCnxtSGdcvPAVRIP70sdLjM9SMRRSU4mmT3U=",
         "owner": "EdAyers",
         "repo": "ProofWidgets4",
-        "rev": "909febc72b4f64628f8d35cd0554f8a90b6e0749",
+        "rev": "31d41415d5782a196999d4fd8eeaef3cae386a5f",
         "type": "github"
       },
       "original": {
         "owner": "EdAyers",
         "repo": "ProofWidgets4",
-        "rev": "909febc72b4f64628f8d35cd0554f8a90b6e0749",
+        "rev": "31d41415d5782a196999d4fd8eeaef3cae386a5f",
         "type": "github"
       }
     },
     "aesop": {
       "flake": false,
       "locked": {
-        "lastModified": 1700501763,
-        "narHash": "sha256-xBbZ/QVu0VdUAZMYScb9dnu7jKHcaeEBPZyTxQAFBM4=",
+        "lastModified": 1703200873,
+        "narHash": "sha256-AA7zI08o6h3juV7pTzcdkAW/tpY+QfaNZvrA8+evfeY=",
         "owner": "JLimperg",
         "repo": "aesop",
-        "rev": "c7cff4551258d31c0d2d453b3f9cbca757d445f1",
+        "rev": "69404390bdc1de946bf0a2e51b1a69f308e56d7a",
         "type": "github"
       },
       "original": {
         "owner": "JLimperg",
         "repo": "aesop",
-        "rev": "c7cff4551258d31c0d2d453b3f9cbca757d445f1",
+        "rev": "69404390bdc1de946bf0a2e51b1a69f308e56d7a",
         "type": "github"
       }
     },
@@ -106,17 +106,17 @@
     "mathlib4": {
       "flake": false,
       "locked": {
-        "lastModified": 1701429535,
-        "narHash": "sha256-8l1N8hMX3yQ9hZzApNzf5Jmsdx1jE/ac2/KEIA9sLmk=",
+        "lastModified": 1703356975,
+        "narHash": "sha256-inhRl+Gia9Ht1W04tPfSqIaOj1ENUk2MLWutuI5gVAQ=",
         "owner": "leanprover-community",
         "repo": "mathlib4",
-        "rev": "e368f2a55ed7296e8b0f072b5c5a07d981daecbe",
+        "rev": "4a335977d31a2993f09064e9267fa169cdbf20ca",
         "type": "github"
       },
       "original": {
         "owner": "leanprover-community",
         "repo": "mathlib4",
-        "rev": "e368f2a55ed7296e8b0f072b5c5a07d981daecbe",
+        "rev": "4a335977d31a2993f09064e9267fa169cdbf20ca",
         "type": "github"
       }
     },
@@ -191,17 +191,17 @@
     "quote4": {
       "flake": false,
       "locked": {
-        "lastModified": 1700012235,
-        "narHash": "sha256-oL1I+Ri1jj1NLG/9a2V0pawl3qm7ouLGFXH3owRjd1c=",
+        "lastModified": 1701446836,
+        "narHash": "sha256-EHHwoz+BhAokcwzJhlyz22K6jvG21mS1w7GX3IwkHXc=",
         "owner": "gebner",
         "repo": "quote4",
-        "rev": "d3a1d25f3eba0d93a58d5d3d027ffa78ece07755",
+        "rev": "ccba5d35d07a448fab14c0e391c8105df6e2564c",
         "type": "github"
       },
       "original": {
         "owner": "gebner",
         "repo": "quote4",
-        "rev": "d3a1d25f3eba0d93a58d5d3d027ffa78ece07755",
+        "rev": "ccba5d35d07a448fab14c0e391c8105df6e2564c",
         "type": "github"
       }
     },
@@ -222,17 +222,17 @@
     "std": {
       "flake": false,
       "locked": {
-        "lastModified": 1701313252,
-        "narHash": "sha256-A/ZgLvj2SPNmO7MmWlU2LxGKqnUZIbVqsIh6Rbv/A1k=",
+        "lastModified": 1703200362,
+        "narHash": "sha256-xEX5/fdbEYTs8BL8cWUxQylS90BtuFy/qTp4aMatwsU=",
         "owner": "leanprover",
         "repo": "std4",
-        "rev": "2e4a3586a8f16713f16b2d2b3af3d8e65f3af087",
+        "rev": "ee49cf8fada1bf5a15592c399a925c401848227f",
         "type": "github"
       },
       "original": {
         "owner": "leanprover",
         "repo": "std4",
-        "rev": "2e4a3586a8f16713f16b2d2b3af3d8e65f3af087",
+        "rev": "ee49cf8fada1bf5a15592c399a925c401848227f",
         "type": "github"
       }
     }
