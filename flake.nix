@@ -127,6 +127,9 @@
         roots = [ "Seccomp" ];
         deps = leanPkgs.stdlib;
         staticLibDeps = [ loogle_seccomp ];
+        overrideBuildModAttrs = self: super: {
+          LOOGLE_SECCOMP = true;
+        };
       };
 
       looglePkg = leanPkgs.buildLeanPackage {
