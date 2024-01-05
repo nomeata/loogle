@@ -8,15 +8,15 @@
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.nixpkgs.follows = "lean/nixpkgs";
 
-  inputs.mathlib4.url = "github:leanprover-community/mathlib4/4a335977d31a2993f09064e9267fa169cdbf20ca";
+  inputs.mathlib4.url = "github:leanprover-community/mathlib4/03bf774359b9e2b8ea4f21537284b015731dee35";
   inputs.mathlib4.flake = false;
-  inputs.std.url = "github:leanprover/std4/ee49cf8fada1bf5a15592c399a925c401848227f";
+  inputs.std.url = "github:leanprover/std4/0f6bc5b32bf5b0498902d3b5f0806c75530539d5";
   inputs.std.flake = false;
-  inputs.quote4.url = "github:gebner/quote4/ccba5d35d07a448fab14c0e391c8105df6e2564c";
+  inputs.quote4.url = "github:gebner/quote4/1c88406514a636d241903e2e288d21dc6d861e01";
   inputs.quote4.flake = false;
   inputs.aesop.url = "github:JLimperg/aesop/69404390bdc1de946bf0a2e51b1a69f308e56d7a";
   inputs.aesop.flake = false;
-  inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/31d41415d5782a196999d4fd8eeaef3cae386a5f";
+  inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/8dd18350791c85c0fc9adbd6254c94a81d260d35";
   inputs.ProofWidgets.flake = false;
 
   outputs = { self, nixpkgs, ...}@inputs:
