@@ -2,9 +2,7 @@
 
 set -e
 
-drv="$(nix path-info --derivation .#nixosConfigurations.loogle.config.system.build.toplevel)"
-echo "Derivation: $drv"
-path="$(nix show-derivation "$drv" | jq -r '.[].outputs.out.path')"
+path="$(nix derivation show .#nixosConfigurations.loogle.config.system.build.toplevel | jq -r '.[].outputs.out.path')"
 echo "Output path: $path"
 
 echo "Checking if it is avaliable on garnix"
