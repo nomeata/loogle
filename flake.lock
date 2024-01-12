@@ -49,6 +49,23 @@
         "type": "github"
       }
     },
+    "importGraph": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1704804529,
+        "narHash": "sha256-AtA5nRRwRgUpv9ctqLYRdw1THMR8EeyfK+R+tHq8Rkg=",
+        "owner": "leanprover-community",
+        "repo": "import-graph",
+        "rev": "6f42d2822aba47eb690ed98c508a23e6f0becce2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "leanprover-community",
+        "repo": "import-graph",
+        "rev": "6f42d2822aba47eb690ed98c508a23e6f0becce2",
+        "type": "github"
+      }
+    },
     "lean": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -209,6 +226,7 @@
       "inputs": {
         "ProofWidgets": "ProofWidgets",
         "aesop": "aesop",
+        "importGraph": "importGraph",
         "lean": "lean",
         "mathlib4": "mathlib4",
         "nixpkgs": [

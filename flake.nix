@@ -18,6 +18,8 @@
   inputs.aesop.flake = false;
   inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/8dd18350791c85c0fc9adbd6254c94a81d260d35";
   inputs.ProofWidgets.flake = false;
+  inputs.importGraph.url = "github:leanprover-community/import-graph/6f42d2822aba47eb690ed98c508a23e6f0becce2";
+  inputs.importGraph.flake = false;
 
   outputs = { self, nixpkgs, ...}@inputs:
     let
@@ -41,6 +43,13 @@
         name = "Aesop";
         src = inputs.aesop;
         roots = [ "Aesop" ];
+        deps = [std];
+      };
+
+      importGraph = leanPkgs.buildLeanPackage {
+        name = "importGraph";
+        src = inputs.importGraph;
+        roots = [ "ImportGraph" ];
         deps = [std];
       };
 
@@ -94,7 +103,7 @@
           "-DautoImplicit=false"
           "-DrelaxedAutoImplicit=false"
         ];
-        deps = [std quote4 aesop ProofWidgets];
+        deps = [std quote4 aesop ProofWidgets importGraph];
         overrideBuildModAttrs = addFakeFiles {
           "Mathlib.Tactic.Widget.CommDiag" = [
             "widget/src/penrose/commutative.dsl"
