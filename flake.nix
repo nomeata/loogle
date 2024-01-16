@@ -8,9 +8,9 @@
   inputs.nixpkgs.url = github:NixOS/nixpkgs;
   inputs.nixpkgs.follows = "lean/nixpkgs";
 
-  inputs.mathlib4.url = "github:leanprover-community/mathlib4/c1cd6459c24cdd591e94efe695e2256a28974ba5";
+  inputs.mathlib4.url = "github:leanprover-community/mathlib4/b4cd3132fe069277f225fde5e0a5ecba95b9a57f";
   inputs.mathlib4.flake = false;
-  inputs.std.url = "github:leanprover/std4/0b2e962a80b98df1c6455f8ae11f2bd16809067c";
+  inputs.std.url = "github:leanprover/std4/ca91956e8d5c311e00d6a69eb93d5eb5eef9b37d";
   inputs.std.flake = false;
   inputs.quote4.url = "github:gebner/quote4/1c88406514a636d241903e2e288d21dc6d861e01";
   inputs.quote4.flake = false;
@@ -18,7 +18,7 @@
   inputs.aesop.flake = false;
   inputs.ProofWidgets.url = "github:EdAyers/ProofWidgets4/8dd18350791c85c0fc9adbd6254c94a81d260d35";
   inputs.ProofWidgets.flake = false;
-  inputs.importGraph.url = "github:leanprover-community/import-graph/6f42d2822aba47eb690ed98c508a23e6f0becce2";
+  inputs.importGraph.url = "github:leanprover-community/import-graph/7d051a52c49ac25ee5a04c7a2a70148cc95ddab3";
   inputs.importGraph.flake = false;
 
   outputs = { self, nixpkgs, ...}@inputs:
