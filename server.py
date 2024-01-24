@@ -18,8 +18,22 @@ serverPort = 8080
 blurb = open("./blurb.html","rb").read()
 icon = open("./loogle.png","rb").read()
 
-rev1 = os.getenv("LOOGLE_REV", default = "dirty")
-rev2 = os.getenv("MATHLIB_REV", default = "dirty")
+rev1 = os.getenv("LOOGLE_REV")
+if rev1 is None:
+    try:
+        rev1 = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('ascii').strip()
+    except _:
+        rev1 = "UNKNOWN"
+rev2 = os.getenv("MATHLIB_REV")
+if rev2 is None:
+    rev2 = "UNKNOWN"
+    try:
+        manifest = json.load(open('lake-manifest.json'))
+        for package in manifest['packages']:
+            if package['name'] == "mathlib":
+                rev2 = package['rev']
+    except _:
+        pass
 
 # Prometheus setup
 import prometheus_client
@@ -341,10 +355,9 @@ class MyHandler(prometheus_client.MetricsHandler):
 
         self.wfile.write(blurb)
 
-        if rev1 != "dirty" and rev2 != "dirty":
-            self.wfile.write(bytes(f"""
-                <p><small>This is Loogle revision <a href="https://github.com/nomeata/loogle/commit/{rev1}"><code>{rev1[:7]}</code></a> serving mathlib revision <a href="https://github.com/leanprover-community/mathlib4/commit/{rev2}"><code>{rev2[:7]}</code></a></small></p>
-            """, "utf-8"))
+        self.wfile.write(bytes(f"""
+            <p><small>This is Loogle revision <a href="https://github.com/nomeata/loogle/commit/{rev1}"><code>{rev1[:7]}</code></a> serving mathlib revision <a href="https://github.com/leanprover-community/mathlib4/commit/{rev2}"><code>{rev2[:7]}</code></a></small></p>
+        """, "utf-8"))
 
         self.wfile.write(b"""
             </main>
