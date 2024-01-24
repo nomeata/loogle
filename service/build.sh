@@ -47,11 +47,11 @@ echo "Building loogle"
 lake build loogle
 
 echo "Building mathlib cache"
-lake build LoogleMathlibCache
+lake exec loogle --write-index ./.lake/build/lib/LoogleMathlibCache.extra
 
 echo "Sanity checks"
 echo "Does .extra exist?"
-test -e ./.lake/build/lib/LoogleMathlibCache.extra
+ls -sh ./.lake/build/lib/LoogleMathlibCache.extra
 echo "Does the binary exist?"
 test -x ./.lake/build/bin/loogle
 
