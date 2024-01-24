@@ -5,7 +5,8 @@ let
 in {
   imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
 
-  # for testing
+  # for testing with
+  # nix run .#nixosConfigurations.loogle.config.system.build.vm
   virtualisation.vmVariant = {
     virtualisation.forwardPorts = [
       { from = "host"; host.port = 8888; guest.port = 80; }
@@ -42,7 +43,7 @@ in {
   nix.settings.experimental-features = ["nix-command" "flakes"];
   nix.registry.nixpkgs.flake = nixpkgs;
   nix.nixPath = [
-    "nixpkgs=/etc/nixpkgs/channels/nixpkgs}"
+    "nixpkgs=/etc/nixpkgs/channels/nixpkgs"
     "/nix/var/nix/profiles/per-user/root/channels"
   ];
   systemd.tmpfiles.rules = [
@@ -53,6 +54,7 @@ in {
   documentation.enable = false;
 
   environment.systemPackages = [
+    pkgs.lsof
     self.packages.${pkgs.system}.loogle-updater
   ];
 
@@ -113,7 +115,7 @@ in {
     ];
     path = [
       (pkgs.python3.withPackages(p: with p; [prometheus-client]))
-      pkgs.git
+      pkgs.gitMinimal
     ];
     serviceConfig = {
       Type = "simple";
@@ -148,8 +150,6 @@ in {
   systemd.services.loogle-updater = {
     wants = ["network-online.target"];
     after = ["network-online.target"];
-
-    path = with pkgs; [ elan git ];
 
     startAt = "00/6:00"; #  repeat every 6 hours
     serviceConfig = {

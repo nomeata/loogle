@@ -36,7 +36,7 @@
   nix.settings.experimental-features = ["nix-command" "flakes"];
   nix.registry.nixpkgs.flake = nixpkgs;
   nix.nixPath = [
-    "nixpkgs=/etc/nixpkgs/channels/nixpkgs}"
+    "nixpkgs=/etc/nixpkgs/channels/nixpkgs"
     "/nix/var/nix/profiles/per-user/root/channels"
   ];
   systemd.tmpfiles.rules = [
