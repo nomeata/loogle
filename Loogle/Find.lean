@@ -4,7 +4,6 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Joachim Breitner
 -/
 import Lean
-import Lean.Data.Trie
 import Std.Lean.Delaborator
 import Std.Data.String.Basic
 import Std.Util.Pickle
@@ -13,6 +12,7 @@ import Loogle.Cache
 import Loogle.NameRel
 import Loogle.RBTree
 import Loogle.BlackListed
+import Loogle.Trie
 
 /-!
 # The `#find` command and tactic.
@@ -172,7 +172,7 @@ private def addDecl (name : Lean.Name) (c : ConstantInfo) (m : NameRel) : MetaM 
 
 
 /-- A suffix trie for `Name`s -/
-def SuffixTrie := Lean.Data.Trie (Array Name)
+def SuffixTrie := Loogle.Trie (Array Name)
 deriving Nonempty
 
 /-- Insert a `Name` into a `SuffixTrie` -/
@@ -198,7 +198,7 @@ def SuffixTrie.find (t : SuffixTrie) (s : String) : NameSet :=
 
 /-- Search the suffix trie, returning an empty array if nothing matches -/
 def SuffixTrie.findSuffix (t : SuffixTrie) (s : String) : Array Name :=
-  (Lean.Data.Trie.find? t s.toLower).getD #[]
+  (Loogle.Trie.find? t s.toLower).getD #[]
 
 open Std.Tactic
 
