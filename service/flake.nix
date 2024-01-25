@@ -11,7 +11,7 @@
       packages.${system} = {
         loogle-updater =
           let deps = [
-            pkgs.git
+            pkgs.gitMinimal
             pkgs.elan
             pkgs.coreutils
             pkgs.curl

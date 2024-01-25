@@ -121,12 +121,14 @@ in {
       Type = "simple";
       User = "loogle";
       Restart = "always";
-      ConditionPathExists = "/home/loogle/deploy/live";
       WorkingDirectory = "/home/loogle/deploy/live";
       ExecStart = "/home/loogle/deploy/live/server.py";
       NoNewPrivileges = true;
       ProtectSystem = "strict";
       ProtectHome = "read-only";
+    };
+    unitConfig = {
+      ConditionPathExists = "/home/loogle/deploy/live";
     };
   };
 
@@ -142,7 +144,7 @@ in {
     wantedBy = [ "multi-user.target" ];
     pathConfig = {
       PathChanged = [
-        "/home/loogle/deploy/live"
+        "/home/loogle/deploy"
       ];
     };
   };
@@ -155,7 +157,7 @@ in {
     serviceConfig = {
       User = "loogle";
       WorkingDirectory = "~";
-      ExecStart = "${self.packages.${pkgs.system}.loogle-updater}/bin/loogle-updater /home/loogle/deploy";
+      ExecStart = "${self.packages.${pkgs.system}.loogle-updater}/bin/loogle-updater /home/loogle";
 #      Restart = "on-failure";
       NoNewPrivileges = true;
       ProtectSystem = "strict";

@@ -3,12 +3,12 @@
 # Usage: $0 dest/
 #
 # This script
-# * creates a temporary directory in dest/
+# * creates a temporary directory in dest/build/
 # * fetches the latest loogle
 # * runs lake update to get the latest mathlib
 # * builds the loogle binary and the mathlib cache
 # * does a quick sanity check
-# * atomically replaces the dest/live symlink
+# * atomically replaces the dest/deploy/live symlink
 # * if successful, delets all other directories
 
 set -e
@@ -19,19 +19,17 @@ if [ -z "$DEST" ]; then
     exit 1
 fi
 
-mkdir -p "$DEST"
+mkdir -p "$DEST/build" "$DEST/deploy"
 cd "$DEST"
 
 workdir="deploy-$(date --iso=seconds)"
 logfile="$workdir.log"
-exec &> >(tee -a "$logfile")
+exec &> >(tee -a "build/$logfile")
 
-echo "Working in $DEST/$workdir"
-mkdir -p "$workdir"
-
+echo "Working in $DEST/build/$workdir"
 echo "Cloning loogle"
-git clone --depth=1 https://github.com/nomeata/loogle.git "$workdir"
-cd "$workdir"
+git clone --depth=1 https://github.com/nomeata/loogle.git "build/$workdir"
+cd "build/$workdir"
 git log -n 1
 
 echo "Replace toolchain by mathlib's"
@@ -69,11 +67,11 @@ echo "Size of .lake"
 ls -sh .lake
 
 echo "All good, going live"
-cd ..
+cd .. # in build/ now
 
 rm -f tmp
-ln -s "$workdir" tmp
-mv -T tmp live
+ln -s "../build/$workdir" tmp
+mv -T tmp ../deploy/live
 
 for file in deploy-*; do
   if [ "$file" != "$workdir" ] && [ "$file" != "$logfile" ]; then
