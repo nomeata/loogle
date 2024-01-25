@@ -34,19 +34,6 @@ the index for Mathlib.
 
 [elan]: https://github.com/leanprover/elan
 
-Running locally (with nix)
---------------------------
-
-You can also build it with nix. The first time this will take several hours as
-it builds all of mathlib:
-
-1. check out this repository
-2. `nix run -L ./#loogle -- --help`
-
-If you configure nix to use the [Garnix cache](https://garnix.io/docs/caching)
-it will be faster.
-
-
 CLI Usage
 ---------
 
@@ -71,13 +58,14 @@ Web service
 -----------
 
 This tools is the backend of <https://loogle.lean-lang.org/>. This is currently
-running on a 2GB Hetzner virtual host with a nixos system (see `./nixos`) with
+running on a 4GB Hetzner virtual host with a nixos system (see `./nixos`) with
 a ngingx reverse proxy (for SSL) in front of a small python HTTP server (see
 `./server.py`) that uses `loogle`. The query processing is locked down using
-SECCOMP (see `./loogle_seccomp.c`).
+SECCOMP (see `./loogle_seccomp.c`). It automatically tries to upgrade to the latest
+mathlib every 6 hours. See `./service` for the NixOS configuration for the server.
 
-You can run this server locally as well, either using `./server.py` if you
-built `loogle` via `lake`, or using `nix run ./#loogle_server` if you use nix.
+You can run this server locally as well, either using `./server.py` after you
+built `loogle` via `lake`.
 
 At the path `/json?q=…` (instead of `/?q=…`), the result is returned in JSOON
 format. No stability of the format is guaranteed at this point.
@@ -105,5 +93,3 @@ Contact
 This tool was created by Joachim Breitner <<mail@joachim-breitner.de>>. Feel free
 to use this repository to report issues or (even better) submit PRs that
 resolves such issues.
-
-
