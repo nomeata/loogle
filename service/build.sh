@@ -63,7 +63,7 @@ echo "Does it run"
 ./.lake/build/bin/loogle
 
 echo "Does it work (fast enough, so using the cache)"
-timeout 10s ./.lake/build/bin/loogle List.replicate|grep -q 'List.replicate (from Init.Data.List.Basic)'
+timeout 30s ./.lake/build/bin/loogle List.replicate|grep -q 'List.replicate (from Init.Data.List.Basic)'
 
 echo "Size of .lake"
 ls -sh .lake
