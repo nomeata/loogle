@@ -9,6 +9,7 @@ Adapted from Lean.Data.Trie to use path compression.
 
 -/
 import Lean.Data.Format
+import Std.Tactic.Omega
 
 namespace Loogle
 
@@ -63,7 +64,7 @@ def hasPrefix (s₁ : String) (s₂ : ByteArray) (offset1 : Nat) : Bool :=
 termination_by loop => s₂.size - i
 
 /-- Insert or update the value at a the given key `s`.  -/
-partial def upsert (t : Trie α) (s : String) (f : Option α → α) : Trie α :=
+def upsert (t : Trie α) (s : String) (f : Option α → α) : Trie α :=
   let rec insertEmpty (i : Nat) : Trie α :=
     if i < s.utf8ByteSize then
       path none (s.toUTF8.extract i s.utf8ByteSize) (leaf (f .none))
@@ -78,7 +79,7 @@ partial def upsert (t : Trie α) (s : String) (f : Option α → α) : Trie α :
     | i, path v ps t' =>
       if h : i < s.utf8ByteSize then
         let j := commonPrefix s ps i
-        if 0 < j then
+        if hj : 0 < j then
           -- split common prefix, continue
           let ps1 := ps.extract 0 j
           path v ps1 <| loop (i + j) <|
@@ -108,13 +109,15 @@ partial def upsert (t : Trie α) (s : String) (f : Option α → α) : Trie α :
       else
         node (f v) cs ts
   loop 0 t
+termination_by loop i _ => s.utf8ByteSize - i
+decreasing_by simp_wf; omega
 
 /-- Inserts a value at a the given key `s`, overriding an existing value if present. -/
-partial def insert (t : Trie α) (s : String) (val : α) : Trie α :=
+def insert (t : Trie α) (s : String) (val : α) : Trie α :=
   upsert t s (fun _ => val)
 
 /-- Looks up a value at the given key `s`.  -/
-partial def find? (t : Trie α) (s : String) : Option α :=
+def find? (t : Trie α) (s : String) : Option α :=
   let rec loop
     | i, leaf val =>
       if i < s.utf8ByteSize then
@@ -123,10 +126,12 @@ partial def find? (t : Trie α) (s : String) : Option α :=
         val
     | i, path val ps t' =>
       if i < s.utf8ByteSize then
-        if hasPrefix s ps i then
-          loop (i + ps.size) t'
-        else
-          none
+        if 0 < ps.size then
+          if hasPrefix s ps i then
+            loop (i + ps.size) t'
+          else
+            none
+        else none -- should be dead code
       else
         val
     | i, node val cs ts =>
@@ -138,9 +143,11 @@ partial def find? (t : Trie α) (s : String) : Option α :=
       else
         val
   loop 0 t
+termination_by loop i _ => s.utf8ByteSize - i
+decreasing_by simp_wf; omega
 
 /-- Returns an `Array` of all values in the trie, in no particular order. -/
-partial def values (t : Trie α) : Array α := go t |>.run #[] |>.2
+def values (t : Trie α) : Array α := go t |>.run #[] |>.2
   where
     go : Trie α → StateM (Array α) Unit
       | leaf a? => do
@@ -153,10 +160,10 @@ partial def values (t : Trie α) : Array α := go t |>.run #[] |>.2
       | node a? _ ts => do
         if let some a := a? then
           modify (·.push a)
-        ts.forM fun t' => go t'
+        ts.attach.forM fun ⟨t',_⟩ => go t'
 
 /-- Returns all values whose key have the given string `pre` as a prefix, in no particular order. -/
-partial def findPrefix (t : Trie α) (pre : String) : Array α := go t 0
+def findPrefix (t : Trie α) (pre : String) : Array α := go t 0
   where
     go (t : Trie α) (i : Nat) : Array α :=
       if h : i < pre.utf8ByteSize then
@@ -164,13 +171,19 @@ partial def findPrefix (t : Trie α) (pre : String) : Array α := go t 0
         match t with
         | leaf _val => .empty
         | path _val ps t' =>
+          if 0 < ps.size then
             if hasPrefix pre ps i
             then go t' (i + ps.size)
             else .empty
+          else
+            .empty -- should be an invariant
         | node _val cs ts =>
           match cs.findIdx? (· == c) with
           | none   => .empty
-          | some idx => go (ts.get! idx) (i + 1)
+          | some idx =>
+            if let some ⟨t',_⟩ := ts.attach.get? idx then
+            go t' (i + 1)
+            else .empty -- should be unreachable
       else
         t.values
 
