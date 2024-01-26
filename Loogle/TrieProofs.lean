@@ -55,7 +55,7 @@ inductive Trie.valid {α} : Trie α → Prop
   | leaf (v : Option α) : valid (.leaf v)
   | path (v : Option α)
     (ps : ByteArray) (hps : 0 < ps.size)
-    (t : Trie α) (ht : Trie.valid t) : valid (.path v ps t)
+    (t : Trie α) (ht : Trie.valid t) : valid (.path v ps hps t)
   | node (v : Option α)
     (cs : ByteArray)
     (ts : Array (Trie α))
@@ -63,16 +63,18 @@ inductive Trie.valid {α} : Trie α → Prop
     (hdistinct : cs.toList.Nodup)
     (hts : ∀ t, t ∈ ts → Trie.valid t) : Trie.valid (Trie.node v cs ts)
 
+theorem valid_mkPath {α} (v : Option α) (ps : ByteArray) (t : Trie α) (ht : Trie.valid t) :
+    Trie.valid (Trie.mkPath v ps t) := by
+  unfold Trie.mkPath
+  split
+  · exact Trie.valid.path _ _ _ _ ht
+  · exact ht
+
 theorem valid_loop_insertEmpty {α} (i : Nat) (k : String) (f : Option α → α) :
     Trie.valid (Trie.upsert.insertEmpty k f i) := by
   unfold Trie.upsert.insertEmpty
-  split
-  case inl h =>
-    apply Trie.valid.path
-    · simp at *; omega
-    · apply Trie.valid.leaf
-  case inr h =>
-  · apply Trie.valid.leaf
+  apply valid_mkPath
+  apply Trie.valid.leaf
 
 theorem valid_loop_upsert {α} (t : Trie α) (i : Nat) (k : String) (f : Option α → α) (h : Trie.valid t):
     Trie.valid (Trie.upsert.loop k f i t) := by
@@ -81,29 +83,18 @@ theorem valid_loop_upsert {α} (t : Trie α) (i : Nat) (k : String) (f : Option 
     simp only [Trie.upsert.loop]
     split
     case inr hi => apply Trie.valid.leaf
-    case inl hi =>
-      constructor
-      · simp only [ByteArray.size_extract, String.utf8ByteSize_eq_toUTF8_size, Nat.min_self] at *
-        omega
-      · apply Trie.valid.leaf
+    case inl hi => apply valid_mkPath; apply Trie.valid.leaf
   | path v ps hps t ht =>
     simp only [Trie.upsert.loop]
     split
-    case inr hi => apply Trie.valid.path <;> assumption
+    case inr hi => apply Trie.valid.path; assumption
     case inl hi =>
       split
       case inl hp =>
-        apply Trie.valid.path
-        · simp only [ByteArray.size_extract, Nat.sub_zero, Nat.lt_min]
-          omega
-        · apply valid_loop_upsert -- induction happens here
-          split
-          case inl hp2 =>
-            apply Trie.valid.path
-            · simp only [ByteArray.size_extract, Nat.sub_pos_iff_lt, Nat.lt_min]
-              omega
-            · exact ht
-          case inr hp => exact ht
+        apply valid_mkPath
+        apply valid_loop_upsert -- induction happens here
+        apply valid_mkPath
+        exact ht
       case inr hp =>
         apply Trie.valid.node
         · simp [ByteArray.size]
@@ -116,12 +107,8 @@ theorem valid_loop_upsert {α} (t : Trie α) (i : Nat) (k : String) (f : Option 
             apply valid_loop_insertEmpty
           case right =>
             simp only [List.not_mem_nil, false_implies, forall_const, and_true]
-            split
-            case inl _ => exact ht
-            case inr hps1 =>
-              apply Trie.valid.path
-              · simp;omega
-              · exact ht
+            apply valid_mkPath
+            exact ht
   | node v cs ts hsize hdisitnct hts =>
     simp only [Trie.upsert.loop]
     split
