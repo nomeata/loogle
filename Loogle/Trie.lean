@@ -14,6 +14,8 @@ import Std.Tactic.Omega
 namespace Loogle
 
 
+set_option autoImplicit false
+
 /-- A Trie is a key-value store where the keys are of type `String`,
 and the internal structure is a tree that branches on the bytes of the string.  -/
 inductive Trie (α : Type) where
@@ -92,9 +94,11 @@ def upsert (t : Trie α) (s : String) (f : Option α → α) : Trie α :=
           -- no common prefix, split off first character
           let c := s.getUtf8Byte i h
           let c' := ps.get! 0
-          let ps' := ps.extract 1 ps.size
           let t := insertEmpty (i + 1)
-          node v (.mk #[c, c']) #[t, path none ps' t']
+          let t'' := if ps.size = 1 then t' else
+            let ps' := ps.extract 1 ps.size
+            path none ps' t'
+          node v (.mk #[c, c']) #[t, t'']
       else
         path (f v) ps t'
     | i, node v cs ts =>
