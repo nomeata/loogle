@@ -6,8 +6,12 @@ set_option autoImplicit false
 @[simp]
 axiom String.utf8ByteSize_eq_toUTF8_size (s : String) : s.utf8ByteSize = s.toUTF8.size
 
+@[simp]
 axiom String.getUtf8Byte_eq_toUTF8_get (s : String) (i : Nat) (h : i < s.utf8ByteSize) :
   s.getUtf8Byte i h = s.toUTF8.get ⟨i, s.utf8ByteSize_eq_toUTF8_size ▸ h⟩
+
+macro "simp_utf8" : tactic =>
+  `(tactic|simp only [String.getUtf8Byte_eq_toUTF8_get, String.utf8ByteSize_eq_toUTF8_size] at *)
 
 @[simp]
 theorem ByteArray.toList_mk (bs : Array UInt8) : (ByteArray.mk bs).toList = bs.toList := sorry
@@ -35,17 +39,17 @@ open Loogle
 
 theorem Trie.commonPrefix_differs
   (s₁ : String) (s₂ : ByteArray) (offset1 : Nat)
-  (h1 : offset1 + Trie.commonPrefix s₁ s₂ offset1 < s₁.utf8ByteSize)
+  (h1 : offset1 + Trie.commonPrefix s₁ s₂ offset1 < s₁.toUTF8.size)
   (h2 : Trie.commonPrefix s₁ s₂ offset1 < s₂.size) :
-  s₁.getUtf8Byte (offset1 + Trie.commonPrefix s₁ s₂ offset1) h1
+  s₁.toUTF8.get ⟨offset1 + Trie.commonPrefix s₁ s₂ offset1, h1⟩
     ≠ ByteArray.get! s₂ (Trie.commonPrefix s₁ s₂ offset1) := sorry
 
 theorem Trie.commonPrefix_differs_head
   (s₁ : String) (s₂ : ByteArray) (offset1 : Nat)
   (heq0 : Trie.commonPrefix s₁ s₂ offset1 = 0)
-  (h1 : offset1 < s₁.utf8ByteSize)
+  (h1 : offset1 < s₁.toUTF8.size)
   (h2 : 0 < s₂.size) :
-  s₁.getUtf8Byte offset1 h1 ≠ ByteArray.get! s₂ 0 := by
+  s₁.toUTF8.get ⟨offset1, h1⟩ ≠ ByteArray.get! s₂ 0 := by
     have := Trie.commonPrefix_differs s₁ s₂ offset1
     simp only [heq0, Nat.add_zero] at this
     apply this <;> assumption
@@ -80,12 +84,12 @@ theorem valid_loop_upsert {α} (t : Trie α) (i : Nat) (k : String) (f : Option 
     Trie.valid (Trie.upsert.loop k f i t) := by
   cases h with
   | leaf v =>
-    simp only [Trie.upsert.loop]
+    simp only [Trie.upsert.loop]; simp_utf8
     split
     case inr hi => apply Trie.valid.leaf
     case inl hi => apply valid_mkPath; apply Trie.valid.leaf
   | path v ps hps t ht =>
-    simp only [Trie.upsert.loop]
+    simp only [Trie.upsert.loop]; simp_utf8
     split
     case inr hi => apply Trie.valid.path; assumption
     case inl hi =>
@@ -110,7 +114,7 @@ theorem valid_loop_upsert {α} (t : Trie α) (i : Nat) (k : String) (f : Option 
             apply valid_mkPath
             exact ht
   | node v cs ts hsize hdisitnct hts =>
-    simp only [Trie.upsert.loop]
+    simp only [Trie.upsert.loop]; simp_utf8
     split
     case inr hi => apply Trie.valid.node <;> assumption
     case inl hi =>
@@ -158,10 +162,9 @@ theorem valid_loop_upsert {α} (t : Trie α) (i : Nat) (k : String) (f : Option 
             simp only [← Array.get?_eq_data_get?]
             exact ⟨_, ht''⟩
             done
-termination_by _ => k.utf8ByteSize - i
+termination_by _ => k.toUTF8.size - i
 decreasing_by
   simp_wf
-  simp only [← String.utf8ByteSize_eq_toUTF8_size] at *
   omega
 
 
