@@ -10,6 +10,8 @@ axiom String.utf8ByteSize_eq_toUTF8_size (s : String) : s.utf8ByteSize = s.toUTF
 axiom String.getUtf8Byte_eq_toUTF8_get (s : String) (i : Nat) (h : i < s.utf8ByteSize) :
   s.getUtf8Byte i h = s.toUTF8.get ⟨i, s.utf8ByteSize_eq_toUTF8_size ▸ h⟩
 
+axiom String.toUTF8_inj (s₁ s₂ : String) (h : s₁.toUTF8 = s₂.toUTF8) : s₁ = s₂
+
 macro "simp_utf8" : tactic =>
   `(tactic|simp only [String.getUtf8Byte_eq_toUTF8_get, String.utf8ByteSize_eq_toUTF8_size] at *)
 
@@ -36,6 +38,13 @@ theorem Array.get?_modify {α : Type _} (ts : Array α) (i j : Nat) (f : α → 
   (ts.modify i f).get? j = (if i = j then (ts.get? i).map f else ts.get? j) := sorry
 
 open Loogle
+
+@[simp]
+theorem Trie.hasPrefix_empty {s : String} {i : Nat} :
+    Trie.hasPrefix s .empty i = true := by
+  unfold Trie.hasPrefix Trie.hasPrefix.loop
+  simp
+
 
 theorem Trie.commonPrefix_differs
   (s₁ : String) (s₂ : ByteArray) (offset1 : Nat)
@@ -167,10 +176,71 @@ decreasing_by
   simp_wf
   omega
 
-
 theorem valid_upsert {α} (t : Trie α) (k : String) (f : Option α → α) (h : Trie.valid t):
   Trie.valid (t.upsert k f) := valid_loop_upsert _ _ _ _ h
 
-theorem find_upsert {α} (t : Trie α) (k₁ k₂ : String) (f : Option α → α) :
+
+theorem find?_loop_mkPath {α} (t : Trie α) (k : String) (v : Option α) (ps : ByteArray) (i : Nat)
+  (hi : i < k.toUTF8.size) :
+    Trie.find?.loop k i (Trie.mkPath v ps t) =
+      if Trie.hasPrefix k ps i then
+        Trie.find?.loop k (i + ps.size) t
+      else
+        none := by
+  unfold Trie.mkPath
+  split
+  next => simp [Trie.find?.loop, hi]
+  next =>
+    have : ps = .empty := sorry
+    subst ps
+    simp
+
+theorem find_upsert_loop {α} (t : Trie α) (k₁ k₂ : String) (f : Option α → α) (h : Trie.valid t)
+  (i : Nat) (hprefix : k₁.toUTF8.extract 0 i = k₂.toUTF8.extract 0 i) :
+  Trie.find?.loop k₂ i (Trie.upsert.loop k₁ f i t) =
+    let v := Trie.find?.loop k₂ i t; (if k₂ = k₁ then some (f v) else v) := by
+  cases h with
+  | leaf v =>
+    -- This kills the let; known issue
+    simp only [Trie.upsert.loop, Trie.find?.loop]; simp_utf8
+    split
+    case inr hi₁ =>
+      simp only [Trie.upsert.loop, Trie.find?.loop]; simp_utf8
+      split
+      case inl hi₂ =>
+        have : ¬ k₂= k₁ := by intro h; cases h; contradiction
+        simp only [this, ite_false]
+      case inr hi₂ =>
+        have : k₁ = k₂ := by
+          apply String.toUTF8_inj
+          sorry
+        simp only [this, ite_true]
+    case inl hi₁ =>
+      if hi₂ : i < ByteArray.size (String.toUTF8 k₂)
+      then
+        simp only [hi₂, ite_true]
+        simp only [find?_loop_mkPath, hi₂]; simp_utf8
+        split
+        case inl hprefix =>
+          simp only [Trie.find?.loop]; simp_utf8
+          split
+          case inl hi₃ =>
+            suffices k₂ ≠ k₁ by simp [this]
+            intro hk; cases hk
+            simp at hi₃
+            omega
+          case inr hi₃ =>
+            suffices k₂ = k₁ by simp [this]
+            have hsize : ByteArray.size (String.toUTF8 k₂) ≤
+                ByteArray.size (String.toUTF8 k₁) := by simp at hi₃; omega
+            clear hi₃
+            sorry
+        case inr hprefix =>
+          sorry
+      else
+        sorry
+
+
+theorem find_upsert {α} (t : Trie α) (k₁ k₂ : String) (f : Option α → α) (h : Trie.valid t) :
     (t.upsert k₁ f).find? k₂ = (if k₂ = k₁ then some (f (t.find? k₂)) else t.find? k₂) := by
   sorry
