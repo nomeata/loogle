@@ -182,6 +182,7 @@ in {
 
   networking.firewall.enable = true;
   networking.firewall.allowedTCPPorts = [ 80 443 22 ];
+  networking.firewall.logRefusedConnections = false;
 
   services.journald.extraConfig = "SystemMaxUse=100M";
 
