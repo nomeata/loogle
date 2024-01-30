@@ -494,9 +494,9 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
     let hits5 ← sortByModule' (·.name) (exprSize ·.type) hits4
 
     -- Apply maxShown limit
-    let hits6 := hits5.extract 0 maxShown
-    unless (hits6.size ≤ maxShown) do
+    unless (hits5.size ≤ maxShown) do
       message := message ++ m!"Of these, only the first {maxShown} are shown.\n"
+    let hits6 := hits5.extract 0 maxShown
 
     -- Resolve ModIndex to module name
     let hits7 := hits6.map fun (ci, mi) =>
