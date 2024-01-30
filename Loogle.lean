@@ -1,7 +1,6 @@
 import Lean.Meta
 import Lake.CLI.Error
 import Lake.Util.Cli
-import Std.Util.Pickle
 import Std.Lean.CoreM
 
 import Loogle.Find
