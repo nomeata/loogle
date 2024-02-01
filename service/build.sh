@@ -35,12 +35,12 @@ done
 
 workdir="deploy-$(date --iso=seconds)"
 logfile="$workdir.log"
-exec &> >(tee -a "build/$logfile")
+exec &> >(tee -a "$logfile")
 
 echo "Working in $DEST/build/$workdir"
 echo "Cloning loogle"
-git clone --depth=1 https://github.com/nomeata/loogle.git "build/$workdir"
-cd "build/$workdir"
+git clone --depth=1 https://github.com/nomeata/loogle.git "$workdir"
+cd "$workdir"
 git log -n 1
 
 echo "Replace toolchain by mathlib's"
