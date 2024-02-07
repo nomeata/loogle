@@ -63,41 +63,8 @@ in {
 
   services.openssh = {
     enable = true;
-    ports = [ 2722 ];
+    ports = [ 22 ];
     settings.PasswordAuthentication = false;
-  };
-
-  services.nginx = {
-    enable = true;
-    enableReload = true;
-    recommendedProxySettings = true;
-    recommendedGzipSettings = true;
-    recommendedOptimisation = true;
-    recommendedTlsSettings = true;
-    proxyTimeout = "300s";
-  };
-
-  services.nginx.virtualHosts = {
-    "loogle.lean-lang.org" = {
-      enableACME = true;
-      default = true;
-      forceSSL = !inVM;
-      locations = {
-        "/" = {
-          proxyPass = "http://localhost:8080";
-        };
-      };
-    };
-    "loogle.lean-fro.org" = {
-      enableACME = true;
-      forceSSL = !inVM;
-      globalRedirect = "loogle.lean-lang.org";
-    };
-    "loogle.nomeata.de" = {
-      enableACME = true;
-      forceSSL = !inVM;
-      globalRedirect = "loogle.lean-lang.org";
-    };
   };
 
   users.users.loogle = {

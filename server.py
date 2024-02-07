@@ -13,7 +13,7 @@ import select
 
 
 hostName = "localhost"
-serverPort = 8080
+serverPort = 80
 
 blurb = open("./blurb.html","rb").read()
 icon = open("./loogle.png","rb").read()
