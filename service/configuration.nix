@@ -137,6 +137,7 @@ in {
   };
   system.activationScripts = {
     kick-updater = ''
+      source ${config.system.build.setEnvironment}
       test -e /home/loogle/deploy/live || systemctl start loogle-updater
       '';
   };
