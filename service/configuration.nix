@@ -135,6 +135,11 @@ in {
       StartLimitBurst = "3";
     };
   };
+  system.activationScripts = {
+    kick-updater = ''
+      test -e /home/loogle/deploy/live || systemctl start loogle-updater
+      '';
+  };
 
   swapDevices = [{ device = "/swapfile"; size = 2048; }];
 
