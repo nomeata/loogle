@@ -58,13 +58,37 @@ in {
     self.packages.${pkgs.system}.loogle-updater
   ];
 
-  security.acme.defaults.email = "mail@joachim-breitner.de";
-  security.acme.acceptTerms = true;
-
   services.openssh = {
     enable = true;
-    ports = [ 22 ];
+    ports = [ 2722 ];
     settings.PasswordAuthentication = false;
+  };
+
+  services.nginx = {
+    enable = true;
+    enableReload = true;
+    recommendedProxySettings = true;
+    recommendedGzipSettings = true;
+    recommendedOptimisation = true;
+    recommendedTlsSettings = true;
+    proxyTimeout = "300s";
+  };
+
+  services.nginx.virtualHosts = {
+    "loogle.lean-lang.org" = {
+      default = true;
+      locations = {
+        "/" = {
+          proxyPass = "http://localhost:8080";
+        };
+      };
+    };
+    "loogle.lean-fro.org" = {
+      globalRedirect = "loogle.lean-lang.org";
+    };
+    "loogle.nomeata.de" = {
+      globalRedirect = "loogle.lean-lang.org";
+    };
   };
 
   users.users.loogle = {
