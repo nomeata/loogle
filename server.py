@@ -108,6 +108,7 @@ class Loogle():
 
     def query(self, query):
         m_queries.inc()
+        print(f"Query: {json.dumps(query)}", flush=True)
         output = self.do_query(query)
         # Update metrics
         if "error" in output:
@@ -146,11 +147,7 @@ class MyHandler(prometheus_client.MetricsHandler):
         self.send_response(404)
         self.send_header("Content-type", "text/plain")
         self.end_headers()
-        try:
-            self.wfile.write(b"Not found.\n")
-        except BrokenPipeError:
-            # browsers seem to like to close this early
-            pass
+        self.wfile.write(b"Not found.\n")
 
     def return400(self):
         self.send_response(400)
@@ -186,186 +183,194 @@ class MyHandler(prometheus_client.MetricsHandler):
             pass
 
     def do_POST(self):
-        url = urllib.parse.urlparse(self.path)
-        if url.path != "/zulipbot":
-            self.return404()
-            return
+        try:
+            url = urllib.parse.urlparse(self.path)
+            if url.path != "/zulipbot":
+                self.return404()
+                return
 
-        if self.headers.get_content_type() != 'application/json':
-            self.send_response(400)
-            self.end_headers()
-            return
-        m_client.labels("zulip").inc()
+            if self.headers.get_content_type() != 'application/json':
+                self.send_response(400)
+                self.end_headers()
+                return
+            m_client.labels("zulip").inc()
 
-        length = int(self.headers.get('content-length'))
-        message = json.loads(self.rfile.read(length))
+            length = int(self.headers.get('content-length'))
+            message = json.loads(self.rfile.read(length))
 
-        m = re.search('@\*\*loogle\*\*[:,\?]?\s*(.*)$', message['data'], flags = re.MULTILINE)
-        if m:
-            query = m.group(1)
-        else:
-            query = message['data'].split('\n', 1)[0]
-
-        result = loogle.query(query)
-
-        if "error" in result:
-            if "\n" in result['error']:
-                reply = f"❗\n```\n{result['error']}\n```"
+            m = re.search('@\*\*loogle\*\*[:,\?]?\s*(.*)$', message['data'], flags = re.MULTILINE)
+            if m:
+                query = m.group(1)
             else:
-                reply = f"❗ {result['error']}"
-            if "suggestions" in result:
-                suggs = result["suggestions"]
-                reply += "\n"
+                query = message['data'].split('\n', 1)[0]
 
-                if len(suggs) == 1:
-                    reply += f"Did you mean {zulQuery(suggs[0])}?"
-                elif len(suggs) == 2:
-                    reply += f"Did you mean {zulQuery(suggs[0])} or {zulQuery(suggs[1])}?"
+            result = loogle.query(query)
+
+            if "error" in result:
+                if "\n" in result['error']:
+                    reply = f"❗\n```\n{result['error']}\n```"
                 else:
-                    reply += f"Did you mean {zulQuery(suggs[0])}, {zulQuery(suggs[1])}, or [something else]({querylink(query)})?"
+                    reply = f"❗ {result['error']}"
+                if "suggestions" in result:
+                    suggs = result["suggestions"]
+                    reply += "\n"
 
-        else:
-            hits = result["hits"]
-            if len(hits) == 0:
-                reply = f"🤷 nothing found"
-            elif len(hits) == 1:
-                reply = f"🔍 {zulHit(hits[0])}"
-            elif len(hits) == 2:
-                reply = f"🔍 {zulHit(hits[0])}, {zulHit(hits[1])}"
+                    if len(suggs) == 1:
+                        reply += f"Did you mean {zulQuery(suggs[0])}?"
+                    elif len(suggs) == 2:
+                        reply += f"Did you mean {zulQuery(suggs[0])} or {zulQuery(suggs[1])}?"
+                    else:
+                        reply += f"Did you mean {zulQuery(suggs[0])}, {zulQuery(suggs[1])}, or [something else]({querylink(query)})?"
+
             else:
-                n = result["count"] - 2
-                reply = f"🔍 {zulHit(hits[0])}, {zulHit(hits[1])}, and [{n} more]({querylink(query)})"
-        self.returnJSON({ "content": reply })
+                hits = result["hits"]
+                if len(hits) == 0:
+                    reply = f"🤷 nothing found"
+                elif len(hits) == 1:
+                    reply = f"🔍 {zulHit(hits[0])}"
+                elif len(hits) == 2:
+                    reply = f"🔍 {zulHit(hits[0])}, {zulHit(hits[1])}"
+                else:
+                    n = result["count"] - 2
+                    reply = f"🔍 {zulHit(hits[0])}, {zulHit(hits[1])}, and [{n} more]({querylink(query)})"
+            self.returnJSON({ "content": reply })
+        except BrokenPipeError:
+            # browsers seem to like to close this early
+            pass
 
     def do_GET(self):
-        query = ""
-        result = {}
-        url = urllib.parse.urlparse(self.path)
-        want_json = False
+        try:
+            query = ""
+            result = {}
+            url = urllib.parse.urlparse(self.path)
+            want_json = False
 
-        if url.path == "/loogle.png":
-           self.returnIcon()
-           return
-        if url.path == "/json":
-            want_json = True
-        elif url.path == "/metrics":
-            return super(MyHandler, self).do_GET()
-        elif url.path != "/":
-            self.return404()
-            return
+            if url.path == "/loogle.png":
+               self.returnIcon()
+               return
+            if url.path == "/json":
+                want_json = True
+            elif url.path == "/metrics":
+                return super(MyHandler, self).do_GET()
+            elif url.path != "/":
+                self.return404()
+                return
 
-        url_query = url.query
-        params = urllib.parse.parse_qs(url_query)
-        if "q" in params and len(params["q"]) == 1:
-            if want_json:
-                if "vscode" in self.headers["user-agent"]:
-                    m_client.labels("vscode").inc()
-                elif "lean.nvim" in self.headers["user-agent"]:
-                    m_client.lables("nvim").inc()
+            url_query = url.query
+            params = urllib.parse.parse_qs(url_query)
+            if "q" in params and len(params["q"]) == 1:
+                if want_json:
+                    if "vscode" in self.headers["user-agent"]:
+                        m_client.labels("vscode").inc()
+                    elif "lean.nvim" in self.headers["user-agent"]:
+                        m_client.lables("nvim").inc()
+                    else:
+                        m_client.labels("json").inc()
                 else:
-                    m_client.labels("json").inc()
-            else:
-                m_client.labels("web").inc()
+                    m_client.labels("web").inc()
 
-            query = params["q"][0].strip().removeprefix("#find ").strip()
-            if query:
-                if "\n" in query:
-                    self.return400()
-                    return
-                result = loogle.query(query)
+                query = params["q"][0].strip().removeprefix("#find ").strip()
+                if query:
+                    if "\n" in query:
+                        self.return400()
+                        return
+                    result = loogle.query(query)
 
-            if "lucky" in params:
-                if "hits" in result and len(result["hits"]) >= 1:
-                    self.returnRedirect(doclink(result["hits"][0]))
-                    return
+                if "lucky" in params:
+                    if "hits" in result and len(result["hits"]) >= 1:
+                        self.returnRedirect(doclink(result["hits"][0]))
+                        return
 
 
-        if want_json:
-            self.returnJSON(result)
-            return
+            if want_json:
+                self.returnJSON(result)
+                return
 
-        self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.end_headers()
-        self.wfile.write(bytes("""
-            <!doctype html>
-            <html lang="en">
-            <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <link rel="stylesheet" href="https://unpkg.com/chota@latest">
-            <style>
-              @import url('https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.051/juliamono.css');
-              :root {
-                --font-family-mono: 'JuliaMono', monospace;
-              }
-            </style>
-            <link rel="icon" type="image/png" href="/loogle.png" />
-            <title>Loogle!</title>
-            <body>
-            <main class="container">
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write(bytes("""
+                <!doctype html>
+                <html lang="en">
+                <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <link rel="stylesheet" href="https://unpkg.com/chota@latest">
+                <style>
+                  @import url('https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.051/juliamono.css');
+                  :root {
+                    --font-family-mono: 'JuliaMono', monospace;
+                  }
+                </style>
+                <link rel="icon" type="image/png" href="/loogle.png" />
+                <title>Loogle!</title>
+                <body>
+                <main class="container">
 
-            <section>
-            <h1><a href="/" style="color:#333;">Loogle!</a></h1>
-        """, "utf-8"))
-        self.wfile.write(bytes(f"""
-            <form method="GET">
-            <p class="grouped">
-            <input type="text" name="q" value="{html.escape(query)}"/>
-            <button type="submit">#find</button>
-            <button type="submit" name="lucky" value="yes" title="Directly jump to the documentation of the first hit.">#lucky</button>
-            </p>
-            </form>
-            </section>
-        """, "utf-8"))
-        if "error" in result:
-            self.wfile.write(bytes(f"""
-                <h2>Error</h2>
-                <pre>{html.escape(result['error'])}</pre>
+                <section>
+                <h1><a href="/" style="color:#333;">Loogle!</a></h1>
             """, "utf-8"))
-        if "header" in result:
-            self.wfile.write(b"""
-                <h2>Result</h2>
-            """)
             self.wfile.write(bytes(f"""
-                <p>{html.escape(result['header'])}</p>
+                <form method="GET">
+                <p class="grouped">
+                <input type="text" name="q" value="{html.escape(query)}"/>
+                <button type="submit">#find</button>
+                <button type="submit" name="lucky" value="yes" title="Directly jump to the documentation of the first hit.">#lucky</button>
+                </p>
+                </form>
+                </section>
             """, "utf-8"))
-        if "hits" in result:
-            self.wfile.write(bytes(f"""
-                <ul>
-            """, "utf-8"))
-            for hit in result["hits"]:
-                name = hit["name"]
-                mod = hit["module"]
-                type = hit["type"]
+            if "error" in result:
                 self.wfile.write(bytes(f"""
-                    <li><a href="{doclink(hit)}">{html.escape(name)}</a> <small>{html.escape(mod)}</small><br><tt>{html.escape(type)}</tt></li>
+                    <h2>Error</h2>
+                    <pre>{html.escape(result['error'])}</pre>
                 """, "utf-8"))
+            if "header" in result:
+                self.wfile.write(b"""
+                    <h2>Result</h2>
+                """)
+                self.wfile.write(bytes(f"""
+                    <p>{html.escape(result['header'])}</p>
+                """, "utf-8"))
+            if "hits" in result:
+                self.wfile.write(bytes(f"""
+                    <ul>
+                """, "utf-8"))
+                for hit in result["hits"]:
+                    name = hit["name"]
+                    mod = hit["module"]
+                    type = hit["type"]
+                    self.wfile.write(bytes(f"""
+                        <li><a href="{doclink(hit)}">{html.escape(name)}</a> <small>{html.escape(mod)}</small><br><tt>{html.escape(type)}</tt></li>
+                    """, "utf-8"))
+                self.wfile.write(b"""
+                    </ul>
+                """)
+            if "suggestions" in result:
+                self.wfile.write(b'<h2>Did you maybe mean</h2><ul>')
+                for sugg in result["suggestions"]:
+                    link = locallink(sugg)
+                    self.wfile.write(bytes(f'<li>🔍 <a href={link}><code>{html.escape(sugg)}</code></a></li>', "utf-8"))
+                self.wfile.write(b'</ul>')
+
+            self.wfile.write(blurb)
+
+            self.wfile.write(bytes(f"""
+                <p><small>This is Loogle revision <a href="https://github.com/nomeata/loogle/commit/{rev1}"><code>{rev1[:7]}</code></a> serving mathlib revision <a href="https://github.com/leanprover-community/mathlib4/commit/{rev2}"><code>{rev2[:7]}</code></a></small></p>
+            """, "utf-8"))
+
             self.wfile.write(b"""
-                </ul>
+                </main>
+                </body>
+                </html>
             """)
-        if "suggestions" in result:
-            self.wfile.write(b'<h2>Did you maybe mean</h2><ul>')
-            for sugg in result["suggestions"]:
-                link = locallink(sugg)
-                self.wfile.write(bytes(f'<li>🔍 <a href={link}><code>{html.escape(sugg)}</code></a></li>', "utf-8"))
-            self.wfile.write(b'</ul>')
-
-        self.wfile.write(blurb)
-
-        self.wfile.write(bytes(f"""
-            <p><small>This is Loogle revision <a href="https://github.com/nomeata/loogle/commit/{rev1}"><code>{rev1[:7]}</code></a> serving mathlib revision <a href="https://github.com/leanprover-community/mathlib4/commit/{rev2}"><code>{rev2[:7]}</code></a></small></p>
-        """, "utf-8"))
-
-        self.wfile.write(b"""
-            </main>
-            </body>
-            </html>
-        """)
+        except BrokenPipeError:
+            # browsers seem to like to close this early
+            pass
 
 if __name__ == "__main__":
     webServer = HTTPServer((hostName, serverPort), MyHandler)
-    print("Server started http://%s:%s" % (hostName, serverPort))
+    print("Server started http://%s:%s" % (hostName, serverPort), flush=True)
 
     try:
         webServer.serve_forever()

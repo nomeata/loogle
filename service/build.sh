@@ -22,14 +22,25 @@ fi
 mkdir -p "$DEST/build" "$DEST/deploy"
 cd "$DEST"
 
+echo "Cleaning up $DEST/build"
+cd build/
+old_live="$(readlink ../deploy/live)"
+echo "Currently live: $old_live"
+for file in deploy-*; do
+  if [ "../build/$file" != "$old_live" ] && [ "../build/$file" != "$old_live.log" ]; then
+    echo "Deleting old build $file"
+    rm -rf "$file"
+  fi
+done
+
 workdir="deploy-$(date --iso=seconds)"
 logfile="$workdir.log"
-exec &> >(tee -a "build/$logfile")
+exec &> >(tee -a "$logfile")
 
 echo "Working in $DEST/build/$workdir"
 echo "Cloning loogle"
-git clone --depth=1 https://github.com/nomeata/loogle.git "build/$workdir"
-cd "build/$workdir"
+git clone --depth=1 https://github.com/nomeata/loogle.git "$workdir"
+cd "$workdir"
 git log -n 1
 
 echo "Replace toolchain by mathlib's"

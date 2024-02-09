@@ -9,6 +9,7 @@ Adapted from Lean.Data.Trie to use path compression.
 
 -/
 import Lean.Data.Format
+import Std.Data.Array
 import Std.Tactic.Omega
 
 namespace Loogle
@@ -47,8 +48,8 @@ def commonPrefix (s₁ : String) (s₂ : ByteArray)  (offset1 : Nat) : Nat :=
         i
     else
       i
+    termination_by s₂.size - i
   loop 0
-termination_by loop => s₂.size - i
 
 def hasPrefix (s₁ : String) (s₂ : ByteArray) (offset1 : Nat) : Bool :=
   let rec loop (i : Nat) : Bool :=
@@ -62,8 +63,8 @@ def hasPrefix (s₁ : String) (s₂ : ByteArray) (offset1 : Nat) : Bool :=
         false
     else
       true
+    termination_by s₂.size - i
   loop 0
-termination_by loop => s₂.size - i
 
 def mkPath (v : Option α) (ps : ByteArray) (t : Trie α) : Trie α :=
   if h : 0 < ps.size then
@@ -108,9 +109,9 @@ def upsert (t : Trie α) (s : String) (f : Option α → α) : Trie α :=
             node v cs (ts.modify idx (loop (i + 1)))
       else
         node (f v) cs ts
+    termination_by i _ => s.utf8ByteSize - i
+    decreasing_by all_goals { simp_wf; omega }
   loop 0 t
-termination_by loop i _ => s.utf8ByteSize - i
-decreasing_by simp_wf; omega
 
 /-- Inserts a value at a the given key `s`, overriding an existing value if present. -/
 def insert (t : Trie α) (s : String) (val : α) : Trie α :=
@@ -140,9 +141,9 @@ def find? (t : Trie α) (s : String) : Option α :=
         | some idx => loop (i + 1) (ts.get! idx)
       else
         val
+    termination_by i _ => s.utf8ByteSize - i
+    decreasing_by all_goals { simp_wf; omega }
   loop 0 t
-termination_by loop i _ => s.utf8ByteSize - i
-decreasing_by simp_wf; omega
 
 /-- Returns an `Array` of all values in the trie, in no particular order. -/
 def values (t : Trie α) : Array α := go t |>.run #[] |>.2
@@ -169,9 +170,13 @@ def findPrefix (t : Trie α) (pre : String) : Array α := go t 0
         match t with
         | leaf _val => .empty
         | path _val ps _ t' =>
-          if hasPrefix pre ps i
-          then go t' (i + ps.size)
-          else .empty
+          let j := commonPrefix pre ps i
+          if j == ps.size then
+            go t' (i + ps.size)
+          else if i + j == pre.utf8ByteSize then
+            t'.values
+          else
+            .empty
         | node _val cs ts =>
           match cs.findIdx? (· == c) with
           | none   => .empty
