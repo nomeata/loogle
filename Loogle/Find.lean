@@ -6,6 +6,7 @@ Authors: Joachim Breitner
 import Lean
 import Std.Data.String.Basic
 import Std.Util.Pickle
+import Std.Lean.Delaborator
 
 import Loogle.Cache
 import Loogle.NameRel
