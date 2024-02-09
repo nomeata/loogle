@@ -108,6 +108,7 @@ class Loogle():
 
     def query(self, query):
         m_queries.inc()
+        print(f"Query: {json.dumps(query)}")
         output = self.do_query(query)
         # Update metrics
         if "error" in output:
