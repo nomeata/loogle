@@ -120,6 +120,7 @@ in {
     wants = ["network-online.target"];
     after = ["network-online.target"];
 
+    startAt = "00/6:00"; #  repeat every 6 hours
     serviceConfig = {
       User = "loogle";
       WorkingDirectory = "~";
@@ -133,11 +134,6 @@ in {
       StartLimitIntervalSec = "10";
       StartLimitBurst = "3";
     };
-  };
-  systemd.timers.loogle-updater = {
-    wantedBy = [ "timers.target" ];
-    timerConfig.OnCalendar = "00/6:00"; #  repeat every 6 hours
-    timerConfig.Persistent = true;
   };
 
   swapDevices = [{ device = "/swapfile"; size = 2048; }];
