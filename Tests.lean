@@ -16,10 +16,7 @@ erase_loogle_cache
 #guard_msgs in
 #find
 
-/--
-info: Found 0 definitions whose name contains "namefragmentsearch".
-Of these, 0 have a name containing "namefragmentsearch".
--/
+/-- info: Found 0 definitions whose name contains "namefragmentsearch". -/
 #guard_msgs in
 #find "namefragmentsearch"
 
@@ -42,7 +39,6 @@ info: Found 3 definitions mentioning my_true.
 
 /--
 info: Found 3 definitions whose name contains "my_true".
-Of these, 3 have a name containing "my_true".
 • my_true
 • my_true_eq_True
 • my_true_eq_true
@@ -52,7 +48,6 @@ Of these, 3 have a name containing "my_true".
 
 /--
 info: Found 3 definitions whose name contains "y_tru".
-Of these, 3 have a name containing "y_tru".
 • my_true
 • my_true_eq_True
 • my_true_eq_true
@@ -258,7 +253,6 @@ end DefaultingTest
 
 /--
 info: Found 2 definitions whose name contains "my_true_eq_True".
-Of these, 2 have a name containing "my_true_eq_True".
 • my_true_eq_True
 • my_true_eq_true
 -/
@@ -424,10 +418,20 @@ Of these, one matches your pattern(s).
 
 
 def this_peculiar_name_repeats_a_peculiar_substring := true
+def this_other_peculiar_name_repeats_a_peculiar_substring := true
 /--
-info: Found one definition whose name contains "peculiar".
-Of these, one has a name containing "peculiar".
+info: Found 2 definitions whose name contains "peculiar".
+• this_other_peculiar_name_repeats_a_peculiar_substring
 • this_peculiar_name_repeats_a_peculiar_substring
 -/
 #guard_msgs in
 #find "peculiar"
+
+
+/--
+info: Found 2 definitions whose name contains "peculiar".
+Of these, one has a name containing "peculiar" and "the".
+• this_other_peculiar_name_repeats_a_peculiar_substring
+-/
+#guard_msgs in
+#find "peculiar", "the"

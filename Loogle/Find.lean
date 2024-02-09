@@ -432,7 +432,7 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
     let needles : NameSet :=
           {} |> idents.foldl NameSet.insert
              |> terms.foldl (fun s (_,t) => t.foldConsts s (flip NameSet.insert))
-    let indexHits ← do
+    let (indexHits, remainingNamePats)  ← do
       if needles.isEmpty then do
         if namePats.isEmpty then
           return .error ⟨args, m!"Cannot search: No constants or name fragments in search pattern.",
@@ -442,13 +442,14 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
         let hitArrays := namePats.map (fun s => (s, t₁.find s ++ t₂.find s))
         -- If we have more than one name fragment pattern, use the one that returns the smallest
         -- array of names
-        let hitArrays := hitArrays.qsort fun (_, a₁) (_, a₂) => a₁.size < a₂.size
-        let (needle, hits) := hitArrays.get! 0
+        let hitArrays := hitArrays.qsort fun (_, a₁) (_, a₂) => a₁.size > a₂.size
+        let (needle, hits) := hitArrays.back
         if hits.size == 1 then
           message := message ++ m!"Found one definition whose name contains \"{needle}\".\n"
         else
           message := message ++ m!"Found {hits.size} definitions whose name contains \"{needle}\".\n"
-        pure hits
+        let remainingNamePats := hitArrays.pop.map (·.1)
+        pure (hits, remainingNamePats)
       else do
         -- Query the declaration cache
         let (m₁, m₂) ← index.nameRelCache.get
@@ -460,13 +461,13 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
           message := message ++ m!"Found one definition mentioning {needlesList}.\n"
         else
           message := message ++ m!"Found {hits.size} definitions mentioning {needlesList}.\n"
-        pure hits
+        pure (hits, namePats)
 
     -- Filter by name patterns
-    let nameMatchers := namePats.map (String.Matcher.ofString ·.toLower)
+    let nameMatchers := remainingNamePats.map (String.Matcher.ofString ·.toLower)
     let hits2 := indexHits.toArray.filter fun n => nameMatchers.all fun m =>
       m.find? n.toString.toLower |>.isSome
-    unless (namePats.isEmpty) do
+    unless (remainingNamePats.isEmpty) do
       let nameList := MessageData.andList <| namePats.map fun s => m!"\"{s}\""
       if hits2.size == 1 then
         message := message ++ m!"Of these, one has a name containing {nameList}.\n"
