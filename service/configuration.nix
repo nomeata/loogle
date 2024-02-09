@@ -120,7 +120,6 @@ in {
     wants = ["network-online.target"];
     after = ["network-online.target"];
 
-    startAt = "00/6:00"; #  repeat every 6 hours
     serviceConfig = {
       User = "loogle";
       WorkingDirectory = "~";
@@ -135,11 +134,10 @@ in {
       StartLimitBurst = "3";
     };
   };
-  system.activationScripts = {
-    kick-updater = ''
-      source ${config.system.build.setEnvironment}
-      test -e /home/loogle/deploy/live || systemctl start loogle-updater
-      '';
+  systemd.timers.loogle-updater = {
+    wantedBy = [ "timers.target" ];
+    timerConfig.OnCalendar = "00/6:00"; #  repeat every 6 hours
+    timerConfig.Persistent = true;
   };
 
   swapDevices = [{ device = "/swapfile"; size = 2048; }];
