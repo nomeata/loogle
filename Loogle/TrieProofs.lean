@@ -111,29 +111,25 @@ theorem valid_loop_upsert {α} (t : Trie α) (i : Nat) (k : String) (f : Option 
     apply IH1
     apply valid_mkPath
     exact ht
-  case case4 i v ps hps t hi =>
+  case case4 i v ps hps t hi j =>
+    intro ht
     cases ht; case path _ ht =>
-    simp only [Trie.upsert.loop, hi, if_pos, if_neg]; simp_utf8; dsimp
-    split
-    case inl hp =>
-      apply valid_mkPath
-      sorry -- apply IH -- Bug in WfInduct?
-      -- apply valid_mkPath
-      -- exact h
-    case inr hp =>
-      apply Trie.valid.node
-      · simp [ByteArray.size]
-      · have heq0 : Trie.commonPrefix k ps i = 0 := by omega
-        have := Trie.commonPrefix_differs_head k ps i heq0 hi hps
-        simpa [List.Nodup]
-      · simp only [List.mem_toArray, List.mem_cons, List.mem_singleton, forall_eq_or_imp, forall_eq]
-        constructor
-        case left =>
-          apply valid_loop_insertEmpty
-        case right =>
-          simp only [List.not_mem_nil, false_implies, forall_const, and_true]
-          apply valid_mkPath
-          exact ht
+    simp only [Trie.upsert.loop, hi, h, if_pos, if_neg]; simp_utf8; dsimp
+    apply Trie.valid.node
+    · simp [ByteArray.size]
+    · have heq0 : Trie.commonPrefix k ps i = 0 := by omega
+      simp only [String.getUtf8Byte_eq_toUTF8_get, String.utf8ByteSize_eq_toUTF8_size] at hi
+        -- ^ odd: this does not work with `at *`, but it works with `at hi`
+      have := Trie.commonPrefix_differs_head k ps i heq0 hi hps
+      simpa [List.Nodup]
+    · simp only [List.mem_toArray, List.mem_cons, List.mem_singleton, forall_eq_or_imp, forall_eq]
+      constructor
+      case left =>
+        apply valid_loop_insertEmpty
+      case right =>
+        simp only [List.not_mem_nil, false_implies, forall_const, and_true]
+        apply valid_mkPath
+        exact ht
   case case5 i v ps hps t' hi =>
     cases ht; case path _ ht =>
     simp only [Trie.upsert.loop, hi, if_pos, if_neg]; simp_utf8; dsimp
