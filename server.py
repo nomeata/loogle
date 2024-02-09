@@ -108,7 +108,7 @@ class Loogle():
 
     def query(self, query):
         m_queries.inc()
-        sys.stdout.write(f"Query: {json.dumps(query)}\n")
+        print(f"Query: {json.dumps(query)}", flush=True)
         output = self.do_query(query)
         # Update metrics
         if "error" in output:
@@ -370,7 +370,7 @@ class MyHandler(prometheus_client.MetricsHandler):
 
 if __name__ == "__main__":
     webServer = HTTPServer((hostName, serverPort), MyHandler)
-    print("Server started http://%s:%s" % (hostName, serverPort))
+    print("Server started http://%s:%s" % (hostName, serverPort), flush=True)
 
     try:
         webServer.serve_forever()
