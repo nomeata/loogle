@@ -170,9 +170,13 @@ def findPrefix (t : Trie α) (pre : String) : Array α := go t 0
         match t with
         | leaf _val => .empty
         | path _val ps _ t' =>
-          if hasPrefix pre ps i
-          then go t' (i + ps.size)
-          else .empty
+          let j := commonPrefix pre ps i
+          if j == ps.size then
+            go t' (i + ps.size)
+          else if i + j == pre.utf8ByteSize then
+            t'.values
+          else
+            .empty
         | node _val cs ts =>
           match cs.findIdx? (· == c) with
           | none   => .empty
