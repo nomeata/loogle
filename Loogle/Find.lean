@@ -631,11 +631,11 @@ the distributed cache, it may be useful to open a scratch file, `import Mathlib`
 there, this way you will find lemmas that you have not yet imported, and the
 cache will stay up-to-date.
 
-By default `#find` only prints you names of found definitions and lemmas. You can also make print
-types by setting `find.showType` to true:
+By default `#find` prints names and types of found definitions and lemmas. You can also make it print
+names only by setting `find.showType` to `false`:
 
 ```lean
-set_option find.showTypes true
+set_option find.showTypes false
 ```
 -/
 elab(name := findSyntax) "#find " args:find_filters : command =>

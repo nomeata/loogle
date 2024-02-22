@@ -439,16 +439,15 @@ Of these, one has a name containing "peculiar" and "the".
 #guard_msgs in
 #find "peculiar", "the"
 
--- To make find print types of found definitions and lemmas use `find.showTypes` option
+-- To make find not to print types of found definitions and lemmas use `find.showTypes` option
 
-set_option find.showTypes true
-set_option pp.raw false
+set_option find.showTypes false
 
 /--
 info: Found 3 definitions mentioning my_true.
 Of these, 2 have a name containing "eq".
-• my_true_eq_True : my_true = true
-• my_true_eq_true : my_true = true
+• my_true_eq_True
+• my_true_eq_true
 -/
 #guard_msgs in
 #find my_true, "eq"
