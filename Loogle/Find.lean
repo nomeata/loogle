@@ -545,7 +545,7 @@ open Command
 Option to control whether `find` should print types of found lemmas
 -/
 register_option find.showTypes : Bool := {
-  defValue := false
+  defValue := true
   descr := "showing types in #f"
 }
 
@@ -641,5 +641,6 @@ set_option find.showTypes true
 elab(name := findSyntax) "#find " args:find_filters : command =>
   liftTermElabM $ elabFind args
 
+@[inherit_doc findSyntax]
 elab(name := findSyntaxTac) "#find " args:find_filters : tactic =>
   elabFind args
