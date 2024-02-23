@@ -25,7 +25,7 @@ open Lean Meta Elab
 -/
 
 /-- Puts `MessageData` into a bulleted list -/
-def MessageData.bulletList (xs : Array (MessageData)): MessageData :=
+def MessageData.bulletList (xs : Array MessageData) : MessageData :=
   MessageData.joinSep (xs.toList.map (m!"• " ++ ·)) Format.line
 
 /-- Puts `MessageData` into a comma-separated list with `"and"` at the back (no Oxford comma).
