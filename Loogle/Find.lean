@@ -25,11 +25,8 @@ open Lean Meta Elab
 -/
 
 /-- Puts `MessageData` into a bulleted list -/
-def MessageData.bulletList (xs : Array (MessageData × Expr))
-  (showTypes : Bool := false) : MessageData :=
-  MessageData.joinSep (xs.toList.map (fun x =>
-  let type? : MessageData := if showTypes then " : " ++ x.2 else ""
-  m!"• " ++ x.1 ++ type?)) Format.line
+def MessageData.bulletList (xs : Array (MessageData)): MessageData :=
+  MessageData.joinSep (xs.toList.map (m!"• " ++ ·)) Format.line
 
 /-- Puts `MessageData` into a comma-separated list with `"and"` at the back (no Oxford comma).
 Best used on non-empty arrays; returns `"– none –"` for an empty array.  -/
@@ -42,9 +39,13 @@ def MessageData.andList (xs : Array MessageData) : MessageData :=
 /-- Formats a list of names and types, as you would expect from a lemma-searching command.  -/
 def MessageData.bulletListOfConstsAndTypes {m} [Monad m] [MonadEnv m] [MonadError m]
     (names : Array (Name × Expr)) (showTypes : Bool := false) : m MessageData := do
-  let es ← names.mapM $ fun x =>do return (<- mkConstWithLevelParams x.1, x.2)
-  pure (MessageData.bulletList (es.map (fun x => (ppConst x.1, x.2))) showTypes)
-
+    let ms ← names.mapM fun (n,t) => do
+      let n := ppConst (← mkConstWithLevelParams n)
+      if showTypes then
+        return m!"{n} : {t}"
+      else
+        return n
+    pure (MessageData.bulletList ms)
 /-!
 ## Name sorting
 -/
