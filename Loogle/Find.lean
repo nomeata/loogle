@@ -36,12 +36,16 @@ def MessageData.andList (xs : Array MessageData) : MessageData :=
   | #[x] => x
   | _ => MessageData.joinSep xs.pop.toList m!", " ++ m!" and " ++ xs.back
 
-/-- Formats a list of names, as you would expect from a lemma-searching command.  -/
-def MessageData.bulletListOfConsts {m} [Monad m] [MonadEnv m] [MonadError m]
-    (names : Array Name) : m MessageData := do
-  let es ← names.mapM mkConstWithLevelParams
-  pure (MessageData.bulletList (es.map ppConst))
-
+/-- Formats a list of names and types, as you would expect from a lemma-searching command.  -/
+def MessageData.bulletListOfConstsAndTypes {m} [Monad m] [MonadEnv m] [MonadError m]
+    (names : Array (Name × Expr)) (showTypes : Bool := false) : m MessageData := do
+    let ms ← names.mapM fun (n,t) => do
+      let n := ppConst (← mkConstWithLevelParams n)
+      if showTypes then
+        return m!"{n} : {t}"
+      else
+        return n
+    pure (MessageData.bulletList ms)
 /-!
 ## Name sorting
 -/
@@ -539,6 +543,28 @@ initialize cachedIndex : Index ← unsafe do
 open Command
 
 /--
+Option to control whether `find` should print types of found lemmas
+-/
+register_option find.showTypes : Bool := {
+  defValue := true
+  descr := "showing types in #f"
+}
+
+def elabFind (args : TSyntax `Loogle.Find.find_filters) : TermElabM Unit := do
+  profileitM Exception "find" (← getOptions) do
+      match ← find cachedIndex args with
+      | .error ⟨s, warn, suggestions⟩ => do
+        Lean.logErrorAt s warn
+        unless suggestions.isEmpty do
+          Std.Tactic.TryThis.addSuggestions args <| suggestions.map fun sugg =>
+            { suggestion := .tsyntax sugg }
+      | .ok result =>
+        let showTypes := (<- getOptions).get find.showTypes.name find.showTypes.defValue
+        let names := result.hits.map $ fun x=> (x.1.name, x.1.type)
+        Lean.logInfo $ result.header ++ (← MessageData.bulletListOfConstsAndTypes names showTypes)
+
+
+/--
 The `#find` command finds definitions and lemmas in various ways. One can search by: the constants
 involved in the type; a substring of the name; a subexpression of the type; or a subexpression
 located in the return type or a hypothesis specifically. All of these search methods can be
@@ -605,15 +631,17 @@ the _first_ use of `#find` in a module will be slow (in the order of minutes). I
 the distributed cache, it may be useful to open a scratch file, `import Mathlib`, and use `#find`
 there, this way you will find lemmas that you have not yet imported, and the
 cache will stay up-to-date.
+
+By default `#find` prints names and types of found definitions and lemmas. You can also make it print
+names only by setting `find.showType` to `false`:
+
+```lean
+set_option find.showTypes false
+```
 -/
-elab(name := findSyntax) "#find " args:find_filters : command => liftTermElabM do
-  profileitM Exception "find" (← getOptions) do
-    match ← find cachedIndex args with
-    | .error ⟨s, warn, suggestions⟩ => do
-      Lean.logErrorAt s warn
-      unless suggestions.isEmpty do
-        Std.Tactic.TryThis.addSuggestions args <| suggestions.map fun sugg =>
-          { suggestion := .tsyntax sugg }
-    | .ok result =>
-      let names := result.hits.map (·.1.name)
-      Lean.logInfo $ result.header ++ (← MessageData.bulletListOfConsts names)
+elab(name := findSyntax) "#find " args:find_filters : command =>
+  liftTermElabM $ elabFind args
+
+@[inherit_doc findSyntax]
+elab(name := findSyntaxTac) "#find " args:find_filters : tactic =>
+  elabFind args
