@@ -1,6 +1,3 @@
-import Std.Tactic.GuardMsgs
-import Std.Data.List.Lemmas
-
 import Loogle.Find
 
 -- We want the following tests to be self-contained.

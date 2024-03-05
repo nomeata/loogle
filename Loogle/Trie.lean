@@ -10,7 +10,6 @@ Adapted from Lean.Data.Trie to use path compression.
 -/
 import Lean.Data.Format
 import Std.Data.Array
-import Std.Tactic.Omega
 
 namespace Loogle
 

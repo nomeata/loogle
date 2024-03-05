@@ -80,7 +80,7 @@ def sortByModule {m} [Monad m] [MonadEnv m] {α} (name : α → Name) (f : α �
 
 /-- In lieu of an real `Lean.Expr.size` function, explicitly fold for now -/
 def exprSize (e : Expr ) : Nat := go e 0
-  where @[nolint docBlame] go : Expr → Nat → Nat
+  where go : Expr → Nat → Nat
     | Expr.forallE _ d b _, c  => go b (go d (c + 1))
     | Expr.lam _ d b _, c      => go b (go d (c + 1))
     | Expr.letE _ t v b _, c   => go b (go v (go t (c + 1)))
@@ -189,7 +189,6 @@ def SuffixTrie.insert (t : SuffixTrie) (n : Lean.Name) : SuffixTrie := Id.run $ 
   pure t
 
 /-- Insert a declaration into a `SuffixTrie`, if the name isn't blacklisted. -/
-@[nolint unusedArguments]
 def SuffixTrie.addDecl (name : Lean.Name) (_ : ConstantInfo) (t : SuffixTrie) :
     MetaM SuffixTrie := do
   if ← Loogle.isBlackListed name then
@@ -556,7 +555,7 @@ def elabFind (args : TSyntax `Loogle.Find.find_filters) : TermElabM Unit := do
       | .error ⟨s, warn, suggestions⟩ => do
         Lean.logErrorAt s warn
         unless suggestions.isEmpty do
-          Std.Tactic.TryThis.addSuggestions args <| suggestions.map fun sugg =>
+          Lean.Meta.Tactic.TryThis.addSuggestions args <| suggestions.map fun sugg =>
             { suggestion := .tsyntax sugg }
       | .ok result =>
         let showTypes := (<- getOptions).get find.showTypes.name find.showTypes.defValue
