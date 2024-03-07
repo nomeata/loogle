@@ -21,6 +21,7 @@ in {
   boot.initrd.kernelModules = [ "nvme" ];
   fileSystems."/" = { device = "/dev/sda1"; fsType = "ext4"; };
 
+  services.getty.autologinUser = "root";
   boot.tmp.cleanOnBoot = true;
   zramSwap.enable = true;
   networking.hostName = "loogle";
