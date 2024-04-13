@@ -1,4 +1,4 @@
-servers:
+servers: []
 # - configuration: loogle
 #   deployment:
 #     type: on-branch
