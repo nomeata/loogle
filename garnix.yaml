@@ -1,5 +1,5 @@
 servers:
-  - configuration: loogle
-    deployment:
-      type: on-branch
-      branch: garnix
+# - configuration: loogle
+#   deployment:
+#     type: on-branch
+#     branch: garnix
