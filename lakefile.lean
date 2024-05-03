@@ -16,7 +16,7 @@ meta if run_io Option.isSome <$> IO.getEnv "LOOGLE_SECCOMP" then do
     let oFile := pkg.buildDir / "loogle_seccomp.o"
     let srcJob ← inputFile <| pkg.dir / "loogle_seccomp.c"
     let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
-    buildO "Seccomp c shim (.o)" oFile srcJob flags #[] "cc"
+    buildO oFile srcJob flags #[] "cc"
 
   extern_lib libloogle_seccomp pkg := do
     let name := nameToStaticLib "loogle_seccomp"
