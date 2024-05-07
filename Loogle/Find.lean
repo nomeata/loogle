@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Joachim Breitner
 -/
 import Lean
-import Std.Data.String.Basic
-import Std.Util.Pickle
-import Std.Lean.Delaborator
+import Batteries.Data.String.Basic
+import Batteries.Util.Pickle
+import Batteries.Lean.Delaborator
 
 import Loogle.Cache
 import Loogle.NameRel
@@ -203,7 +203,7 @@ def SuffixTrie.find (t : SuffixTrie) (s : String) : NameSet :=
 def SuffixTrie.findSuffix (t : SuffixTrie) (s : String) : Array Name :=
   (Loogle.Trie.find? t s.toLower).getD #[]
 
-open Std.Tactic
+open Batteries.Tactic
 
 /-- The index used by `#find`: A declaration cache with a `NameRel` mapping names to the name
 of constants they are mentinend in, and a declaration cache storing a suffix trie. -/

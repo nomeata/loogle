@@ -3,12 +3,12 @@ Copyright (c) 2023 Joachim Breitner. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Joachim Breitner
 -/
-import Std.Util.Cache
+import Batteries.Util.Cache
 
 open Lean Meta
 
 -- Odd to have that namespace in std4
-namespace Std.Tactic
+namespace Batteries.Tactic
 
 /--
 A type synonym for a `DeclCache` containing a pair of elements.

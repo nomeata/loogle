@@ -9,7 +9,7 @@ Adapted from Lean.Data.Trie to use path compression.
 
 -/
 import Lean.Data.Format
-import Std.Data.Array
+import Batteries.Data.Array
 
 namespace Loogle
 
