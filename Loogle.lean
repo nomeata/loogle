@@ -91,9 +91,9 @@ def toJson : Result → CoreM Json -- only in IO for MessageData.toString
       else
         pure $ .mkObj [ ("error", .str err), ("suggestions", .arr (suggs.map .str)), ("heartbeats", heartbeats)]
   | (.ok result, suggs, heartbeats) => do
-      pure $ .mkObj [
-        ("header", ← result.header.toString),
-        ("heartbeats", heartbeats),
+      pure $ .mkObj $ [
+        ("header", .str (← result.header.toString)),
+        ("heartbeats", .num heartbeats),
         ("count", .num result.count),
         ("hits", .arr $ ← result.hits.mapM fun (ci, mod) => do
           let ty := (← (ppExpr ci.type).run').pretty
@@ -107,9 +107,11 @@ def toJson : Result → CoreM Json -- only in IO for MessageData.toString
             ("module", mod ),
             ("doc", ds )
           ]
-        ),
+        )
+      ] ++
+      (if suggs.isEmpty then [] else [
         ("suggestions", .arr (suggs.map .str))
-      ]
+      ])
 
 def printJson : Printer := fun r => do
   IO.println (← toJson r).compress
