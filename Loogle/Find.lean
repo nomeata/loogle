@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Joachim Breitner
 -/
 import Lean
-import Batteries.Data.String.Basic
+import Batteries.Data.String.Matcher
 import Batteries.Util.Pickle
 import Batteries.Lean.Delaborator
 
