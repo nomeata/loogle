@@ -146,12 +146,14 @@ class MyHandler(prometheus_client.MetricsHandler):
     def return404(self):
         self.send_response(404)
         self.send_header("Content-type", "text/plain")
+        sefl.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(b"Not found.\n")
 
     def return400(self):
         self.send_response(400)
         self.send_header("Content-type", "text/plain")
+        sefl.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         try:
             self.wfile.write(b"Invalid request.\n")
@@ -162,11 +164,13 @@ class MyHandler(prometheus_client.MetricsHandler):
     def returnRedirect(self, url):
         self.send_response(302)
         self.send_header("Location", url)
+        sefl.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
 
     def returnJSON(self, data):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
+        sefl.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         try:
             self.wfile.write(bytes(json.dumps(data), "utf8"))
@@ -176,6 +180,7 @@ class MyHandler(prometheus_client.MetricsHandler):
     def returnIcon(self):
         self.send_response(200)
         self.send_header("Content-type", "image/png")
+        sefl.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         try:
             self.wfile.write(icon)
