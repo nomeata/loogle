@@ -40,7 +40,7 @@ def MessageData.andList (xs : Array MessageData) : MessageData :=
 def MessageData.bulletListOfConstsAndTypes {m} [Monad m] [MonadEnv m] [MonadError m]
     (names : Array (Name × Expr)) (showTypes : Bool := false) : m MessageData := do
     let ms ← names.mapM fun (n,t) => do
-      let n := ppConst (← mkConstWithLevelParams n)
+      let n := .ofConst (← mkConstWithLevelParams n)
       if showTypes then
         return m!"{n} : {t}"
       else

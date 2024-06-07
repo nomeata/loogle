@@ -52,8 +52,8 @@ def Printer := Result → CoreM Unit
 
 def runQuery (index : Find.Index) (query : String) : CoreM Result :=
   withCurrHeartbeats do
-    let (r, suggs) ← withCatchingRuntimeEx do
-      try
+    let (r, suggs) ← tryCatchRuntimeEx
+      (handler := fun e => do return (.error (← e.toMessageData.toString), #[])) do
         match Parser.runParser (← getEnv) `Loogle.Find.find_filters query with
         | .error err => pure $ (.error err, #[])
         | .ok s => do
@@ -67,8 +67,6 @@ def runQuery (index : Find.Index) (query : String) : CoreM Result :=
               let suggs ← err.suggestions.mapM fun sugg => do
                 return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty
               return (.error (← err.message.toString), suggs)
-      catch e =>
-        return (.error (← e.toMessageData.toString), #[])
     let heartbeats := ((← IO.getNumHeartbeats) - (← getInitHeartbeats )) / 1000
     return (r, suggs, heartbeats)
 
