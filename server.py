@@ -302,12 +302,48 @@ class MyHandler(prometheus_client.MetricsHandler):
                 <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1">
-                <link rel="stylesheet" href="https://unpkg.com/chota@latest">
+                <link rel="stylesheet"
+                      href="https://unpkg.com/chota@0.9.2/dist/chota.min.css"
+                      integrity="sha384-A2UBIkgVTcNWgv+snhw7PKvU/L9N0JqHwgwDwyNcbsLiVhGG5KAuR64N4wuDYd99"
+                      crossorigin="anonymous">
+                <link rel="modulepreload"
+                      href="https://cdn.skypack.dev/-/@leanprover/unicode-input@v0.1.0-8CqsXR89dtD7hIU0c6wN/dist=es2020,mode=imports,min/optimized/@leanprover/unicode-input.js"
+                      integrity="sha384-IR290YsDJ1+Rzd4fgZM4K+v1E2kG2NzQ3XYgGhSxE4cNodMg0JQ9BWn/0JMgk5Xa"
+                      crossorigin="anonymous">
+                <link rel="modulepreload"
+                      href="https://cdn.skypack.dev/-/@leanprover/unicode-input-component@v0.1.0-cAcOWoqAnOWevp4vHscs/dist=es2020,mode=imports,min/optimized/@leanprover/unicode-input-component.js"
+                      integrity="sha384-yX1xThTPuhw06x65fHJAV8FLLmaKxiyeKkBTGsI5R1dHRQmHbXU0ylBBu2+56Bc/"
+                      crossorigin="anonymous">
+                <link rel="modulepreload"
+                      href="https://cdn.skypack.dev/pin/@leanprover/unicode-input-component@v0.1.0-cAcOWoqAnOWevp4vHscs/mode=imports,min/optimized/@leanprover/unicode-input-component.js"
+                      integrity="sha384-3jdol3AWL3guud0hEWfo7ysqRxI6grINH5ElwPuStNcMb887NNz08TqkGNgy+2q6"
+                      crossorigin="anonymous">
                 <style>
                   @import url('https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.051/juliamono.css');
                   :root {
                     --font-family-mono: 'JuliaMono', monospace;
                   }
+
+                  /* Browser fix for unicode editing */
+                  .textinput { white-space: -moz-pre-space; }
+
+                  /* Copied from chota for textinput */
+                  .textinput {
+                      font-family: inherit;
+                      padding: 0.8rem 1rem;
+                      border-radius: 4px;
+                      border: 1px solid var(--color-lightGrey);
+                      font-size: 1em;
+                      -webkit-transition: all 0.2s ease;
+                      transition: all 0.2s ease;
+                      display: block;
+                      width: 100%;
+                    }
+                   .textinput:focus {
+                      outline: none;
+                      border-color: var(--color-primary);
+                      box-shadow: 0 0 1px var(--color-primary);
+                    }
                 </style>
                 <link rel="icon" type="image/png" href="/loogle.png" />
                 <title>Loogle!</title>
@@ -318,12 +354,13 @@ class MyHandler(prometheus_client.MetricsHandler):
                 <h1><a href="/" style="color:#333;">Loogle!</a></h1>
             """, "utf-8"))
             self.wfile.write(bytes(f"""
-                <form method="GET">
-                <p class="grouped">
-                <input type="text" name="q" value="{html.escape(query)}"/>
-                <button type="submit">#find</button>
+                <form method="GET" id="queryform">
+                <div class="grouped">
+                <input id="hiddenquery" type="hidden" name="q" value=""/>
+                <div class="textinput" id="query" name="q" contenteditable="true" autofocus="true">{html.escape(query)}</div>
+                <button type="submit" id="submit">#find</button>
                 <button type="submit" name="lucky" value="yes" title="Directly jump to the documentation of the first hit.">#lucky</button>
-                </p>
+                </div>
                 </form>
                 </section>
             """, "utf-8"))
@@ -368,6 +405,28 @@ class MyHandler(prometheus_client.MetricsHandler):
 
             self.wfile.write(b"""
                 </main>
+                <script type="module">
+                import { InputAbbreviationRewriter } from "https://cdn.skypack.dev/pin/@leanprover/unicode-input-component@v0.1.0-cAcOWoqAnOWevp4vHscs/mode=imports,min/optimized/@leanprover/unicode-input-component.js";
+                const queryInput = document.getElementById('query');
+                const hiddenInput = document.getElementById('hiddenquery');
+                const form = document.getElementById('queryform');
+                const submitButton = document.getElementById('submit');
+                const rewriter = new InputAbbreviationRewriter(
+                    { abbreviationCharacter: "\\\\",
+                      customTranslations: [],
+                      eagerReplacementEnabled: true },
+                    queryInput,
+                )
+                queryInput.addEventListener('keydown', event => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        submitButton.click();
+                    }
+                })
+                form.addEventListener('submit', event => {
+                    hiddenInput.value = queryInput.innerText;
+                })
+                </script>
                 </body>
                 </html>
             """)
