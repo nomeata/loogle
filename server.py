@@ -42,7 +42,7 @@ m_errors = prometheus_client.Counter('errors', 'Total number of failing queries'
 m_results = prometheus_client.Histogram('results', 'Results per query', buckets=(0,1,2,5,10,50,100,200,500,1000))
 m_heartbeats = prometheus_client.Histogram('heartbeats', 'Heartbeats per query', buckets=(0,2e0,2e1,2e2,2e3,2e4))
 m_client = prometheus_client.Counter('clients', 'Clients used', ["client"])
-for l in ("web", "zulip", "json", "nvim", "vscode"): m_client.labels(l)
+for l in ("web", "zulip", "json", "nvim", "vscode-lean4", "vscode-loogle"): m_client.labels(l)
 
 examples = [
     "Real.sin",
@@ -192,6 +192,18 @@ class MyHandler(prometheus_client.MetricsHandler):
         except BrokenPipeError:
             pass
 
+    def do_OPTIONS(self):
+        url = urllib.parse.urlparse(self.path)
+        if url.path == "/json":
+            self.send_response(200)
+            self.send_header("Content-type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Access-Control-Allow-Methods", "GET")
+            self.send_header("Access-Control-Allow-Headers", "User-Agent, X-Loogle-Client")
+            self.end_headers()
+        else:
+            self.return404()
+
     def do_POST(self):
         try:
             url = urllib.parse.urlparse(self.path)
@@ -270,8 +282,10 @@ class MyHandler(prometheus_client.MetricsHandler):
             params = urllib.parse.parse_qs(url_query)
             if "q" in params and len(params["q"]) == 1:
                 if want_json:
+                    if "lean4/" in self.headers.get("x-loogle-client", ""):
+                        m_client.labels("vscode-lean4").inc()
                     if "vscode" in self.headers["user-agent"]:
-                        m_client.labels("vscode").inc()
+                        m_client.labels("vscode-loogle").inc()
                     elif "lean.nvim" in self.headers["user-agent"]:
                         m_client.labels("nvim").inc()
                     elif "lean+nvim" in self.headers["user-agent"]:
