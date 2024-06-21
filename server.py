@@ -147,6 +147,7 @@ class MyHandler(prometheus_client.MetricsHandler):
         self.send_response(404)
         self.send_header("Content-type", "text/plain")
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "User-Agent, X-Loogle-Client")
         self.end_headers()
         self.wfile.write(b"Not found.\n")
 
@@ -154,6 +155,7 @@ class MyHandler(prometheus_client.MetricsHandler):
         self.send_response(400)
         self.send_header("Content-type", "text/plain")
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "User-Agent, X-Loogle-Client")
         self.end_headers()
         try:
             self.wfile.write(b"Invalid request.\n")
@@ -165,12 +167,14 @@ class MyHandler(prometheus_client.MetricsHandler):
         self.send_response(302)
         self.send_header("Location", url)
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "User-Agent, X-Loogle-Client")
         self.end_headers()
 
     def returnJSON(self, data):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "User-Agent, X-Loogle-Client")
         self.end_headers()
         try:
             self.wfile.write(bytes(json.dumps(data), "utf8"))
@@ -181,6 +185,7 @@ class MyHandler(prometheus_client.MetricsHandler):
         self.send_response(200)
         self.send_header("Content-type", "image/png")
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "User-Agent, X-Loogle-Client")
         self.end_headers()
         try:
             self.wfile.write(icon)
