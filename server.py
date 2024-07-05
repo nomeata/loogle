@@ -284,7 +284,7 @@ class MyHandler(prometheus_client.MetricsHandler):
                 if want_json:
                     if "lean4/" in self.headers.get("x-loogle-client", ""):
                         m_client.labels("vscode-lean4").inc()
-                    if "vscode" in self.headers["user-agent"]:
+                    elif "vscode" in self.headers["user-agent"]:
                         m_client.labels("vscode-loogle").inc()
                     elif "lean.nvim" in self.headers["user-agent"]:
                         m_client.labels("nvim").inc()
