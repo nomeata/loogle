@@ -14,7 +14,7 @@ require mathlib from git "https://github.com/leanprover-community/mathlib4" @ "m
 meta if run_io Option.isSome <$> IO.getEnv "LOOGLE_SECCOMP" then do
   target loogle_seccomp.o pkg : FilePath := do
     let oFile := pkg.buildDir / "loogle_seccomp.o"
-    let srcJob ← inputFile <| pkg.dir / "loogle_seccomp.c"
+    let srcJob ← inputTextFile <| pkg.dir / "loogle_seccomp.c"
     let flags := #["-I", (← getLeanIncludeDir).toString, "-fPIC"]
     buildO oFile srcJob flags #[] "cc"
 
