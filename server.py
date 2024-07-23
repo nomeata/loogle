@@ -370,7 +370,7 @@ class MyHandler(prometheus_client.MetricsHandler):
                 <main class="container">
 
                 <section>
-                <h1><a href="/" style="color:#333;">Loogle!</a></h1>
+                <h1><a href="." style="color:#333;">Loogle!</a></h1>
             """, "utf-8"))
             self.wfile.write(bytes(f"""
                 <form method="GET" id="queryform">
