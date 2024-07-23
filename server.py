@@ -125,7 +125,7 @@ loogle = Loogle()
 
 # link formatting
 def locallink(query):
-    return f"/?q={urllib.parse.quote(query)}"
+    return f"?q={urllib.parse.quote(query)}"
 
 def querylink(query):
     return f"https://loogle.lean-lang.org/?q={urllib.parse.quote(query)}"
@@ -364,7 +364,7 @@ class MyHandler(prometheus_client.MetricsHandler):
                       box-shadow: 0 0 1px var(--color-primary);
                     }
                 </style>
-                <link rel="icon" type="image/png" href="/loogle.png" />
+                <link rel="icon" type="image/png" href="loogle.png" />
                 <title>Loogle!</title>
                 <body>
                 <main class="container">

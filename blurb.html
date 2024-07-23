@@ -1,9 +1,10 @@
 <h2 id="about">About</h2>
-<p>Loogle searches of Lean and Mathlib definitions and theorems.</p>
-<p>You may also want to try the <a
+<p>Loogle searches Lean and Mathlib definitions and theorems.</p>
+<p>You can use Loogle from witin the Lean4 VSCode language extension
+using (by default) Ctrl-K Ctrl-S. You can also try the <a
 href="https://github.com/nomeata/loogle">CLI version</a>, the <a
-href="https://marketplace.visualstudio.com/items?itemName=ShreyasSrinivas.loogle-lean">VS
-Code extension</a>, the <a
+href="https://marketplace.visualstudio.com/items?itemName=ShreyasSrinivas.loogle-lean">Loogle
+VS Code extension</a>, the <a
 href="https://github.com/Julian/lean.nvim#features"><code>lean.nvim</code>
 integration</a> or the <a
 href="https://github.com/nomeata/loogle#zulip-bot">Zulip bot</a>.</p>
@@ -11,35 +12,35 @@ href="https://github.com/nomeata/loogle#zulip-bot">Zulip bot</a>.</p>
 <p>Loogle finds definitions and lemmas in various ways:</p>
 <ol type="1">
 <li><p>By constant:<br />
-🔍 <a href="/?q=Real.sin"><code>Real.sin</code></a><br />
+🔍 <a href="?q=Real.sin"><code>Real.sin</code></a><br />
 finds all lemmas whose statement somehow mentions the sine
 function.</p></li>
 <li><p>By lemma name substring:<br />
-🔍 <a href="/?q=%22differ%22"><code>"differ"</code></a><br />
+🔍 <a href="?q=%22differ%22"><code>"differ"</code></a><br />
 finds all lemmas that have <code>"differ"</code> somewhere in their
 lemma <em>name</em>.</p></li>
 <li><p>By subexpression:<br />
-🔍 <a href="/?q=_+*+(_+%5E+_)"><code>_ * (_ ^ _)</code></a><br />
+🔍 <a href="?q=_+*+(_+%5E+_)"><code>_ * (_ ^ _)</code></a><br />
 finds all lemmas whose statements somewhere include a product where the
 second argument is raised to some power.</p>
 <p>The pattern can also be non-linear, as in<br />
 🔍 <a
-href="/?q=Real.sqrt+%3Fa+*+Real.sqrt+%3Fa"><code>Real.sqrt ?a * Real.sqrt ?a</code></a></p>
+href="?q=Real.sqrt+%3Fa+*+Real.sqrt+%3Fa"><code>Real.sqrt ?a * Real.sqrt ?a</code></a></p>
 <p>If the pattern has parameters, they are matched in any order. Both of
 these will find <code>List.map</code>:<br />
 🔍 <a
-href="/?q=(?a%20-%3E%20?b)%20-%3E%20List%20?a%20-%3E%20List%20?b"><code>(?a -&gt; ?b) -&gt; List ?a -&gt; List ?b</code></a><br />
+href="?q=(?a%20-%3E%20?b)%20-%3E%20List%20?a%20-%3E%20List%20?b"><code>(?a -&gt; ?b) -&gt; List ?a -&gt; List ?b</code></a><br />
 🔍 <a
-href="/?q=List%20?a%20-%3E%20(?a%20-%3E%20?b)%20-%3E%20List%20?b"><code>List ?a -&gt; (?a -&gt; ?b) -&gt; List ?b</code></a></p></li>
+href="?q=List%20?a%20-%3E%20(?a%20-%3E%20?b)%20-%3E%20List%20?b"><code>List ?a -&gt; (?a -&gt; ?b) -&gt; List ?b</code></a></p></li>
 <li><p>By main conclusion:<br />
 🔍 <a
-href="/?q=%7C-%20tsum%20_%20=%20_%20*%20tsum%20_"><code>|- tsum _ = _ * tsum _</code></a><br />
+href="?q=%7C-%20tsum%20_%20=%20_%20*%20tsum%20_"><code>|- tsum _ = _ * tsum _</code></a><br />
 finds all lemmas where the conclusion (the subexpression to the right of
 all <code>→</code> and <code>∀</code>) has the given shape.</p>
 <p>As before, if the pattern has parameters, they are matched against
 the hypotheses of the lemma in any order; for example,<br />
 🔍 <a
-href="/?q=%7C-%20_%20%3C%20_%20→%20tsum%20_%20%3C%20tsum%20_"><code>|- _ &lt; _ → tsum _ &lt; tsum _</code></a><br />
+href="?q=%7C-%20_%20%3C%20_%20→%20tsum%20_%20%3C%20tsum%20_"><code>|- _ &lt; _ → tsum _ &lt; tsum _</code></a><br />
 will find <code>tsum_lt_tsum</code> even though the hypothesis
 <code>f i &lt; g i</code> is not the last.</p></li>
 </ol>
@@ -47,7 +48,7 @@ will find <code>tsum_lt_tsum</code> even though the hypothesis
 Loogle will return lemmas which match <em>all</em> of them. The
 search<br />
 🔍 <a
-href="/?q=Real.sin,+%22two%22,+tsum,+_+*+_,+_+%5E+_,+%7C-+_+%3C+_+→+_"><code>Real.sin, "two", tsum, _ * _, _ ^ _, |- _ &lt; _ → _</code></a><br />
+href="?q=Real.sin,+%22two%22,+tsum,+_+*+_,+_+%5E+_,+%7C-+_+%3C+_+→+_"><code>Real.sin, "two", tsum, _ * _, _ ^ _, |- _ &lt; _ → _</code></a><br />
 woould find all lemmas which mention the constants <code>Real.sin</code>
 and <code>tsum</code>, have <code>"two"</code> as a substring of the
 lemma name, include a product and a power somewhere in the type,
