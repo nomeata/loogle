@@ -158,7 +158,7 @@ in {
     serviceConfig = {
       User = "loogle";
       WorkingDirectory = "~";
-      ExecStart = "${self.packages.${pkgs.system}.loogle-updater}/bin/loogle-updater /home/loogle";
+      ExecStart = "${self.packages.${pkgs.system}.atomic}/bin/atomic build deploy/live ${self.packages.${pkgs.system}.loogle-updater}/bin/loogle-updater";
 #      Restart = "on-failure";
       NoNewPrivileges = true;
       ProtectSystem = "strict";

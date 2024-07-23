@@ -9,6 +9,12 @@
     in
     {
       packages.${system} = {
+        atomic =
+          pkgs.runCommand "atomic" {}
+            ''
+              install -m755 ${./atomic.sh} -D $out/bin/atomic
+              patchShebangs $out/bin/atomic
+            '';
         loogle-updater =
           let deps = [
             pkgs.gitMinimal
