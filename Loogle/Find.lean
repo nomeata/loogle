@@ -134,19 +134,30 @@ def matchConclusion (t : Expr) : MetaM ConstMatcher := withReducible do
     let cTy := c.instantiateTypeLevelParams (← mkFreshLevelMVars c.numLevelParams)
     matchUpToHyps pat head cTy
 
-/-- A wrapper around `Lean.Meta.forEachExpr'` that checks if any subexpression matches the
-predicate.  -/
-def Lean.Meta.anyExpr (input : Expr) (pred : Expr → MetaM Bool) : MetaM Bool := do
+/--
+A wrapper around `Lean.Meta.forEachExpr'` that checks if any subexpression matches the
+predicate. The `pre` predicate is used to prune subexpressions eagerly.
+-/
+def Lean.Meta.anyExpr (input : Expr) (pre : Expr → MetaM Bool) (pred : Expr → MetaM Bool) : MetaM Bool := do
   let found  ← IO.mkRef false
   Lean.Meta.forEachExpr' input fun sub_e => do
+    unless ← pre sub_e do return false
     if ← pred sub_e then found.set true
     -- keep searching if we haven't found it yet
     not <$> found.get
   found.get
 
+/--
+Used to prune the search early: Checks that all consts mentioned in `consts` appear
+in `e`.
+-/
+def checkUsedConsts (consts : NameSet) (e : Expr) : MetaM Bool := do
+  return consts.subset e.getUsedConstantsAsSet
+
 /-- Takes a pattern (of type `Expr`), and returns a matcher that succeeds if _any_ subexpression
 matches that patttern. If the pattern is a function type, it matches up to parameter reordering. -/
 def matchAnywhere (t : Expr) : MetaM ConstMatcher := withReducible do
+  let patConsts := t.getUsedConstantsAsSet
   let head := (← forallMetaTelescope t).2.2.toHeadIndex
   let pat ← abstractMVars (← instantiateMVars t)
   pure fun (c : ConstantInfo) => withReducible do
@@ -154,7 +165,7 @@ def matchAnywhere (t : Expr) : MetaM ConstMatcher := withReducible do
     -- NB: Lean.Meta.forEachExpr`' handles nested foralls in one go, so
     -- in `(a → b → c)`, it will never vist `b → c`.
     -- But since we use `matchUpToHyps` instead of `isDefEq` directly, this is ok.
-    Lean.Meta.anyExpr cTy $ matchUpToHyps pat head
+    Lean.Meta.anyExpr cTy (checkUsedConsts patConsts) (matchUpToHyps pat head)
 
 /-!
 ## The two indexes used
@@ -171,7 +182,7 @@ of lemma names.
 private def addDecl (name : Lean.Name) (c : ConstantInfo) (m : NameRel) : MetaM NameRel := do
   if ← Loogle.isBlackListed name then
     return m
-  let consts := c.type.foldConsts {} (flip NameSet.insert)
+  let consts := c.type.getUsedConstantsAsSet
   return consts.fold (init := m) fun m n => m.insert n name
 
 
