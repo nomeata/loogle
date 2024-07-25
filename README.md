@@ -57,12 +57,12 @@ the nix setup, the index is built as part of the build process.
 Web service
 -----------
 
-This tools is the backend of <https://loogle.lean-lang.org/>. This is currently
-running on a 4GB Hetzner virtual host with a nixos system (see `./nixos`) with
-a ngingx reverse proxy (for SSL) in front of a small python HTTP server (see
-`./server.py`) that uses `loogle`. The query processing is locked down using
-SECCOMP (see `./loogle_seccomp.c`). It automatically tries to upgrade to the latest
-mathlib every 6 hours. See `./service` for the NixOS configuration for the server.
+This tool is the backend of <https://loogle.lean-lang.org/>. This is currently
+running on a virtual host with a nixos system with a ngingx reverse proxy (for
+SSL) in front of a small python HTTP server (see `./server.py`) that uses
+`loogle`. The query processing is locked down using SECCOMP (see
+`./loogle_seccomp.c`). It automatically tries to upgrade to the latest
+mathlib every 6 hours.
 
 You can run this server locally as well, either using `./server.py` after you
 built `loogle` via `lake`.
