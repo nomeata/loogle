@@ -366,7 +366,7 @@ class MyHandler(prometheus_client.MetricsHandler):
                 </style>
                 <link rel="icon" type="image/png" href="loogle.png" />
                 <title>Loogle!</title>
-                <body>
+                <body autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                 <main class="container">
 
                 <section>
