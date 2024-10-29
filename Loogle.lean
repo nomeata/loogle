@@ -82,6 +82,15 @@ def printPlain : Printer
       | none => IO.println s!"{ci.name}" -- unlikely to happen in CLI usage
       | some mod => IO.println s!"{ci.name} (from {mod})"
 
+open PrettyPrinter in
+/-- Like PrettyPrinter.ppSignature, but omits the id -/
+def ppSignature (name : Name) : MetaM Format := do
+  let e ← mkConstWithLevelParams name
+  let (stx, _infos) ← delabCore e (delab := Delaborator.delabConstWithSignature)
+  let stx : Syntax := stx
+  -- stx[1] picks out the signature
+  ppTerm ⟨stx[1]⟩
+
 def toJson : Result → CoreM Json -- only in IO for MessageData.toString
   | (.error err, suggs, heartbeats) => do
       if suggs.isEmpty then
@@ -94,7 +103,7 @@ def toJson : Result → CoreM Json -- only in IO for MessageData.toString
         ("heartbeats", .num heartbeats),
         ("count", .num result.count),
         ("hits", .arr $ ← result.hits.mapM fun (ci, mod) => do
-          let ty := (← (ppExpr ci.type).run').pretty
+          let ty := (← (ppSignature ci.name).run').pretty
           let ds := match ← findDocString? (← getEnv) ci.name false with
             | some s => .str s
             | none => .null
