@@ -84,7 +84,7 @@ def printPlain : Printer
 
 open PrettyPrinter in
 /-- Like PrettyPrinter.ppSignature, but omits the id -/
-def ppSignature (name : Name) : MetaM Format := do
+def ppSignature (name : Name) : MetaM Format := withCurrHeartbeats do
   tryCatchRuntimeEx do
     let e ← mkConstWithLevelParams name
     let (stx, _infos) ← delabCore e (delab := Delaborator.delabConstWithSignature)
