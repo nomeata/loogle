@@ -85,13 +85,13 @@ def printPlain : Printer
 open PrettyPrinter in
 /-- Like PrettyPrinter.ppSignature, but omits the id -/
 def ppSignature (name : Name) : MetaM Format := do
-  try
+  tryCatchRuntimeEx do
     let e ← mkConstWithLevelParams name
     let (stx, _infos) ← delabCore e (delab := Delaborator.delabConstWithSignature)
     let stx : Syntax := stx
     -- stx[1] picks out the signature
     ppTerm ⟨stx[1]⟩
-  catch e =>
+   fun e =>
     return f!"[Failed to pretty-print signature: {← e.toMessageData.format}]"
 
 
