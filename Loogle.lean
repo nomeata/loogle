@@ -85,11 +85,15 @@ def printPlain : Printer
 open PrettyPrinter in
 /-- Like PrettyPrinter.ppSignature, but omits the id -/
 def ppSignature (name : Name) : MetaM Format := do
-  let e ← mkConstWithLevelParams name
-  let (stx, _infos) ← delabCore e (delab := Delaborator.delabConstWithSignature)
-  let stx : Syntax := stx
-  -- stx[1] picks out the signature
-  ppTerm ⟨stx[1]⟩
+  try
+    let e ← mkConstWithLevelParams name
+    let (stx, _infos) ← delabCore e (delab := Delaborator.delabConstWithSignature)
+    let stx : Syntax := stx
+    -- stx[1] picks out the signature
+    ppTerm ⟨stx[1]⟩
+  catch e =>
+    return f!"[Failed to pretty-print signature: {← e.toMessageData.format}]"
+
 
 def toJson : Result → CoreM Json -- only in IO for MessageData.toString
   | (.error err, suggs, heartbeats) => do
