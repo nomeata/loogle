@@ -1,7 +1,7 @@
 ## About
 Loogle searches Lean and Mathlib definitions and theorems.
 
-You can use Loogle from witin the Lean4 VSCode language extension using (by default) Ctrl-K Ctrl-S. You can also try the [CLI version](https://github.com/nomeata/loogle), the [Loogle VS Code extension](https://marketplace.visualstudio.com/items?itemName=ShreyasSrinivas.loogle-lean), the [`lean.nvim` integration](https://github.com/Julian/lean.nvim#features) or the [Zulip bot](https://github.com/nomeata/loogle#zulip-bot).
+You can use Loogle from within the Lean4 VSCode language extension using (by default) Ctrl-K Ctrl-S. You can also try the `#loogle` command from [LeanSearchClient](https://github.com/leanprover-community/LeanSearchClient), the [CLI version](https://github.com/nomeata/loogle), the [Loogle VS Code extension](https://marketplace.visualstudio.com/items?itemName=ShreyasSrinivas.loogle-lean), the [`lean.nvim` integration](https://github.com/Julian/lean.nvim#features) or the [Zulip bot](https://github.com/nomeata/loogle#zulip-bot).
 
 ## Usage
 
