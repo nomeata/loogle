@@ -28,14 +28,6 @@ open Lean Meta Elab
 def MessageData.bulletList (xs : Array MessageData) : MessageData :=
   MessageData.joinSep (xs.toList.map (m!"• " ++ ·)) Format.line
 
-/-- Puts `MessageData` into a comma-separated list with `"and"` at the back (no Oxford comma).
-Best used on non-empty arrays; returns `"– none –"` for an empty array.  -/
-def MessageData.andList (xs : Array MessageData) : MessageData :=
-  match xs with
-  | #[] => m!"– none –"
-  | #[x] => x
-  | _ => MessageData.joinSep xs.pop.toList m!", " ++ m!" and " ++ xs.back
-
 /-- Formats a list of names and types, as you would expect from a lemma-searching command.  -/
 def MessageData.bulletListOfConstsAndTypes {m} [Monad m] [MonadEnv m] [MonadError m]
     (names : Array (Name × Expr)) (showTypes : Bool := false) : m MessageData := do
@@ -457,7 +449,7 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
         -- If we have more than one name fragment pattern, use the one that returns the smallest
         -- array of names
         let hitArrays := hitArrays.qsort fun (_, a₁) (_, a₂) => a₁.size > a₂.size
-        let (needle, hits) := hitArrays.back
+        let (needle, hits) := hitArrays.back!
         if hits.size == 1 then
           message := message ++ m!"Found one definition whose name contains \"{needle}\".\n"
         else
@@ -470,7 +462,7 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
         let hits := RBTree.intersects <| needles.toArray.map <| fun needle =>
           ((m₁.find needle).union (m₂.find needle)).insert needle
 
-        let needlesList := MessageData.andList (needles.toArray.map .ofName)
+        let needlesList := .andList (needles.toList.map .ofConstName)
         if hits.size == 1 then
           message := message ++ m!"Found one definition mentioning {needlesList}.\n"
         else
@@ -482,7 +474,7 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
     let hits2 := indexHits.toArray.filter fun n => nameMatchers.all fun m =>
       m.find? n.toString.toLower |>.isSome
     unless (remainingNamePats.isEmpty) do
-      let nameList := MessageData.andList <| namePats.map fun s => m!"\"{s}\""
+      let nameList := .andList <| namePats.toList.map fun s => m!"\"{s}\""
       if hits2.size == 1 then
         message := message ++ m!"Of these, one has a name containing {nameList}.\n"
       else

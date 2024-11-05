@@ -19,5 +19,5 @@ def Lean.RBTree.intersects (ts : Array (RBTree α cmp)) : RBTree α cmp :=
   -- sorts smallest set to the back, and iterate over that one
   -- TODO: An `RBTree` admits bulk operations, which could replace this implementation
   let ts := ts.qsort (·.size > ·.size)
-  ts.back.fold (init := {}) fun s m =>
+  ts.back!.fold (init := {}) fun s m =>
     if ts.pop.all (·.contains m) then s.insert m else s

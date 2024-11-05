@@ -193,7 +193,7 @@ private partial def toStringAux {α : Type} : Trie α → List Format
   | path _ ps _ t =>
     [ format (repr ps.data), Format.group $ Format.nest 4 $ flip Format.joinSep Format.line $ toStringAux t ]
   | node _ cs ts =>
-    List.join $ List.zipWith (fun c t =>
+    List.flatten $ List.zipWith (fun c t =>
       [ format (repr c), (Format.group $ Format.nest 4 $ flip Format.joinSep Format.line $ toStringAux t) ]
     ) cs.toList ts.toList
 
