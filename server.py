@@ -59,7 +59,7 @@ class Loogle():
     def start(self):
         self.starting = True
         self.loogle = subprocess.Popen(
-            #[".lake/build/bin/loogle","--json", "--interactive", "--module","Std.Data.List.Lemmas"],
+            #[".lake/build/bin/loogle","--json", "--interactive", "--module","Init.Data.List.Basic"],
             [".lake/build/bin/loogle","--json", "--interactive"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -365,6 +365,9 @@ class MyHandler(prometheus_client.MetricsHandler):
                       border-color: var(--color-primary);
                       box-shadow: 0 0 1px var(--color-primary);
                     }
+
+                    /* Copy buttons */
+                    span.copy { cursor: pointer; }
                 </style>
                 <link rel="icon" type="image/png" href="loogle.png" />
                 <title>Loogle!</title>
@@ -406,7 +409,7 @@ class MyHandler(prometheus_client.MetricsHandler):
                     mod = hit["module"]
                     type = hit["type"]
                     self.wfile.write(bytes(f"""
-                        <li><a href="{doclink(hit)}">{html.escape(name)}</a> <small>{html.escape(mod)}</small><br><tt>{html.escape(type)}</tt></li>
+                        <li><a href="{doclink(hit)}">{html.escape(name)}</a> <small><span class="copy" title="Copy to clipboard" data-text="{html.escape(name)}">📋</span> {html.escape(mod)}</small><br><tt>{html.escape(type)}</tt></li>
                     """, "utf-8"))
                 self.wfile.write(b"""
                     </ul>
@@ -447,6 +450,13 @@ class MyHandler(prometheus_client.MetricsHandler):
                 form.addEventListener('submit', event => {
                     hiddenInput.value = queryInput.innerText;
                 })
+
+                // Implement the copy buttons
+                document.querySelectorAll('span.copy').forEach(element => {
+                    element.addEventListener('click', () => {
+                        navigator.clipboard.writeText(element.getAttribute('data-text'));
+                    });
+                });
                 </script>
                 </body>
                 </html>
