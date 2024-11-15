@@ -6,7 +6,6 @@ Authors: Joachim Breitner
 import Lean
 import Batteries.Data.String.Matcher
 import Batteries.Util.Pickle
-import Batteries.Lean.Delaborator
 
 import Loogle.Cache
 import Loogle.NameRel
