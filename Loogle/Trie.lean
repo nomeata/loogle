@@ -39,7 +39,7 @@ def commonPrefix (s₁ : String) (s₂ : ByteArray)  (offset1 : Nat) : Nat :=
   let rec loop (i : Nat) : Nat :=
     if h : offset1 + i < s₁.utf8ByteSize then
       if h' : i < s₂.size then
-        if s₁.getUtf8Byte (offset1 + i) h == s₂.get ⟨i, h'⟩ then
+        if s₁.getUtf8Byte (offset1 + i) h == s₂[i] then
           loop (i + 1)
         else
           i
@@ -54,7 +54,7 @@ def hasPrefix (s₁ : String) (s₂ : ByteArray) (offset1 : Nat) : Bool :=
   let rec loop (i : Nat) : Bool :=
     if h' : i < s₂.size then
       if h : offset1 + i < s₁.utf8ByteSize then
-        if s₁.getUtf8Byte (offset1 + i) h == s₂.get ⟨i, h'⟩ then
+        if s₁.getUtf8Byte (offset1 + i) h == s₂[i] then
           loop (i + 1)
         else
           false
