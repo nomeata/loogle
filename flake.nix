@@ -12,6 +12,7 @@
         packages = with pkgs;
           [ elan
             pkgsStatic.libseccomp
+            gdb
             my_python
           ];
       };
