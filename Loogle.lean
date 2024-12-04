@@ -155,6 +155,7 @@ unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Un
   then searchPathRef.set compileTimeSearchPath
   else searchPathRef.set opts.searchPath
 
+  Lean.enableInitializersExecution
   let imports := #[{module := opts.module.toName}, {module := `Loogle.Find}]
   withImportModules imports {} 0 fun env => do
     let ctx := {fileName := "/", fileMap := Inhabited.default}
