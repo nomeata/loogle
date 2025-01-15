@@ -6,6 +6,7 @@ package «loogle» {
    if run_io Option.isSome <$> IO.getEnv "LOOGLE_SECCOMP"
    then #[ "-lseccomp" ]
    else #[]
+  testDriver := "Tests"
 }
 
 -- require std from git "https://github.com/leanprover/std4" @ "main"

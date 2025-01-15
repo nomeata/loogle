@@ -169,7 +169,7 @@ export Star(star)
 theorem star_comm_self' {R} [Mul R] [Star R] (x : R) : star x * x = x * star x := sorry
 
 /--
-info: Found 2 definitions mentioning LinearPatternTest.Star.star.
+info: Found 2 definitions mentioning star.
 Of these, one matches your pattern(s).
 • star_comm_self' : ∀ {R : Type u_1} [inst : Mul R] [inst_1 : Star R] (x : R), star x * x = x * star x
 -/
@@ -177,7 +177,7 @@ Of these, one matches your pattern(s).
 #find star _
 
 /--
-info: Found one definition mentioning HMul.hMul, LinearPatternTest.Star.star and Eq.
+info: Found one definition mentioning HMul.hMul, star and Eq.
 Of these, one matches your pattern(s).
 • star_comm_self' : ∀ {R : Type u_1} [inst : Mul R] [inst_1 : Star R] (x : R), star x * x = x * star x
 -/
@@ -185,7 +185,7 @@ Of these, one matches your pattern(s).
 #find star ?a * ?a = ?a * star ?_
 
 /--
-info: Found one definition mentioning HMul.hMul, LinearPatternTest.Star.star and Eq.
+info: Found one definition mentioning HMul.hMul, star and Eq.
 Of these, one matches your pattern(s).
 • star_comm_self' : ∀ {R : Type u_1} [inst : Mul R] [inst_1 : Star R] (x : R), star x * x = x * star x
 -/
@@ -221,16 +221,6 @@ end ListMapTest
 section DefaultingTest
 
 set_option autoImplicit true
-
-class Zero.{u} (α : Type u) where
-  zero : α
-
-instance Zero.toOfNat0 {α} [Zero α] : OfNat α (nat_lit 0) where
-  ofNat := ‹Zero α›.1
-
-instance Zero.ofOfNat0 {α} [OfNat α (nat_lit 0)] : Zero α where
-  zero := 0
-
 
 /-- warning: declaration uses 'sorry' -/
 #guard_msgs in
