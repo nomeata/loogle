@@ -67,7 +67,7 @@ mathlib every 6 hours.
 You can run this server locally as well, either using `./server.py` after you
 built `loogle` via `lake`.
 
-At the path `/json?q=…` (instead of `/?q=…`), the result is returned in JSOON
+At the path `/json?q=…` (instead of `/?q=…`), the result is returned in JSON
 format. No stability of the format is guaranteed at this point.
 
 Zulip bot
