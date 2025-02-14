@@ -169,7 +169,7 @@ unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Un
     | none =>
       -- Special-case Mathlib and use the cached index if present
       if opts.writeIndex.isNone && opts.module.toName = `Mathlib
-      then pure Find.cachedIndex
+      then Find.cachedIndex.get
       else Find.Index.mk
     -- warm up cache eagerly
     let _ ← index.1.cache.get

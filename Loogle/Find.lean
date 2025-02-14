@@ -12,6 +12,7 @@ import Loogle.NameRel
 import Loogle.RBTree
 import Loogle.BlackListed
 import Loogle.Trie
+import Loogle.LazyInitialized
 
 /-!
 # The `#find` command and tactic.
@@ -532,8 +533,14 @@ def cachePath : IO FilePath :=
   catch _ =>
     return ".lake" / "build" / "lib" / "LoogleMathlibCache.extra"
 
-/-- The `DeclCache` used by `#find` -/
-initialize cachedIndex : Index ← unsafe do
+/--
+The `DeclCache` used by `#find`.
+
+This is lazily initialized, so that the cost is only paid when Loogle is used, not when it is
+imported. Among other things, this means we do not bother loading the database when _compiling_
+`Loogle.lean` into a binary!
+-/
+initialize cachedIndex : LazilyInitialized Index ← LazilyInitialized.new <| unsafe do
   let path ← cachePath
   if (← path.pathExists) then
     let (d, _) ← unpickle _ path
@@ -553,7 +560,7 @@ register_option find.showTypes : Bool := {
 
 def elabFind (args : TSyntax `Loogle.Find.find_filters) : TermElabM Unit := do
   profileitM Exception "find" (← getOptions) do
-      match ← find cachedIndex args with
+      match ← find (← cachedIndex.get) args with
       | .error ⟨s, warn, suggestions⟩ => do
         Lean.logErrorAt s warn
         unless suggestions.isEmpty do
