@@ -4,8 +4,8 @@ import Loogle.Find
 -- Therefore we erase all knowledge about imported definitios from find:
 
 elab (name := erase_loogle_cache) "erase_loogle_cache " : command => do
-  Loogle.Find.cachedIndex.1.cache.set (.inr (.pure (pure (.empty, .empty))))
-  Loogle.Find.cachedIndex.2.cache.set (.inr (.pure (pure (.empty, .empty))))
+  (← Loogle.Find.cachedIndex.get).1.cache.set (.inr (.pure (pure (.empty, .empty))))
+  (← Loogle.Find.cachedIndex.get).2.cache.set (.inr (.pure (pure (.empty, .empty))))
 
 erase_loogle_cache
 
