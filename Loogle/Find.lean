@@ -12,7 +12,7 @@ import Loogle.NameRel
 import Loogle.RBTree
 import Loogle.BlackListed
 import Loogle.Trie
-import Loogle.LazyInitialized
+import Loogle.BaseIOThunk
 
 /-!
 # The `#find` command and tactic.
@@ -540,7 +540,7 @@ This is lazily initialized, so that the cost is only paid when Loogle is used, n
 imported. Among other things, this means we do not bother loading the database when _compiling_
 `Loogle.lean` into a binary!
 -/
-initialize cachedIndex : LazilyInitialized Index ← LazilyInitialized.new <| unsafe do
+initialize cachedIndex : IO.Thunk Index ← IO.Thunk.new <| unsafe do
   let path ← cachePath
   if (← path.pathExists) then
     let (d, _) ← unpickle _ path
