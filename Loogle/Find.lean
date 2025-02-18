@@ -451,9 +451,9 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
         let hitArrays := hitArrays.qsort fun (_, a₁) (_, a₂) => a₁.size > a₂.size
         let (needle, hits) := hitArrays.back!
         if hits.size == 1 then
-          message := message ++ m!"Found one definition whose name contains \"{needle}\".\n"
+          message := message ++ m!"Found one declaration whose name contains \"{needle}\".\n"
         else
-          message := message ++ m!"Found {hits.size} definitions whose name contains \"{needle}\".\n"
+          message := message ++ m!"Found {hits.size} declarations whose name contains \"{needle}\".\n"
         let remainingNamePats := hitArrays.pop.map (·.1)
         pure (hits, remainingNamePats)
       else do
@@ -464,9 +464,9 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
 
         let needlesList := .andList (needles.toList.map .ofConstName)
         if hits.size == 1 then
-          message := message ++ m!"Found one definition mentioning {needlesList}.\n"
+          message := message ++ m!"Found one declaration mentioning {needlesList}.\n"
         else
-          message := message ++ m!"Found {hits.size} definitions mentioning {needlesList}.\n"
+          message := message ++ m!"Found {hits.size} declarations mentioning {needlesList}.\n"
         pure (hits, namePats)
 
     -- Filter by name patterns

@@ -8,7 +8,7 @@ Try it at <https://loogle.lean-lang.org/>!
 
 
     $ loogle '(List.replicate (_ + _) _ = _)'
-    Found 5 definitions mentioning List.replicate, HAdd.hAdd and Eq.
+    Found 5 declarations mentioning List.replicate, HAdd.hAdd and Eq.
     Of these, 3 match your patterns.
 
     List.replicate_add
