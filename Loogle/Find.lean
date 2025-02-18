@@ -464,9 +464,9 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
 
         let needlesList := .andList (needles.toList.map .ofConstName)
         if hits.size == 1 then
-          message := message ++ m!"Found one definition mentioning {needlesList}.\n"
+          message := message ++ m!"Found one declaration mentioning {needlesList}.\n"
         else
-          message := message ++ m!"Found {hits.size} definitions mentioning {needlesList}.\n"
+          message := message ++ m!"Found {hits.size} declarations mentioning {needlesList}.\n"
         pure (hits, namePats)
 
     -- Filter by name patterns
