@@ -220,7 +220,7 @@ class MyHandler(prometheus_client.MetricsHandler):
             length = int(self.headers.get('content-length'))
             message = json.loads(self.rfile.read(length))
 
-            m = re.search('@\*\*loogle\*\*[:,\?]?\s*(.*)$', message['data'], flags = re.MULTILINE)
+            m = re.search(r'@\*\*loogle\*\*[:,\?]?\s*(.*)$', message['data'], flags = re.MULTILINE)
             if m:
                 query = m.group(1)
             else:
