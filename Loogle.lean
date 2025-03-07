@@ -1,7 +1,7 @@
 import Lean.Meta
 import Lake.CLI.Error
 import Lake.Util.Cli
-
+import PhysLean
 import Loogle.Find
 
 import Seccomp
@@ -144,7 +144,7 @@ structure LoogleOptions where
   interactive : Bool := false
   json : Bool := false
   query : Option String := none
-  module : String := "Mathlib"
+  module : String := "PhysLean"
   searchPath : List System.FilePath := []
   writeIndex : Option String := none
   readIndex : Option String := none
