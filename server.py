@@ -133,7 +133,7 @@ def querylink(query):
 def doclink(hit):
     name = hit["name"]
     modpath = hit["module"].replace(".","/")
-    return f"https://leanprover-community.github.io/mathlib4_docs/{urllib.parse.quote(modpath)}.html#{urllib.parse.quote(name)}"
+    return f"https://physlean.com/docs/{urllib.parse.quote(modpath)}.html#{urllib.parse.quote(name)}"
 
 def zulHit(hit):
     return f"[{hit['name']}]({doclink(hit)})"
