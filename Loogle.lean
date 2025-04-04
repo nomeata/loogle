@@ -157,7 +157,7 @@ unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Un
 
   Lean.enableInitializersExecution
   let imports := #[{module := opts.module.toName}, {module := `Loogle.Find}]
-  withImportModules imports {} 0 fun env => do
+  withImportModules imports {} fun env => do
     let ctx := {fileName := "/", fileMap := Inhabited.default}
     let state := {env}
     Prod.fst <$> act'.toIO ctx state
