@@ -41,7 +41,7 @@ Loogle finds definitions and lemmas in various ways:
 If you pass more than one such search filter, separated by commas Loogle will return lemmas which match _all_ of them.
 The search\
 🔍 [`Real.sin, "two", tsum, _ * _, _ ^ _, |- _ < _ → _`](?q=Real.sin,+"two",+tsum,+_+*+_,+_+^+_,+|-+_+<+_+→+_)\
-woould find all lemmas which mention the constants `Real.sin` and `tsum`, have `"two"` as a
+would find all lemmas which mention the constants `Real.sin` and `tsum`, have `"two"` as a
 substring of the lemma name, include a product and a power somewhere in the type, *and* have a
 hypothesis of the form `_ < _` (if there were any such lemmas). Metavariables (`?a`) are assigned independently in each filter.
 
