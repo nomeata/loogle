@@ -157,26 +157,26 @@ unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Un
 
   Lean.enableInitializersExecution
   let imports := #[{module := opts.module.toName}, {module := `Loogle.Find}]
-  withImportModules imports {} 0 fun env => do
-    let ctx := {fileName := "/", fileMap := Inhabited.default}
-    let state := {env}
-    Prod.fst <$> act'.toIO ctx state
-  where act' : CoreM Unit := do
-    let index ← match opts.readIndex with
-    | some path => do
-      let (index, _) ← unpickle _ path
-      Find.Index.mkFromCache index
-    | none =>
-      -- Special-case Mathlib and use the cached index if present
-      if opts.writeIndex.isNone && opts.module.toName = `Mathlib
-      then Find.cachedIndex.get
-      else Find.Index.mk
-    -- warm up cache eagerly
-    let _ ← index.1.cache.get
-    let _ ← index.2.cache.get
-    if let some path := opts.writeIndex then pickle path (← index.getCache)
-    Seccomp.enable
-    act index
+  let env ← importModules (loadExts := true) imports {}
+  let ctx := {fileName := "/", fileMap := Inhabited.default}
+  let state := {env}
+  Prod.fst <$> act'.toIO ctx state
+where act' : CoreM Unit := do
+  let index ← match opts.readIndex with
+  | some path => do
+    let (index, _) ← unpickle _ path
+    Find.Index.mkFromCache index
+  | none =>
+    -- Special-case Mathlib and use the cached index if present
+    if opts.writeIndex.isNone && opts.module.toName = `Mathlib
+    then Find.cachedIndex.get
+    else Find.Index.mk
+  -- warm up cache eagerly
+  let _ ← index.1.cache.get
+  let _ ← index.2.cache.get
+  if let some path := opts.writeIndex then pickle path (← index.getCache)
+  Seccomp.enable
+  act index
 
 abbrev CliMainM := ExceptT Lake.CliError IO
 abbrev CliStateM := StateT LoogleOptions CliMainM
