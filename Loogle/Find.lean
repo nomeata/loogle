@@ -314,7 +314,7 @@ partial def replaceIdentAt' (needle : SourceInfo) (new_name : Name) : Syntax →
 def replaceIdentAt {kind} (si : SourceInfo) (n : Name) : TSyntax kind → TSyntax kind
   | .mk s => .mk (replaceIdentAt' si n s)
 
-/-- When a name cannot be resolved, see if we can find it in the trie under some namepace. -/
+/-- When a name cannot be resolved, see if we can find it in the trie under some namespace. -/
 def resolveUnqualifiedName (index : Index) (n : Name) : MetaM (Array Name) := do
   let s := "." ++ n.toString
   let (t₁, t₂) ← index.trieCache.get

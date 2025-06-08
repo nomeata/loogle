@@ -293,7 +293,7 @@ info: Try these:
 #find TestDefinition
 
 
--- Handlig duplcats
+-- Handling duplicats
 
 def NamespacedA.AnotherTestDefinition := true
 def NamespacedB.AnotherTestDefinition := true
