@@ -137,7 +137,7 @@ def find? (t : Trie α) (s : String) : Option α :=
         let c := s.getUtf8Byte i h
         match cs.findIdx? (· == c) with
         | none   => none
-        | some idx => loop (i + 1) (ts.get! idx)
+        | some idx => loop (i + 1) ts[idx]!
       else
         val
     termination_by i _ => s.utf8ByteSize - i
@@ -180,7 +180,7 @@ def findPrefix (t : Trie α) (pre : String) : Array α := go t 0
           match cs.findIdx? (· == c) with
           | none   => .empty
           | some idx =>
-            if let some ⟨t',_⟩ := ts.attach.get? idx then
+            if let some ⟨t',_⟩ := ts.attach[idx]? then
             go t' (i + 1)
             else .empty -- should be unreachable
       else

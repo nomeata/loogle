@@ -61,11 +61,11 @@ def runQuery (index : Find.Index) (query : String) : CoreM Result :=
             match ← TermElabM.run' $ Loogle.Find.find index (.mk s) with
             | .ok result => do
               let suggs ← result.suggestions.mapM fun sugg => do
-                return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty
+                return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty (width := 10000)
               pure $ (.ok result, suggs)
             | .error err => do
               let suggs ← err.suggestions.mapM fun sugg => do
-                return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty
+                return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty (width := 10000)
               return (.error (← err.message.toString), suggs)
     let heartbeats := ((← IO.getNumHeartbeats) - (← getInitHeartbeats )) / 1000
     return (r, suggs, heartbeats)
@@ -107,7 +107,7 @@ def toJson : Result → CoreM Json -- only in IO for MessageData.toString
         ("heartbeats", .num heartbeats),
         ("count", .num result.count),
         ("hits", .arr $ ← result.hits.mapM fun (ci, mod) => do
-          let ty := (← (ppSignature ci.name).run').pretty
+          let ty := (← (ppSignature ci.name).run').pretty (width := 10000)
           let ds := match ← findDocString? (← getEnv) ci.name false with
             | some s => .str s
             | none => .null
@@ -157,26 +157,26 @@ unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Un
 
   Lean.enableInitializersExecution
   let imports := #[{module := opts.module.toName}, {module := `Loogle.Find}]
-  withImportModules imports {} 0 fun env => do
-    let ctx := {fileName := "/", fileMap := Inhabited.default}
-    let state := {env}
-    Prod.fst <$> act'.toIO ctx state
-  where act' : CoreM Unit := do
-    let index ← match opts.readIndex with
-    | some path => do
-      let (index, _) ← unpickle _ path
-      Find.Index.mkFromCache index
-    | none =>
-      -- Special-case Mathlib and use the cached index if present
-      if opts.writeIndex.isNone && opts.module.toName = `Mathlib
-      then Find.cachedIndex.get
-      else Find.Index.mk
-    -- warm up cache eagerly
-    let _ ← index.1.cache.get
-    let _ ← index.2.cache.get
-    if let some path := opts.writeIndex then pickle path (← index.getCache)
-    Seccomp.enable
-    act index
+  let env ← importModules (loadExts := true) imports {}
+  let ctx := {fileName := "/", fileMap := Inhabited.default}
+  let state := {env}
+  Prod.fst <$> act'.toIO ctx state
+where act' : CoreM Unit := do
+  let index ← match opts.readIndex with
+  | some path => do
+    let (index, _) ← unpickle _ path
+    Find.Index.mkFromCache index
+  | none =>
+    -- Special-case Mathlib and use the cached index if present
+    if opts.writeIndex.isNone && opts.module.toName = `Mathlib
+    then Find.cachedIndex.get
+    else Find.Index.mk
+  -- warm up cache eagerly
+  let _ ← index.1.cache.get
+  let _ ← index.2.cache.get
+  if let some path := opts.writeIndex then pickle path (← index.getCache)
+  Seccomp.enable
+  act index
 
 abbrev CliMainM := ExceptT Lake.CliError IO
 abbrev CliStateM := StateT LoogleOptions CliMainM
