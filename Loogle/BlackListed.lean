@@ -8,8 +8,6 @@ import Lean
 import Batteries.Lean.Expr
 import Batteries.Data.List.Basic
 
-set_option autoImplicit true
-
 namespace Lean
 
 namespace Name
@@ -56,6 +54,7 @@ def isBlackListed {m} [Monad m] [MonadEnv m] (declName : Name) : m Bool := do
   if declName == ``sorryAx then return true
   if declName matches .str _ "inj" then return true
   if declName matches .str _ "noConfusionType" then return true
+  if declName matches .str (.str _ "noConfusionType") _ then return true
   let env ← getEnv
   pure $ declName.isInternal'
    || isAuxRecursor env declName
