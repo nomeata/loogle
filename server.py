@@ -42,7 +42,7 @@ m_errors = prometheus_client.Counter('errors', 'Total number of failing queries'
 m_results = prometheus_client.Histogram('results', 'Results per query', buckets=(0,1,2,5,10,50,100,200,500,1000))
 m_heartbeats = prometheus_client.Histogram('heartbeats', 'Heartbeats per query', buckets=(0,2e0,2e1,2e2,2e3,2e4))
 m_client = prometheus_client.Counter('clients', 'Clients used', ["client"])
-for l in ("web", "zulip", "json", "nvim", "vscode-lean4", "vscode-loogle", "LeanSearchClient"): m_client.labels(l)
+for l in ("web", "zulip", "json", "nvim", "vscode-lean4", "vscode-loogle", "LeanSearchClient", "lean-lsp-mcp"): m_client.labels(l)
 
 examples = [
     "Real.sin",
@@ -292,6 +292,8 @@ class MyHandler(prometheus_client.MetricsHandler):
                         m_client.labels("nvim").inc()
                     elif "lean+nvim" in self.headers["user-agent"]:
                         m_client.labels("nvim").inc()
+                    elif "lean-lsp-mcp" in self.headers["user-agent"]:
+                        m_client.labels("lean-lsp-mcp").inc()
                     else:
                         m_client.labels("json").inc()
                 else:
