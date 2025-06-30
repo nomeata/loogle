@@ -311,6 +311,16 @@ class MyHandler(prometheus_client.MetricsHandler):
 
 
             if want_json:
+                if "error" not in result and "limit" in params:
+                    try:
+                        limit = int(params["limit"][0])
+                        if limit < 0:
+                            self.return400()
+                            return
+                        result["hits"] = result["hits"][:limit]
+                    except ValueError:
+                        self.return400()
+                        return
                 self.returnJSON(result)
                 return
 
