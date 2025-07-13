@@ -330,16 +330,12 @@ class MyHandler(prometheus_client.MetricsHandler):
                       integrity="sha384-A2UBIkgVTcNWgv+snhw7PKvU/L9N0JqHwgwDwyNcbsLiVhGG5KAuR64N4wuDYd99"
                       crossorigin="anonymous">
                 <link rel="modulepreload"
-                      href="https://cdn.skypack.dev/-/@leanprover/unicode-input@v0.1.0-8CqsXR89dtD7hIU0c6wN/dist=es2020,mode=imports,min/optimized/@leanprover/unicode-input.js"
-                      integrity="sha384-IR290YsDJ1+Rzd4fgZM4K+v1E2kG2NzQ3XYgGhSxE4cNodMg0JQ9BWn/0JMgk5Xa"
+                      href="https://cdn.skypack.dev/-/@leanprover/unicode-input@v0.1.4-AeWIvwNlZ6hAT63evXW0/dist=es2020,mode=imports,min/optimized/@leanprover/unicode-input.js"
+                      integrity="sha384-ApNDvGPRJLDDD+BmP75ljbblIzl8AEA4PYu8ARN1AB51WETDOje3E2Wm5mizWgo3"
                       crossorigin="anonymous">
                 <link rel="modulepreload"
-                      href="https://cdn.skypack.dev/-/@leanprover/unicode-input-component@v0.1.0-cAcOWoqAnOWevp4vHscs/dist=es2020,mode=imports,min/optimized/@leanprover/unicode-input-component.js"
-                      integrity="sha384-yX1xThTPuhw06x65fHJAV8FLLmaKxiyeKkBTGsI5R1dHRQmHbXU0ylBBu2+56Bc/"
-                      crossorigin="anonymous">
-                <link rel="modulepreload"
-                      href="https://cdn.skypack.dev/pin/@leanprover/unicode-input-component@v0.1.0-cAcOWoqAnOWevp4vHscs/mode=imports,min/optimized/@leanprover/unicode-input-component.js"
-                      integrity="sha384-3jdol3AWL3guud0hEWfo7ysqRxI6grINH5ElwPuStNcMb887NNz08TqkGNgy+2q6"
+                      href="https://cdn.skypack.dev/pin/@leanprover/unicode-input-component@v0.1.4-26sLE5METYYO2xtxbFPA/mode=raw,min/optimized/@leanprover/unicode-input-component.js"
+                      integrity="sha384-IA8mae633t0WQFKjWyfKqeVMEsBqJX0L9+qTk7wAslS+h6NI5CkEX7rYNjV7Etmo"
                       crossorigin="anonymous">
                 <style>
                   @import url('https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.051/juliamono.css');
