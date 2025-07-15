@@ -301,9 +301,7 @@ class MyHandler(prometheus_client.MetricsHandler):
 
                 query = params["q"][0].strip().removeprefix("#find ").strip()
                 if query:
-                    if "\n" in query:
-                        self.return400()
-                        return
+                    query = re.sub(r'\s', ' ', query, flags=re.UNICODE)
                     result = loogle.query(query)
 
                 if "lucky" in params:
