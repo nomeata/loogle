@@ -25,7 +25,7 @@ instance : Inhabited NameRel :=
   inferInstanceAs $ Inhabited (NameMap NameSet)
 
 /-- Finds the set of names associated with the given one. -/
-def NameRel.find (m : NameRel) (n : Name) : NameSet := m.findD n {}
+def NameRel.find (m : NameRel) (n : Name) : NameSet := m.getD n {}
 
 /-- Inserts one entry to to the relation. -/
 def NameRel.insert (m : NameRel) (n₁ n₂ : Name) : NameRel :=
