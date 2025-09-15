@@ -87,7 +87,7 @@ info: Try these:
 #find doesn'texist
 
 
-/-- error: unknown identifier 'doesn'texist' -/
+/-- error: Unknown identifier `doesn'texist` -/
 #guard_msgs in
 #find (doesn'texist = _)
 
@@ -330,7 +330,7 @@ info: Try these:
 -- doesn't give suggestions (yet)
 
 /--
-error: unknown identifier 'AnotherTestDefinition'
+error: Unknown identifier `AnotherTestDefinition`
 ---
 info: Try these:
 • "some string before", NamespacedA.AnotherTestDefinition = _, some (Expr after)
@@ -341,7 +341,7 @@ info: Try these:
 #find "some string before", AnotherTestDefinition = _, some (Expr after)
 
 /--
-error: unknown identifier 'AnotherTestDefinition'
+error: Unknown identifier `AnotherTestDefinition`
 ---
 info: Try these:
 • "some string before", |- NamespacedA.AnotherTestDefinition = _, some (Expr after)
@@ -355,14 +355,14 @@ info: Try these:
 -- that can be resolved doesn't make #find look for possible candidates
 
 /--
-error: Application type mismatch: In the application
-  Nat.add 0 my_true
-the argument
+error: Application type mismatch: The argument
   my_true
 has type
-  Bool : Type
+  Bool
 but is expected to have type
-  Nat : Type
+  Nat
+in the application
+  Nat.add 0 my_true
 -/
 #guard_msgs in
 #find Nat.add 0 my_true

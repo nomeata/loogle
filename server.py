@@ -367,6 +367,10 @@ class MyHandler(prometheus_client.MetricsHandler):
                 </style>
                 <link rel="icon" type="image/png" href="loogle.png" />
                 <title>Loogle!</title>
+            """, "utf-8"))
+            self.wfile.write(bytes(os.environ.get('LOOGLE_HEAD',""),"utf-8"))
+            self.wfile.write(bytes(f"""
+                </head>
                 <body autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                 <main class="container">
 

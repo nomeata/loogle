@@ -9,7 +9,7 @@ import Batteries.Util.Pickle
 
 import Loogle.Cache
 import Loogle.NameRel
-import Loogle.RBTree
+import Loogle.TreeMap
 import Loogle.BlackListed
 import Loogle.Trie
 import Loogle.BaseIOThunk
@@ -144,7 +144,14 @@ Used to prune the search early: Checks that all consts mentioned in `consts` app
 in `e`.
 -/
 def checkUsedConsts (consts : NameSet) (e : Expr) : MetaM Bool := do
-  return consts.subset e.getUsedConstantsAsSet
+  -- This used to be
+  -- consts.subset e.getUsedConstantsAsSet
+  -- and should be changed back when and if `NameSet` supports `subset` again
+  let s := e.getUsedConstantsAsSet
+  for n in consts do
+    unless s.contains n do
+      return false
+  return true
 
 /-- Takes a pattern (of type `Expr`), and returns a matcher that succeeds if _any_ subexpression
 matches that patttern. If the pattern is a function type, it matches up to parameter reordering. -/
@@ -175,7 +182,7 @@ private def addDecl (name : Lean.Name) (c : ConstantInfo) (m : NameRel) : MetaM 
   if ← Loogle.isBlackListed name then
     return m
   let consts := c.type.getUsedConstantsAsSet
-  return consts.fold (init := m) fun m n => m.insert n name
+  return consts.foldl (init := m) fun m n => m.insert n name
 
 
 /-- A suffix trie for `Name`s -/
@@ -200,7 +207,7 @@ def SuffixTrie.addDecl (name : Lean.Name) (_ : ConstantInfo) (t : SuffixTrie) :
 
 -- /-- Search the suffix trie, returning an empty array if nothing matches -/
 def SuffixTrie.find (t : SuffixTrie) (s : String) : NameSet :=
-  t.findPrefix s.toLower |>.map (RBTree.fromArray (cmp := _)) |>.foldl (init := {}) NameSet.append
+  t.findPrefix s.toLower |>.map .ofArray |>.foldl (init := {}) NameSet.append
 
 /-- Search the suffix trie, returning an empty array if nothing matches -/
 def SuffixTrie.findSuffix (t : SuffixTrie) (s : String) : Array Name :=
@@ -459,8 +466,8 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
       else do
         -- Query the declaration cache
         let (m₁, m₂) ← index.nameRelCache.get
-        let hits := RBTree.intersects <| needles.toArray.map <| fun needle =>
-          ((m₁.find needle).union (m₂.find needle)).insert needle
+        let hits := .intersects_loogle <| needles.toArray.map <| fun needle =>
+          ((m₁.find needle).union_loogle (m₂.find needle)).insert needle
 
         let needlesList := .andList (needles.toList.map .ofConstName)
         if hits.size == 1 then
