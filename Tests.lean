@@ -62,7 +62,7 @@ Of these, 2 have a name containing "eq".
 #find my_true, "eq"
 
 /--
-info: Found 2 declarations mentioning Bool, my_true and Eq.
+info: Found 2 declarations mentioning Bool, my_true, and Eq.
 Of these, 2 match your pattern(s).
 • my_true_eq_True : my_true = true
 • my_true_eq_true : my_true = true
@@ -71,7 +71,7 @@ Of these, 2 match your pattern(s).
 #find my_true = _
 
 /--
-info: Found 2 declarations mentioning Bool, my_true and Eq.
+info: Found 2 declarations mentioning Bool, my_true, and Eq.
 Of these, 0 match your pattern(s).
 -/
 #guard_msgs in
@@ -108,7 +108,7 @@ theorem non_linear_pattern_test2 {n m : Nat} :
   sorry
 
 /--
-info: Found 2 declarations mentioning List.replicate, List and HAppend.hAppend.
+info: Found 2 declarations mentioning List.replicate, List, and HAppend.hAppend.
 Of these, one matches your pattern(s).
 • non_linear_pattern_test1 : ∀ {n : Nat} {m : Nat},
   List.replicate (2 * n) () = List.replicate n () ++ List.replicate n ()
@@ -117,7 +117,7 @@ Of these, one matches your pattern(s).
 #find List.replicate ?n _ ++ List.replicate ?n _
 
 /--
-info: Found 2 declarations mentioning List.replicate, List and HAppend.hAppend.
+info: Found 2 declarations mentioning List.replicate, List, and HAppend.hAppend.
 Of these, 2 match your pattern(s).
 • non_linear_pattern_test2 : ∀ {n m : Nat}, List.replicate n () ++ List.replicate m () = List.replicate (n + m) ()
 • non_linear_pattern_test1 : ∀ {n : Nat} {m : Nat},
@@ -127,7 +127,7 @@ Of these, 2 match your pattern(s).
 #find List.replicate ?n _ ++ List.replicate ?m _
 
 /--
-info: Found 2 declarations mentioning List.replicate, List, Eq and HAppend.hAppend.
+info: Found 2 declarations mentioning List.replicate, List, Eq, and HAppend.hAppend.
 Of these, one matches your pattern(s).
 • non_linear_pattern_test1 : ∀ {n : Nat} {m : Nat},
   List.replicate (2 * n) () = List.replicate n () ++ List.replicate n ()
@@ -136,7 +136,7 @@ Of these, one matches your pattern(s).
 #find |- _ = List.replicate ?n _ ++ List.replicate ?m _
 
 /--
-info: Found 2 declarations mentioning List.replicate, List, Eq and HAppend.hAppend.
+info: Found 2 declarations mentioning List.replicate, List, Eq, and HAppend.hAppend.
 Of these, one matches your pattern(s).
 • non_linear_pattern_test2 : ∀ {n m : Nat}, List.replicate n () ++ List.replicate m () = List.replicate (n + m) ()
 -/
@@ -147,7 +147,7 @@ theorem hyp_ordering_test1 {n : Nat} (h : 0 < n) (_ : n + n = 6 * n): 0 ≤ n :=
 theorem hyp_ordering_test2 {n : Nat} (_ : n + n = 6 * n) (h : 0 < n) : 0 ≤ n := Nat.le_of_lt h
 
 /--
-info: Found 2 declarations mentioning LE.le, LT.lt and OfNat.ofNat.
+info: Found 2 declarations mentioning LE.le, LT.lt, and OfNat.ofNat.
 Of these, 2 match your pattern(s).
 • hyp_ordering_test1 : ∀ {n : Nat}, 0 < n → n + n = 6 * n → 0 ≤ n
 • hyp_ordering_test2 : ∀ {n : Nat}, n + n = 6 * n → 0 < n → 0 ≤ n
@@ -177,7 +177,7 @@ Of these, one matches your pattern(s).
 #find star _
 
 /--
-info: Found one declaration mentioning HMul.hMul, star and Eq.
+info: Found one declaration mentioning HMul.hMul, star, and Eq.
 Of these, one matches your pattern(s).
 • star_comm_self' : ∀ {R : Type u_1} [inst : Mul R] [inst_1 : Star R] (x : R), star x * x = x * star x
 -/
@@ -185,7 +185,7 @@ Of these, one matches your pattern(s).
 #find star ?a * ?a = ?a * star ?_
 
 /--
-info: Found one declaration mentioning HMul.hMul, star and Eq.
+info: Found one declaration mentioning HMul.hMul, star, and Eq.
 Of these, one matches your pattern(s).
 • star_comm_self' : ∀ {R : Type u_1} [inst : Mul R] [inst_1 : Star R] (x : R), star x * x = x * star x
 -/
@@ -268,7 +268,7 @@ Of these, 0 match your pattern(s).
 #find |- And True
 
 /--
-info: Found 0 declarations mentioning And, True and my_true.
+info: Found 0 declarations mentioning And, True, and my_true.
 Of these, 0 match your pattern(s).
 -/
 #guard_msgs in
@@ -355,9 +355,9 @@ info: Try these:
 -- that can be resolved doesn't make #find look for possible candidates
 
 /--
-error: application type mismatch
+error: Application type mismatch: In the application
   Nat.add 0 my_true
-argument
+the argument
   my_true
 has type
   Bool : Type
@@ -379,7 +379,7 @@ def findThisLemma : A.A1 = B.mk := rfl
 def doNotFindThisLemma : ∀ a, a = B.mk := fun _a => rfl
 
 /--
-info: Found one declaration mentioning B, A.A1, B.ofA, B.mk and Eq.
+info: Found one declaration mentioning B, A.A1, B.ofA, B.mk, and Eq.
 Of these, one matches your pattern(s).
 • findThisLemma : B.ofA A.A1 = B.mk
 -/
@@ -388,7 +388,7 @@ Of these, one matches your pattern(s).
 
 
 /--
-info: Found one declaration mentioning B, A.A1, B.ofA, B.mk and Eq.
+info: Found one declaration mentioning B, A.A1, B.ofA, B.mk, and Eq.
 Of these, one matches your pattern(s).
 • findThisLemma : B.ofA A.A1 = B.mk
 -/
@@ -399,7 +399,7 @@ Of these, one matches your pattern(s).
 set_option pp.raw true
 
 /--
-info: Found one declaration mentioning B, A.A1, B.ofA, B.mk and Eq.
+info: Found one declaration mentioning B, A.A1, B.ofA, B.mk, and Eq.
 Of these, one matches your pattern(s).
 • findThisLemma : Eq.{1} B (B.ofA A.A1) B.mk
 -/
