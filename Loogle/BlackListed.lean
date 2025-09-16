@@ -52,7 +52,9 @@ open Lean Meta
 
 def isBlackListed {m} [Monad m] [MonadEnv m] (declName : Name) : m Bool := do
   if declName == ``sorryAx then return true
+  if declName matches .str _ "ctorIdx" then return true
   if declName matches .str _ "inj" then return true
+  if declName matches .str _ "noConfusion" then return true
   if declName matches .str _ "noConfusionType" then return true
   if declName matches .str (.str _ "noConfusionType") _ then return true
   let env ← getEnv
