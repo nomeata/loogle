@@ -381,7 +381,7 @@ class MyHandler(prometheus_client.MetricsHandler):
                 <form method="GET" id="queryform">
                 <div class="grouped">
                 <input id="hiddenquery" type="hidden" name="q" value=""/>
-                <div class="textinput" id="query" name="q" contenteditable="true" autofocus="true">{html.escape(query)}</div>
+                <div class="textinput" id="query" name="q" contenteditable="true" autofocus="true" autocorrect="false">{html.escape(query)}</div>
                 <button type="submit" id="submit">#find</button>
                 <button type="submit" name="lucky" value="yes" title="Directly jump to the documentation of the first hit.">#lucky</button>
                 </div>
