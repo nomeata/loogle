@@ -17,6 +17,7 @@ serverPort = 8088
 
 blurb = open("./blurb.html","rb").read()
 icon = open("./loogle.png","rb").read()
+banner = open("./loogle-banner.png","rb").read()
 
 rev1 = "UNKNOWN"
 try:
@@ -181,14 +182,14 @@ class MyHandler(prometheus_client.MetricsHandler):
         except BrokenPipeError:
             pass
 
-    def returnIcon(self):
+    def returnPNG(self, data):
         self.send_response(200)
         self.send_header("Content-type", "image/png")
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "User-Agent, X-Loogle-Client")
         self.end_headers()
         try:
-            self.wfile.write(icon)
+            self.wfile.write(data)
         except BrokenPipeError:
             pass
 
@@ -268,7 +269,10 @@ class MyHandler(prometheus_client.MetricsHandler):
             want_json = False
 
             if url.path == "/loogle.png":
-               self.returnIcon()
+               self.returnPNG(icon)
+               return
+            if url.path == "/loogle-banner.png":
+               self.returnPNG(banner)
                return
             if url.path == "/json":
                 want_json = True
@@ -366,6 +370,16 @@ class MyHandler(prometheus_client.MetricsHandler):
                     span.copy { cursor: pointer; }
                 </style>
                 <link rel="icon" type="image/png" href="loogle.png" />
+                <meta name="twitter:card" content="summary_large_image">
+                <meta name="twitter:title" content="Loogle - Search Lean and Mathlib">
+                <meta name="twitter:description" content="Loogle is a search tool for finding definitions, theorems, and lemmas in Lean 4 and Mathlib.">
+                <meta name="twitter:image" content="https://loogle.lean-lang.org/loogle-banner.png">
+                
+                <meta property="og:title" content="Loogle - Search Lean and Mathlib">
+                <meta property="og:description" content="Loogle is a search tool for finding definitions, theorems, and lemmas in Lean 4 and Mathlib.">
+                <meta property="og:image" content="https://loogle.lean-lang.org/loogle-banner.png">
+                <meta property="og:url" content="https://loogle.lean-lang.org/">
+
                 <title>Loogle!</title>
             """, "utf-8"))
             self.wfile.write(bytes(os.environ.get('LOOGLE_HEAD',""),"utf-8"))
