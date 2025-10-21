@@ -39,7 +39,7 @@ def commonPrefix (s₁ : String) (s₂ : ByteArray)  (offset1 : Nat) : Nat :=
   let rec loop (i : Nat) : Nat :=
     if h : offset1 + i < s₁.utf8ByteSize then
       if h' : i < s₂.size then
-        if s₁.getUtf8Byte (offset1 + i) h == s₂[i] then
+        if s₁.getUTF8Byte ⟨offset1 + i⟩ h == s₂[i] then
           loop (i + 1)
         else
           i
@@ -54,7 +54,7 @@ def hasPrefix (s₁ : String) (s₂ : ByteArray) (offset1 : Nat) : Bool :=
   let rec loop (i : Nat) : Bool :=
     if h' : i < s₂.size then
       if h : offset1 + i < s₁.utf8ByteSize then
-        if s₁.getUtf8Byte (offset1 + i) h == s₂[i] then
+        if s₁.getUTF8Byte ⟨offset1 + i⟩ h == s₂[i] then
           loop (i + 1)
         else
           false
@@ -90,7 +90,7 @@ def upsert (t : Trie α) (s : String) (f : Option α → α) : Trie α :=
               mkPath none (ps.extract j ps.size) t'
         else
           -- no common prefix, split off first character
-          let c := s.getUtf8Byte i h
+          let c := s.getUTF8Byte ⟨i⟩ h
           let c' := ps.get! 0
           let t := insertEmpty (i + 1)
           let t'' := mkPath none (ps.extract 1 ps.size) t'
@@ -99,7 +99,7 @@ def upsert (t : Trie α) (s : String) (f : Option α → α) : Trie α :=
         path (f v) ps hps t'
     | i, node v cs ts =>
       if h : i < s.utf8ByteSize then
-        let c := s.getUtf8Byte i h
+        let c := s.getUTF8Byte ⟨i⟩ h
         match cs.findIdx? (· == c) with
           | none   =>
             let t := insertEmpty (i + 1)
@@ -134,7 +134,7 @@ def find? (t : Trie α) (s : String) : Option α :=
         val
     | i, node val cs ts =>
       if h : i < s.utf8ByteSize then
-        let c := s.getUtf8Byte i h
+        let c := s.getUTF8Byte ⟨i⟩ h
         match cs.findIdx? (· == c) with
         | none   => none
         | some idx => loop (i + 1) ts[idx]!
@@ -165,7 +165,7 @@ def findPrefix (t : Trie α) (pre : String) : Array α := go t 0
   where
     go (t : Trie α) (i : Nat) : Array α :=
       if h : i < pre.utf8ByteSize then
-        let c := pre.getUtf8Byte i h
+        let c := pre.getUTF8Byte ⟨i⟩ h
         match t with
         | leaf _val => .empty
         | path _val ps _ t' =>
