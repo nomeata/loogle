@@ -193,7 +193,7 @@ deriving Nonempty
 def SuffixTrie.insert (t : SuffixTrie) (n : Lean.Name) : SuffixTrie := Id.run $ do
   let mut t := t
   let s := n.toString.toLower
-  for i in List.range (s.length - 1) do -- -1 to not consider the empty suffix
+  for i in List.range s.length do -- do not consider the empty suffix
     let suf := s.drop i
     t := t.upsert suf fun ns? => ns? |>.getD #[] |>.push n
   pure t
