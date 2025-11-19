@@ -22,7 +22,7 @@ meta if run_io Option.isSome <$> IO.getEnv "LOOGLE_SECCOMP" then do
   extern_lib libloogle_seccomp pkg := do
     let name := nameToStaticLib "loogle_seccomp"
     let ffiO ← fetch <| pkg.target ``loogle_seccomp.o
-    buildStaticLib (pkg.nativeLibDir / name) #[ffiO]
+    buildStaticLib (pkg.staticLibDir / name) #[ffiO]
 
 lean_lib Seccomp where
   roots := #[`Seccomp]
