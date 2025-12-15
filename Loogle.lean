@@ -136,7 +136,7 @@ def interactive (index : Find.Index) (print : Printer) : CoreM Unit := do
   IO.println "Loogle is ready."
   (← IO.getStdout).flush
   while true do
-    let query := (← (← IO.getStdin).getLine).trim
+    let query := (← (← IO.getStdin).getLine).trimAscii.copy
     if query.isEmpty then break
     single index print query
 

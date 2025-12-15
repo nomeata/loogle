@@ -194,7 +194,7 @@ def SuffixTrie.insert (t : SuffixTrie) (n : Lean.Name) : SuffixTrie := Id.run $ 
   let mut t := t
   let s := n.toString.toLower
   for i in List.range s.length do -- do not consider the empty suffix
-    let suf := s.drop i
+    let suf := (s.drop i).copy
     t := t.upsert suf fun ns? => ns? |>.getD #[] |>.push n
   pure t
 
