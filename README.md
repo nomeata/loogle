@@ -70,6 +70,10 @@ built `loogle` via `lake`.
 At the path `/json?q=…` (instead of `/?q=…`), the result is returned in JSON
 format. No stability of the format is guaranteed at this point.
 
+You can add `&limit=10` to restrict the number if responses returned. Note that
+this (currently) still generates more responses, but just doesn't send them to
+the client.
+
 Zulip bot
 ---------
 
