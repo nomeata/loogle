@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: ["main"] # replace "main" with the default branch
+    branches: ["master"]
   pull_request:
-    branches: ["main"]
+    branches: ["master"]
   workflow_dispatch:
 
 jobs:
@@ -13,5 +13,4 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      # uses lean standard action with all default input values
       - uses: leanprover/lean-action@v1
