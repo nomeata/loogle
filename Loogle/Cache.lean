@@ -51,7 +51,7 @@ Access the cache (imports only).
 Suitable to get a value to be pickled and fed to `mkFromCache` later.
 -/
 def DeclCache2.getImported (cache : DeclCache2 α) : CoreM α := do
-  let (_, m₂) ← cache.cache.get
+  let (_, m₂) ← (cache.cache.get).run'
   pure m₂
 
 /--

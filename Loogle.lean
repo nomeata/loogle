@@ -172,8 +172,8 @@ where act' : CoreM Unit := do
     then Find.cachedIndex.get
     else Find.Index.mk
   -- warm up cache eagerly
-  let _ ← index.1.cache.get
-  let _ ← index.2.cache.get
+  let _ ← index.1.cache.get.run'
+  let _ ← index.2.cache.get.run'
   if let some path := opts.writeIndex then pickle path (← index.getCache)
   Seccomp.enable
   act index

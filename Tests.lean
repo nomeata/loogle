@@ -95,13 +95,13 @@ info: Try these:
 #guard_msgs in
 #find my_true, _
 
-/-- warning: declaration uses 'sorry' -/
+/-- warning: declaration uses `sorry` -/
 #guard_msgs in
 theorem non_linear_pattern_test1 {n m : Nat} :
   List.replicate (2 * n) () = List.replicate n () ++ List.replicate n () := by
   sorry
 
-/-- warning: declaration uses 'sorry' -/
+/-- warning: declaration uses `sorry` -/
 #guard_msgs in
 theorem non_linear_pattern_test2 {n m : Nat} :
   List.replicate n () ++ List.replicate m () = List.replicate (n + m) () := by
@@ -164,7 +164,7 @@ namespace LinearPatternTest
 class Star (R : Type _) where star : R → R
 export Star(star)
 
-/-- warning: declaration uses 'sorry' -/
+/-- warning: declaration uses `sorry` -/
 #guard_msgs in
 theorem star_comm_self' {R} [Mul R] [Star R] (x : R) : star x * x = x * star x := sorry
 
@@ -222,7 +222,7 @@ section DefaultingTest
 
 set_option autoImplicit true
 
-/-- warning: declaration uses 'sorry' -/
+/-- warning: declaration uses `sorry` -/
 #guard_msgs in
 theorem test_with_zero {α} [Zero α] [HMul α α α] [LE α] {a : α}: 0 ≤ a * a := sorry
 
