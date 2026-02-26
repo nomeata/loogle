@@ -87,6 +87,13 @@ These are created by their respective maintainers; reach out to them if you have
 * [VS Code extension “Loogle Lean”](https://marketplace.visualstudio.com/items?itemName=ShreyasSrinivas.loogle-lean)
 * [`lean.nvim`](https://github.com/Julian/lean.nvim#features) has built-in support for loogle.
 
+Declaration filtering
+---------------------
+
+Auto-generated declarations (e.g. `injEq`, `sizeOf_spec`, `casesOn`) are hidden
+from search results. The filtering logic follows doc-gen4's `isBlackListed`
+(see `Loogle/BlackListed.lean`).
+
 Contact
 -------
 
