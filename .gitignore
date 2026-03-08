@@ -3,3 +3,4 @@
 /lake-packages/*
 result
 lakefile.olean
+.direnv

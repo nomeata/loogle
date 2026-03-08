@@ -332,15 +332,15 @@ class MyHandler(prometheus_client.MetricsHandler):
                       integrity="sha384-A2UBIkgVTcNWgv+snhw7PKvU/L9N0JqHwgwDwyNcbsLiVhGG5KAuR64N4wuDYd99"
                       crossorigin="anonymous">
                 <link rel="modulepreload"
-                      href="https://cdn.skypack.dev/-/@leanprover/unicode-input@v0.1.4-AeWIvwNlZ6hAT63evXW0/dist=es2020,mode=imports,min/optimized/@leanprover/unicode-input.js"
-                      integrity="sha384-ApNDvGPRJLDDD+BmP75ljbblIzl8AEA4PYu8ARN1AB51WETDOje3E2Wm5mizWgo3"
+                      href="https://esm.sh/@leanprover/unicode-input@0.1.9/es2022/unicode-input.mjs"
+                      integrity="sha384-6mYLLqtU9qw2CfSz+CFvJA7+8ze+gepM8E6hmkMzNWforMg65FHPr+czOxPwvvPn"
                       crossorigin="anonymous">
                 <link rel="modulepreload"
-                      href="https://cdn.skypack.dev/pin/@leanprover/unicode-input-component@v0.1.4-26sLE5METYYO2xtxbFPA/mode=raw,min/optimized/@leanprover/unicode-input-component.js"
-                      integrity="sha384-IA8mae633t0WQFKjWyfKqeVMEsBqJX0L9+qTk7wAslS+h6NI5CkEX7rYNjV7Etmo"
+                      href="https://esm.sh/@leanprover/unicode-input-component@0.1.9/es2022/unicode-input-component.mjs"
+                      integrity="sha384-J1hXLE6vS4ManSRl9e1JOLOpstGcwakjzCBngyKpfl8cR/PuEedz7lkNY1VPQ7K/"
                       crossorigin="anonymous">
                 <style>
-                  @import url('https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.051/juliamono.css');
+                  @import url('https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.061/juliamono.css');
                   :root {
                     --font-family-mono: 'JuliaMono', monospace;
                   }
@@ -444,7 +444,7 @@ class MyHandler(prometheus_client.MetricsHandler):
             self.wfile.write(b"""
                 </main>
                 <script type="module">
-                import { InputAbbreviationRewriter } from "https://cdn.skypack.dev/pin/@leanprover/unicode-input-component@v0.1.0-cAcOWoqAnOWevp4vHscs/mode=imports,min/optimized/@leanprover/unicode-input-component.js";
+                import { InputAbbreviationRewriter } from "https://esm.sh/@leanprover/unicode-input-component@0.1.9";
                 const queryInput = document.getElementById('query');
                 const hiddenInput = document.getElementById('hiddenquery');
                 const form = document.getElementById('queryform');
