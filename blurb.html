@@ -45,6 +45,8 @@ the hypotheses of the lemma in any order; for example,<br />
 href="?q=%7C-%20_%20%3C%20_%20→%20tsum%20_%20%3C%20tsum%20_"><code>|- _ &lt; _ → tsum _ &lt; tsum _</code></a><br />
 will find <code>tsum_lt_tsum</code> even though the hypothesis
 <code>f i &lt; g i</code> is not the last.</p></li>
+<li>At the moment, loogle does not specifically support filtering for definitions or lemmas. You can emulate this using the expected type filter: <code>⊢ (_ : Type _)</code>
+  finds all definitions which provide data, <code>⊢ (_ : Prop)</code> finds all definitions of propositions.</li>
 </ol>
 <p>If you pass more than one such search filter, separated by commas
 Loogle will return lemmas which match <em>all</em> of them. The
