@@ -12,7 +12,7 @@ Loogle finds definitions and lemmas in various ways:
    finds all lemmas whose statement somehow mentions the sine function.
 
 2. By lemma name substring:\
-   🔍 [`"differ"`](?q="differ")\
+   🔍 [`"differ"`](?q=\"differ\")\
    finds all lemmas that have `"differ"` somewhere in their lemma _name_.
 
 3. By subexpression:\
@@ -38,9 +38,13 @@ Loogle finds definitions and lemmas in various ways:
    will find `tsum_lt_tsum` even though the hypothesis `f i < g i` is not the last.
 
 
+5. You can filter for definitions vs theorems: Using `⊢ (_ : Type _)` finds all
+   definitions which provide data while `⊢ (_ : Prop)` finds all theorems (and
+   definitions of proofs).
+
 If you pass more than one such search filter, separated by commas Loogle will return lemmas which match _all_ of them.
 The search\
-🔍 [`Real.sin, "two", tsum, _ * _, _ ^ _, |- _ < _ → _`](?q=Real.sin,+"two",+tsum,+_+*+_,+_+^+_,+|-+_+<+_+→+_)\
+🔍 [`Real.sin, "two", tsum, _ * _, _ ^ _, |- _ < _ → _`](?q=Real.sin,+\"two\",+tsum,+_+*+_,+_+^+_,+|-+_+<+_+→+_)\
 would find all lemmas which mention the constants `Real.sin` and `tsum`, have `"two"` as a
 substring of the lemma name, include a product and a power somewhere in the type, *and* have a
 hypothesis of the form `_ < _` (if there were any such lemmas). Metavariables (`?a`) are assigned independently in each filter.
