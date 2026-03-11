@@ -336,8 +336,8 @@ class MyHandler(prometheus_client.MetricsHandler):
                       integrity="sha384-6mYLLqtU9qw2CfSz+CFvJA7+8ze+gepM8E6hmkMzNWforMg65FHPr+czOxPwvvPn"
                       crossorigin="anonymous">
                 <link rel="modulepreload"
-                      href="https://esm.sh/@leanprover/unicode-input-component@0.1.9/es2022/unicode-input-component.mjs"
-                      integrity="sha384-J1hXLE6vS4ManSRl9e1JOLOpstGcwakjzCBngyKpfl8cR/PuEedz7lkNY1VPQ7K/"
+                      href="https://esm.sh/@leanprover/unicode-input-component@0.2.0/es2022/unicode-input-component.mjs"
+                      integrity="sha384-8zfB8mBMFzGtqlqp+ueFklzOHnO/tHTwS8OcP9B5Wgcxn/LHrht5S2PboihtKYKF"
                       crossorigin="anonymous">
                 <style>
                   @import url('https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.061/juliamono.css');
@@ -444,7 +444,7 @@ class MyHandler(prometheus_client.MetricsHandler):
             self.wfile.write(b"""
                 </main>
                 <script type="module">
-                import { InputAbbreviationRewriter } from "https://esm.sh/@leanprover/unicode-input-component@0.1.9";
+                import { InputAbbreviationRewriter } from "https://esm.sh/@leanprover/unicode-input-component@0.2.0";
                 const queryInput = document.getElementById('query');
                 const hiddenInput = document.getElementById('hiddenquery');
                 const form = document.getElementById('queryform');
