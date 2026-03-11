@@ -331,11 +331,40 @@ class MyHandler(prometheus_client.MetricsHandler):
                       href="https://unpkg.com/chota@0.9.2/dist/chota.min.css"
                       integrity="sha384-A2UBIkgVTcNWgv+snhw7PKvU/L9N0JqHwgwDwyNcbsLiVhGG5KAuR64N4wuDYd99"
                       crossorigin="anonymous">
+                <link rel="modulepreload"
+                      href="https://esm.sh/@leanprover/unicode-input@0.1.9/es2022/unicode-input.mjs"
+                      integrity="sha384-6mYLLqtU9qw2CfSz+CFvJA7+8ze+gepM8E6hmkMzNWforMg65FHPr+czOxPwvvPn"
+                      crossorigin="anonymous">
+                <link rel="modulepreload"
+                      href="https://esm.sh/@leanprover/unicode-input-component@0.1.9/es2022/unicode-input-component.mjs"
+                      integrity="sha384-J1hXLE6vS4ManSRl9e1JOLOpstGcwakjzCBngyKpfl8cR/PuEedz7lkNY1VPQ7K/"
+                      crossorigin="anonymous">
                 <style>
                   @import url('https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.061/juliamono.css');
                   :root {
                     --font-family-mono: 'JuliaMono', monospace;
                   }
+
+                  /* Browser fix for unicode editing */
+                  .textinput { white-space: -moz-pre-space; }
+
+                  /* Copied from chota for textinput */
+                  .textinput {
+                      font-family: inherit;
+                      padding: 0.8rem 1rem;
+                      border-radius: 4px;
+                      border: 1px solid var(--color-lightGrey);
+                      font-size: 1em;
+                      -webkit-transition: all 0.2s ease;
+                      transition: all 0.2s ease;
+                      display: block;
+                      width: 100%;
+                    }
+                   .textinput:focus {
+                      outline: none;
+                      border-color: var(--color-primary);
+                      box-shadow: 0 0 1px var(--color-primary);
+                    }
 
                     /* Copy buttons */
                     span.copy { cursor: pointer; }
@@ -365,7 +394,8 @@ class MyHandler(prometheus_client.MetricsHandler):
             self.wfile.write(bytes(f"""
                 <form method="GET" id="queryform">
                 <div class="grouped">
-                <input id="query" type="text" name="q" value="{html.escape(query)}" autofocus autocorrect="off">
+                <input id="hiddenquery" type="hidden" name="q" value=""/>
+                <div class="textinput" id="query" name="q" contenteditable="true" autofocus="true" autocorrect="false">{html.escape(query)}</div>
                 <button type="submit" id="submit">#find</button>
                 <button type="submit" name="lucky" value="yes" title="Directly jump to the documentation of the first hit.">#lucky</button>
                 </div>
@@ -414,6 +444,27 @@ class MyHandler(prometheus_client.MetricsHandler):
             self.wfile.write(b"""
                 </main>
                 <script type="module">
+                import { InputAbbreviationRewriter } from "https://esm.sh/@leanprover/unicode-input-component@0.1.9";
+                const queryInput = document.getElementById('query');
+                const hiddenInput = document.getElementById('hiddenquery');
+                const form = document.getElementById('queryform');
+                const submitButton = document.getElementById('submit');
+                const rewriter = new InputAbbreviationRewriter(
+                    { abbreviationCharacter: "\\\\",
+                      customTranslations: [],
+                      eagerReplacementEnabled: true },
+                    queryInput,
+                )
+                queryInput.addEventListener('keydown', event => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        submitButton.click();
+                    }
+                })
+                form.addEventListener('submit', event => {
+                    hiddenInput.value = queryInput.innerText;
+                })
+
                 // Implement the copy buttons
                 document.querySelectorAll('span.copy').forEach(element => {
                     element.addEventListener('click', () => {
