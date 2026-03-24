@@ -54,4 +54,4 @@ The `#lucky` button will directly send you to the documentation of the first hit
 ## Source code
 
 You can find the source code for this service at <https://github.com/nomeata/loogle>.
-The <https://loogle.lean-lang.org/> service is provided by the <a href="https://lean-fro.org/">Lean FRO</a>.
+The <https://loogle.lean-lang.org/> service is provided by the <a href="https://lean-fro.org/">Lean FRO</a>. Please review the Lean FRO <a href="https://lean-lang.org/terms/">Terms of Use</a> and <a href="https://lean-lang.org/privacy/">Privacy Policy</a>.
