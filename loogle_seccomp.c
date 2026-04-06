@@ -37,6 +37,9 @@ LEAN_EXPORT lean_obj_res loogle_seccomp ( lean_obj_arg _0 ) {
   // then the following is not needed
   seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(newfstatat), 0);
   seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(fstat), 0);
+
+  // New since 4.30.0-rc1
+  seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(sigaltstack), 0);
   seccomp_load(ctx);
   return lean_io_result_mk_ok(lean_box(0));
 }
