@@ -287,7 +287,7 @@ class MyHandler(prometheus_client.MetricsHandler):
             if "q" in params and len(params["q"]) == 1:
                 if "meta-externalagent" in self.headers["user-agent"]:
                         m_client.labels("meta-agent").inc()
-                else if want_json:
+                elif want_json:
                     if "lean4/" in self.headers.get("x-loogle-client", ""):
                         m_client.labels("vscode-lean4").inc()
                     elif "LeanSearchClient" in self.headers["user-agent"]:
