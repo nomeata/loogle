@@ -1,4 +1,4 @@
-import Loogle.Find
+import Loogle.FindCommand
 
 -- We want the following tests to be self-contained.
 -- Therefore we erase all knowledge about imported definitios from find:

@@ -1,4 +1,8 @@
-import Lean
+module
+
+public import Lean
+
+@[expose] public section
 
 syntax (name := ifEnv)
   "#ifEnv " str " then " ppLine command " else " command :  command

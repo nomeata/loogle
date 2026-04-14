@@ -1,4 +1,6 @@
-import Std.Sync.Mutex
+module
+
+public import Std.Sync.Mutex
 
 /-!
 # Monadic version of `Thunk`
@@ -8,6 +10,8 @@ This file defines `BaseIO.Thunk` and `IO.Thunk`.
 It makes the choice that errors are cached just like values,
 as opposed to declaring them uncacheable as Python's `functools` caching operations do.
 -/
+
+public section
 
 /-- A version of `Thunk` that runs in `BaseIO`.
 

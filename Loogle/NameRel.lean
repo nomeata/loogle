@@ -3,13 +3,16 @@ Copyright (c) 2023 Joachim Breitner. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Joachim Breitner
 -/
+module
 
-import Lean.Data.NameMap
-import Lean.Declaration
+public import Lean.Data.NameMap
+public import Lean.Declaration
 
 /-!
 ## A data structure for a relation on names
 -/
+
+@[expose] public section
 
 open Lean Meta
 

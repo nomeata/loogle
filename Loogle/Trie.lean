@@ -8,8 +8,12 @@ A string trie data structure, used for tokenizing the Lean language.
 Adapted from Lean.Data.Trie to use path compression.
 
 -/
-import Lean.Data.Format
-import Batteries.Data.Array
+module
+
+public import Lean.Data.Format
+public import Batteries.Data.Array
+
+@[expose] public section
 
 namespace Loogle
 
@@ -188,7 +192,7 @@ def findPrefix (t : Trie α) (pre : String) : Array α := go t 0
 
 
 open Lean in
-private partial def toStringAux {α : Type} : Trie α → List Format
+partial def toStringAux {α : Type} : Trie α → List Format
   | leaf _ => []
   | path _ ps _ t =>
     [ format (repr ps.data), Format.group $ Format.nest 4 $ flip Format.joinSep Format.line $ toStringAux t ]
