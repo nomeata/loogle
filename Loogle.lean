@@ -249,7 +249,7 @@ unsafe def loogleCli : CliM PUnit := do
       if opts.interactive
       then interactive index print
 
-unsafe def main (args : List String) : IO Unit := do
+public unsafe def main (args : List String) : IO Unit := do
   match (← (loogleCli.run args |>.run' {}).run) with
     | .ok _ => pure ()
     | .error e => IO.println e.toString
