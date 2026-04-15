@@ -3,7 +3,11 @@ Copyright (c) 2023 Joachim Breitner. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Joachim Breitner
 -/
-import Batteries.Util.Cache
+module
+
+public import Batteries.Util.Cache
+
+@[expose] public section
 
 open Lean Meta
 

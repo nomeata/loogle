@@ -1,4 +1,9 @@
-import Std
+module
+
+public import Std
+
+@[expose] public section
+
 namespace Std.TreeSet
 
 variable {α : Type _} {cmp}

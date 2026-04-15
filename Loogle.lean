@@ -1,10 +1,14 @@
-import Lean.Meta
-import Lake.CLI.Error
-import Lake.Util.Cli
+module
 
-import Loogle.Find
+public import Lean.Meta
+public import Lake.CLI.Error
+public import Lake.Util.Cli
 
-import Seccomp
+public import Loogle.Find
+
+public import Seccomp
+
+import Lean.PrettyPrinter.Delaborator.Builtins
 
 set_option autoImplicit false
 
@@ -31,7 +35,7 @@ end RunParser
 open Lean Core Meta Elab Term Command
 open Loogle
 
-instance : ToExpr System.FilePath where
+meta instance : ToExpr System.FilePath where
   toTypeExpr := Lean.mkConst ``System.FilePath
   toExpr path := mkApp (Lean.mkConst ``System.FilePath.mk) (toExpr path.1)
 
@@ -245,7 +249,7 @@ unsafe def loogleCli : CliM PUnit := do
       if opts.interactive
       then interactive index print
 
-unsafe def main (args : List String) : IO Unit := do
+public unsafe def main (args : List String) : IO Unit := do
   match (← (loogleCli.run args |>.run' {}).run) with
     | .ok _ => pure ()
     | .error e => IO.println e.toString
