@@ -471,7 +471,7 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
         -- Query the declaration cache
         let (m₁, m₂) ← index.nameRelCache.get
         let hits := .intersects_loogle <| needles.toArray.map <| fun needle =>
-          ((m₁.find needle).union_loogle (m₂.find needle)).insert needle
+          ((m₁.find needle).union (m₂.find needle)).insert needle
 
         let needlesList := .andList (needles.toList.map .ofConstName)
         if hits.size == 1 then
