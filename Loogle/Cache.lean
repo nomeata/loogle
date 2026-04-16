@@ -22,9 +22,7 @@ the second will store declarations from imports (and will hopefully be "read-onl
 def DeclCache2 (α : Type) : Type := DeclCache (α × α)
 
 instance (α : Type) [h : Nonempty α] : Nonempty (DeclCache2 α) :=
-  -- inferInstanceAs (Nonempty (DeclCache (α × α)))
-  -- work around lack of Prod.nonempty in std/core:
-  h.elim fun x => @instNonemptyDeclCache _ ⟨x,x⟩
+  inferInstanceAs (Nonempty (DeclCache (α × α)))
 
 /--
 Creates a `DeclCache`.
