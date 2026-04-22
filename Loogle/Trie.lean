@@ -11,7 +11,6 @@ Adapted from Lean.Data.Trie to use path compression.
 module
 
 public import Lean.Data.Format
-public import Batteries.Data.Array
 
 @[expose] public section
 
