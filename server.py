@@ -284,6 +284,13 @@ class MyHandler(prometheus_client.MetricsHandler):
 
             url_query = url.query
             params = urllib.parse.parse_qs(url_query)
+            limit = None
+            if "limit" in params:
+                limit = int(params["limit"][0])
+                if limit < 0:
+                    self.return400()
+                    return
+
             if "q" in params and len(params["q"]) == 1:
                 if "meta-externalagent" in self.headers["user-agent"]:
                         m_client.labels("meta-agent").inc()
@@ -315,6 +322,8 @@ class MyHandler(prometheus_client.MetricsHandler):
                         self.returnRedirect(doclink(result["hits"][0]))
                         return
 
+            if limit is not None and "hits" in result:
+                result["hits"] = result["hits"][:limit]
 
             if want_json:
                 self.returnJSON(result)
