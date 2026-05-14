@@ -12,8 +12,8 @@ import os
 import select
 
 
-hostName = "localhost"
-serverPort = 8088
+hostName = os.environ.get("LOOGLE_HOST", "localhost")
+serverPort = int(os.environ.get("LOOGLE_PORT", "8088"))
 
 blurb = open("./blurb.html","rb").read()
 icon = open("./loogle.png","rb").read()
