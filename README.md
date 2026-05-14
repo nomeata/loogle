@@ -77,7 +77,7 @@ Docker
     docker run --rm -p 8088:8088 loogle
     curl 'http://localhost:8088/json?q=Real.sin'
 
-Prebuilt images are published to `ghcr.io/iteron-dev/loogle`.
+Prebuilt images are published to `ghcr.io/nomeata/loogle`.
 
 `LOOGLE_HOST` and `LOOGLE_PORT` override the bind address (`0.0.0.0:8088` in
 the image).
@@ -87,7 +87,7 @@ In `docker-compose.yml`:
 ```yaml
 services:
   loogle:
-    build: ./loogle
+    image: ghcr.io/nomeata/loogle
     restart: unless-stopped
     ports: ["8088:8088"]
 
