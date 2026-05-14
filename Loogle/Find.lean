@@ -270,11 +270,18 @@ syntax find_filters := find_filter,*
 when a type class constraint has no instances.  -/
 def elabTerm' (t : Term) (expectedType? : Option Expr) : TermElabM Expr := do
   withTheReader Term.Context ({ ·  with ignoreTCFailures := true, errToSorry := false }) do
-    let t ← Term.elabTerm t expectedType?
-    -- So far all tests work without the following line. Lets expand the test
-    -- suite once someone complains
-    -- Term.synthesizeSyntheticMVars (mayPostpone := true) (ignoreStuckTC := true)
-    instantiateMVars t
+    let e ← Term.elabTerm t expectedType?
+    -- Resume any postponed elaboration steps (e.g. Mathlib's `⊆` elaborator
+    -- postpones until it learns the operand type) without applying default
+    -- instances. The latter is important so that generic patterns like
+    -- `|- 0 ≤ ?a * ?a` are not specialized to `Nat`. We achieve this by
+    -- forcing `tryPostpone*` to be a no-op via `withoutPostponing` and
+    -- letting `synthesizeSyntheticMVars (postpone := .yes)` run only the
+    -- resume step. We rely on `SavedContext` not capturing `mayPostpone`,
+    -- so that `withoutPostponing` also takes effect inside `resumePostponed`.
+    Term.withoutPostponing <|
+      Term.synthesizeSyntheticMVars (postpone := .yes) (ignoreStuckTC := true)
+    instantiateMVars e
 
 /-!
 ## Generating suggestions for unresolvable names
