@@ -1,0 +1,8 @@
+.lake
+.direnv
+result
+build
+**/*.olean
+.github
+.claude
+*.xcf

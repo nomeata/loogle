@@ -70,6 +70,41 @@ built `loogle` via `lake`.
 At the path `/json?q=…` (instead of `/?q=…`), the result is returned in JSON
 format. No stability of the format is guaranteed at this point.
 
+Docker
+------
+
+    docker build -t loogle .
+    docker run --rm -p 8088:8088 loogle
+    curl 'http://localhost:8088/json?q=Real.sin'
+
+Prebuilt images are published to `ghcr.io/nomeata/loogle`.
+
+`LOOGLE_HOST` and `LOOGLE_PORT` override the bind address (`0.0.0.0:8088` in
+the image).
+
+In `docker-compose.yml`:
+
+```yaml
+services:
+  loogle:
+    image: ghcr.io/nomeata/loogle
+    restart: unless-stopped
+    ports: ["8088:8088"]
+
+  your-app:
+    depends_on: [loogle]
+    environment:
+      LOOGLE_URL: "http://loogle:8088/json"
+```
+
+The `/json` endpoint is the same one `loogle.lean-lang.org` serves.
+
+```python
+async with session.get(LOOGLE_URL, params={"q": query}) as resp:
+    body = await resp.json()
+# body["hits"] is a list of {"name", "type", "module", "doc"}
+```
+
 Zulip bot
 ---------
 

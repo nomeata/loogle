@@ -1,0 +1,59 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: [master, docker]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      lean_version:
+        description: 'Lean version (e.g. v4.30.0-rc1). Also used as mathlib ref. Leave empty to use the committed lean-toolchain.'
+        type: string
+        required: false
+        default: ''
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve effective Lean version
+        id: lean
+        run: |
+          if [ -n "${{ inputs.lean_version }}" ]; then
+            version="${{ inputs.lean_version }}"
+          else
+            version="$(sed -n 's|^leanprover/lean4:||p' lean-toolchain)"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          labels: |
+            lean.version=${{ steps.lean.outputs.version }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            LEAN_VERSION=${{ inputs.lean_version }}
