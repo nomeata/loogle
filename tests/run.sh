@@ -212,6 +212,23 @@ run_scenario_fail "write-index to read-only default location" \
   bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode write --module MyMod 'myUniqueValue'"
 chmod u+w "$TESTS_DIR/lake-env/.lake/build/lib/lean"
 
+# A module without a Lake trace file (here: `Init`, which ships with the
+# toolchain). The default `use` mode should warn and fall back to an
+# in-memory build; `read` mode should fail with a clear error.
+INIT_EXPECTED='Found 5 declarations mentioning Nat.zero.
+
+Nat.zero (from Init.Prelude)
+Nat.ctor_eq_zero (from Init.Data.Nat.Basic)
+Nat.zero_eq (from Init.Data.Nat.Basic)
+Nat.recCompiled (from Init.Data.Nat.Basic)
+Nat.rec_eq_recCompiled (from Init.Data.Nat.Basic)'
+run_scenario_split "no-trace module under default (use) mode" \
+  "$INIT_EXPECTED" "no Lake trace file for Init" \
+  "$LOOGLE_BIN" --module Init 'Nat.zero'
+run_scenario_fail "no-trace module under --index-mode read" \
+  "no Lake trace file for Init" \
+  "$LOOGLE_BIN" --module Init --index-mode read 'Nat.zero'
+
 # ---------------------------------------------------------------------------
 if [ "$failures" -gt 0 ]; then
   echo "FAILED: $failures scenario(s)" >&2

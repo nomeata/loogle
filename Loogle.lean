@@ -180,21 +180,20 @@ structure LoogleOptions where
   maxResults : Nat := 200
   wantsHelp : Bool := false
 
-/-- Read the `depHash` field of the Lake-generated `.trace` file sitting next to
-the given module's `.olean`. Used to verify that a cached index built against a
-particular environment matches the env we are about to query: Lake's `depHash`
-is a hash of every transitive input (sources, import hashes, compiler version,
+/-- Try to read the `depHash` field of the Lake-generated `.trace` file sitting
+next to the given module's `.olean`. Returns `none` if there is no trace file
+(e.g. for stdlib modules shipped with the toolchain). Lake's `depHash` is a
+hash of every transitive input (sources, import hashes, compiler version,
 options), so a single comparison detects any change anywhere in the closure. -/
-def readModuleDepHash (mod : Name) : IO String := do
+def readModuleDepHash (mod : Name) : IO (Option String) := do
   let oleanPath ← findOLean mod
   let tracePath := oleanPath.withExtension "trace"
+  if !(← tracePath.pathExists) then
+    return none
   let content ← IO.FS.readFile tracePath
   match Lean.Json.parse content with
-  | .ok json =>
-    match json.getObjValAs? String "depHash" with
-    | .ok h => return h
-    | .error e => throw <| .userError s!"trace file {tracePath}: no depHash field ({e})"
-  | .error e => throw <| .userError s!"trace file {tracePath}: cannot parse ({e})"
+  | .ok json => return json.getObjValAs? String "depHash" |>.toOption
+  | .error _ => return none
 
 unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Unit := do
   -- An explicit `--path` wins; otherwise honour `LEAN_PATH` (e.g. set up by
@@ -262,11 +261,22 @@ where
     let index ← do
       if opts.indexMode == .noIndex then
         mkFresh
-      else
+      else match ← readModuleDepHash opts.module.toName with
+      | none =>
+        -- Some modules (notably stdlib modules shipped with the toolchain)
+        -- have no Lake trace file, so we cannot tell whether a cached index
+        -- is fresh. `read` is fatal in that case; `use` / `write` degrade to
+        -- a one-shot in-memory build.
+        let msg := s!"no Lake trace file for {opts.module}; cannot verify \
+          index freshness — running without an on-disk index"
+        if opts.indexMode == .readIndex then
+          throwError s!"loogle: {msg}"
+        IO.eprintln s!"loogle: {msg}"
+        mkFresh
+      | some curDepHash =>
         let path ← match opts.indexFile with
           | some p => pure p
           | none => defaultIndexPath
-        let curDepHash ← readModuleDepHash opts.module.toName
         let writeFresh : CoreM Find.Index := do
           let idx ← mkFresh
           let (names, trie) ← idx.getCache
