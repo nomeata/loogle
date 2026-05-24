@@ -170,8 +170,10 @@ structure LoogleOptions where
   query : Option String := none
   module : String := "Mathlib"
   searchPath : List System.FilePath := []
-  /-- The lifecycle of the on-disk index file. -/
-  indexMode : IndexMode := .noIndex
+  /-- The lifecycle of the on-disk index file. Defaults to `useIndex` because
+  the speed-up from a cached index is dramatic and the location is
+  predictable; pass `--no-index` to skip caching entirely. -/
+  indexMode : IndexMode := .useIndex
   /-- Override for the index file path. When `none`, the default location is
   derived from the root module's `.olean` (swap `.olean` for `.loogle-index`). -/
   indexFile : Option System.FilePath := none
@@ -313,9 +315,15 @@ def lakeLongOption : (opt : String) → CliM PUnit
     let path : System.FilePath ← takeArg "--path"
     modifyThe LoogleOptions fun opts => {opts with searchPath := opts.searchPath ++ [path]}
 | "--module" => do modifyThe LoogleOptions ({· with module := ← takeArg "--module"})
-| "--write-index" => modifyThe LoogleOptions ({· with indexMode := .writeIndex})
-| "--read-index" => modifyThe LoogleOptions ({· with indexMode := .readIndex})
-| "--use-index" => modifyThe LoogleOptions ({· with indexMode := .useIndex})
+| "--index-mode" => do
+    let arg ← takeArg "--index-mode"
+    let mode ← match arg with
+      | "use" => pure IndexMode.useIndex
+      | "read" => pure IndexMode.readIndex
+      | "write" => pure IndexMode.writeIndex
+      | "none" => pure IndexMode.noIndex
+      | _ => throw <| Lake.CliError.invalidOptArg "--index-mode" arg
+    modifyThe LoogleOptions ({· with indexMode := mode})
 | "--index-file" => do
     let path : System.FilePath ← takeArg "--index-file"
     modifyThe LoogleOptions ({· with indexFile := some path})
@@ -342,12 +350,13 @@ OPTIONS:
   --json, -j            print result in JSON format
   --module mod          import this module (default: Mathlib)
   --path path           search for .olean files here (default: the build time path)
-  --write-index         build the search index and persist it to disk
-  --read-index          load the search index from disk; fail if it is stale
-                        (the index records the Lake depHash of the root module
-                        and is rejected if the current depHash differs)
-  --use-index           load the index from disk if present and up-to-date,
-                        otherwise build it and write it to disk
+  --index-mode MODE     how to manage the on-disk search index. One of:
+                          use   (default) load if present and up-to-date,
+                                otherwise build and write
+                          read  load existing index; refuse to start if it
+                                is missing or out of date
+                          write always (re)build the index and write it
+                          none  build in memory and discard on exit
   --index-file PATH     override the default index path. The default lives
                         next to the root module's .olean (with .loogle-index
                         extension); pass this if that location is read-only.
@@ -365,10 +374,12 @@ unsafe def loogleCli : CliM PUnit := do
     let opts ← getThe LoogleOptions
     let queries ← Lake.takeArgs
     let print := if opts.json then printJson else printPlain
-    let producesSideEffect :=
-      opts.indexMode == .writeIndex || opts.indexMode == .useIndex
+    -- `--write-index` is the only flag that justifies running `work` on its
+    -- own (without a query or `--interactive`): the user is asking to rebuild
+    -- the cache. `--use-index` is the *default*, so it never counts here.
+    let workWithoutQuery := opts.indexMode == .writeIndex
     if opts.wantsHelp ||
-      queries.isEmpty && not opts.interactive && not producesSideEffect
+      queries.isEmpty && not opts.interactive && not workWithoutQuery
     then IO.println usage
     else work opts  fun index => do
       queries.forM (single index opts.maxResults print)

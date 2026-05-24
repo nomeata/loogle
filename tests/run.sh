@@ -135,11 +135,11 @@ myUniqueValue_eq (from MyMod)'
 
 ensure_built lake-exe
 run_scenario "lake-exe" "$EXPECTED" \
-  bash -c "cd $TESTS_DIR/lake-exe && lake exe loogle --module MyMod 'myUniqueValue'"
+  bash -c "cd $TESTS_DIR/lake-exe && lake exe loogle --index-mode none --module MyMod 'myUniqueValue'"
 
 ensure_built lake-env
 run_scenario "lake-env" "$EXPECTED" \
-  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --module MyMod 'myUniqueValue'"
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod 'myUniqueValue'"
 
 # ---------------------------------------------------------------------------
 # Index lifecycle scenarios — all in the lake-env project for simplicity.
@@ -151,7 +151,7 @@ rm -f "$DEFAULT_IDX" "$TMP_IDX"
 # --use-index, first call: builds, writes to default path, warns on stderr.
 run_scenario_split "use-index initial build (default path)" \
   "$EXPECTED" "rebuilding" \
-  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --use-index --module MyMod 'myUniqueValue'"
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode use --module MyMod 'myUniqueValue'"
 [ -f "$DEFAULT_IDX" ] || {
   echo "Expected $DEFAULT_IDX to exist after first --use-index call" >&2
   failures=$((failures + 1))
@@ -160,18 +160,18 @@ run_scenario_split "use-index initial build (default path)" \
 # --use-index, second call: reads the file silently.
 run_scenario_split "use-index reuse (default path)" \
   "$EXPECTED" "" \
-  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --use-index --module MyMod 'myUniqueValue'"
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode use --module MyMod 'myUniqueValue'"
 
 # --read-index on a fresh index: succeeds silently.
 run_scenario_split "read-index on fresh index" \
   "$EXPECTED" "" \
-  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --read-index --module MyMod 'myUniqueValue'"
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode read --module MyMod 'myUniqueValue'"
 
 # --index-file override puts the file at a custom path.
 rm -f "$TMP_IDX"
 run_scenario_split "use-index with --index-file override" \
   "$EXPECTED" "rebuilding" \
-  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --use-index --index-file '$TMP_IDX' --module MyMod 'myUniqueValue'"
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode use --index-file '$TMP_IDX' --module MyMod 'myUniqueValue'"
 [ -f "$TMP_IDX" ] || {
   echo "Expected $TMP_IDX to exist after --index-file override" >&2
   failures=$((failures + 1))
@@ -180,7 +180,7 @@ run_scenario_split "use-index with --index-file override" \
 # --read-index on a missing file: fails non-zero with a helpful message.
 run_scenario_fail "read-index on missing file" \
   "no index file at /this/path/does/not/exist.idx" \
-  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --read-index --index-file '/this/path/does/not/exist.idx' --module MyMod 'myUniqueValue'"
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode read --index-file '/this/path/does/not/exist.idx' --module MyMod 'myUniqueValue'"
 
 # Mutate MyMod.lean so the .trace depHash changes; rebuild the olean.
 cp "$TESTS_DIR/lake-env/MyMod.lean" "$TESTS_DIR/lake-env/MyMod.lean.bak"
@@ -190,17 +190,17 @@ echo "def loogleTestExtraDef : Nat := 1" >> "$TESTS_DIR/lake-env/MyMod.lean"
 # --read-index on the now-stale default index: fails with "is stale".
 run_scenario_fail "read-index on stale index" \
   "is stale" \
-  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --read-index --module MyMod 'myUniqueValue'"
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode read --module MyMod 'myUniqueValue'"
 
 # --use-index on the same stale index: warns and rebuilds, then succeeds.
 run_scenario_split "use-index on stale index (rebuilds)" \
   "$EXPECTED" "is stale" \
-  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --use-index --module MyMod 'myUniqueValue'"
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode use --module MyMod 'myUniqueValue'"
 
 # After the rebuild, --read-index should succeed silently again.
 run_scenario_split "read-index after use-index rebuilt" \
   "$EXPECTED" "" \
-  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --read-index --module MyMod 'myUniqueValue'"
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode read --module MyMod 'myUniqueValue'"
 
 # Restore MyMod.lean (also rebuild) — done via the EXIT trap.
 
@@ -209,7 +209,7 @@ run_scenario_split "read-index after use-index rebuilt" \
 chmod a-w "$TESTS_DIR/lake-env/.lake/build/lib/lean"
 run_scenario_fail "write-index to read-only default location" \
   "--index-file" \
-  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --write-index --module MyMod 'myUniqueValue'"
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode write --module MyMod 'myUniqueValue'"
 chmod u+w "$TESTS_DIR/lake-env/.lake/build/lib/lean"
 
 # ---------------------------------------------------------------------------
