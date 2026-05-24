@@ -250,6 +250,11 @@ def Index.mkFromCache (init : NameRel × SuffixTrie) : IO Index := do
   let c2 ← DeclCache2.mkFromCache .empty SuffixTrie.addDecl init.2
   pure ⟨c1, c2⟩
 
+/-- On-disk format for a cached `Index`: the Lake `depHash` of the root module
+the index was built against, paired with the imported per-module data. The
+depHash is checked on load so that a stale index is detected and rejected. -/
+abbrev PickledIndex : Type := String × NameRel × SuffixTrie
+
 /-!
 ## The #find syntax and elaboration helpers
 -/
@@ -560,33 +565,16 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
 
     return .ok ⟨message, hits4.size, hits7, suggestions⟩
 
-/-
-###  The per-module cache used by the `#find` command
--/
-
 open System (FilePath)
 
-/-- Where to search for the cached index -/
-def cachePath : IO FilePath :=
-  try
-    return (← findOLean `LoogleMathlibCache).withExtension "extra"
-  catch _ =>
-    return ".lake" / "build" / "lib" / "LoogleMathlibCache.extra"
-
 /--
-The `DeclCache` used by `#find`.
-
-This is lazily initialized, so that the cost is only paid when Loogle is used, not when it is
-imported. Among other things, this means we do not bother loading the database when _compiling_
-`Loogle.lean` into a binary!
+Process-local index used by the in-Lean `#find` command. The first call to
+`#find` in a Lean session triggers a full scan of the imported environment;
+the resulting caches live for the lifetime of the process. (The loogle CLI
+does **not** use this thunk — it manages the index explicitly via
+`--write-index` / `--read-index` / `--use-index`.)
 -/
-initialize cachedIndex : Loogle.Thunk Index ← Loogle.Thunk.new <| unsafe do
-  let path ← cachePath
-  if (← path.pathExists) then
-    let (d, _) ← unpickle _ path
-    Index.mkFromCache d
-  else
-    Index.mk
+initialize cachedIndex : Loogle.Thunk Index ← Loogle.Thunk.new <| unsafe Index.mk
 
 open Command
 

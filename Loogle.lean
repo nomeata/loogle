@@ -159,8 +159,25 @@ structure LoogleOptions where
   searchPath : List System.FilePath := []
   writeIndex : Option String := none
   readIndex : Option String := none
+  useIndex : Option String := none
   maxResults : Nat := 200
   wantsHelp : Bool := false
+
+/-- Read the `depHash` field of the Lake-generated `.trace` file sitting next to
+the given module's `.olean`. Used to verify that a cached index built against a
+particular environment matches the env we are about to query: Lake's `depHash`
+is a hash of every transitive input (sources, import hashes, compiler version,
+options), so a single comparison detects any change anywhere in the closure. -/
+def readModuleDepHash (mod : Name) : IO String := do
+  let oleanPath ← findOLean mod
+  let tracePath := oleanPath.withExtension "trace"
+  let content ← IO.FS.readFile tracePath
+  match Lean.Json.parse content with
+  | .ok json =>
+    match json.getObjValAs? String "depHash" with
+    | .ok h => return h
+    | .error e => throw <| .userError s!"trace file {tracePath}: no depHash field ({e})"
+  | .error e => throw <| .userError s!"trace file {tracePath}: cannot parse ({e})"
 
 unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Unit := do
   -- An explicit `--path` wins; otherwise honour `LEAN_PATH` (e.g. set up by
@@ -184,22 +201,61 @@ unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Un
   let ctx := {fileName := "/", fileMap := Inhabited.default}
   let state := {env}
   Prod.fst <$> act'.toIO ctx state
-where act' : CoreM Unit := do
-  let index ← match opts.readIndex with
-  | some path => do
-    let (index, _) ← unpickle _ path
-    Find.Index.mkFromCache index
-  | none =>
-    -- Special-case Mathlib and use the cached index if present
-    if opts.writeIndex.isNone && opts.module.toName = `Mathlib
-    then Find.cachedIndex.get
-    else Find.Index.mk
-  -- warm up cache eagerly
-  let _ ← index.1.cache.get.run'
-  let _ ← index.2.cache.get.run'
-  if let some path := opts.writeIndex then pickle path (← index.getCache)
-  Seccomp.enable
-  act index
+where
+  /-- Pickle to a sibling `.tmp` file and atomically rename, so an interrupted
+  write never leaves a half-written index behind. -/
+  writePickle (path : System.FilePath) (data : Find.PickledIndex) : IO Unit := do
+    let tmpPath := path.addExtension s!"tmp.{← IO.Process.getPID}"
+    pickle tmpPath data
+    IO.FS.rename tmpPath path
+  /-- Try to load `path` and verify its depHash matches `curDepHash`. Returns
+  `none` (and logs to stderr) if the file is absent, unreadable, or stale. -/
+  tryRead (curDepHash : String) (path : System.FilePath) :
+      IO (Option Find.Index) := unsafe do
+    if !(← path.pathExists) then return none
+    try
+      let ((storedHash, names, trie), _) ← unpickle Find.PickledIndex path
+      if storedHash != curDepHash then
+        IO.eprintln
+          s!"loogle: index at {path} is stale (built against {storedHash}, current is {curDepHash})"
+        return none
+      return some (← Find.Index.mkFromCache (names, trie))
+    catch e =>
+      IO.eprintln s!"loogle: failed to read index at {path}: {e}"
+      return none
+  act' : CoreM Unit := do
+    let curDepHash ← readModuleDepHash opts.module.toName
+
+    let mkFresh : CoreM Find.Index := do
+      let idx ← Find.Index.mk
+      -- warm up cache eagerly
+      let _ ← idx.1.cache.get.run'
+      let _ ← idx.2.cache.get.run'
+      return idx
+    let writeIdx (path : System.FilePath) (idx : Find.Index) : CoreM Unit := do
+      let (names, trie) ← idx.getCache
+      writePickle path (curDepHash, names, trie)
+
+    let index ← do
+      if let some path := opts.readIndex then
+        match ← tryRead curDepHash path with
+        | some idx => pure idx
+        | none =>
+          throwError s!"loogle: cannot use index at {path} (missing or stale)"
+      else if let some path := opts.useIndex then
+        match ← tryRead curDepHash path with
+        | some idx => pure idx
+        | none =>
+          let idx ← mkFresh
+          writeIdx path idx
+          pure idx
+      else
+        let idx ← mkFresh
+        if let some path := opts.writeIndex then writeIdx path idx
+        pure idx
+
+    Seccomp.enable
+    act index
 
 abbrev CliMainM := ExceptT Lake.CliError IO
 abbrev CliStateM := StateT LoogleOptions CliMainM
@@ -226,6 +282,7 @@ def lakeLongOption : (opt : String) → CliM PUnit
 | "--module" => do modifyThe LoogleOptions ({· with module := ← takeArg "--module"})
 | "--write-index" => do modifyThe LoogleOptions ({· with writeIndex := ← takeArg "--write-index"})
 | "--read-index" => do modifyThe LoogleOptions ({· with readIndex := ← takeArg "--read-index"})
+| "--use-index" => do modifyThe LoogleOptions ({· with useIndex := ← takeArg "--use-index"})
 | "--max-results" => do
     let arg ← takeArg "--max-results"
     let some n := arg.toNat? | throw <| Lake.CliError.invalidOptArg "--max-results" arg
@@ -249,8 +306,12 @@ OPTIONS:
   --json, -j            print result in JSON format
   --module mod          import this module (default: Mathlib)
   --path path           search for .olean files here (default: the build time path)
-  --write-index file    persists the search index to a file
-  --read-index file     read the search index from a file. This file is blindly trusted!
+  --write-index file    build the search index and persist it to <file>
+  --read-index file     load the search index from <file>; fail if it is stale
+                        (the index records the Lake depHash of the root module
+                        and is rejected if the current depHash differs)
+  --use-index file      load <file> if present and up-to-date, otherwise build
+                        the index and write it to <file>
   --max-results n       limit the number of returned hits (default: 200)
 " ++
 if compileTimeSearchPath.isEmpty then "" else "
@@ -266,7 +327,8 @@ unsafe def loogleCli : CliM PUnit := do
     let queries ← Lake.takeArgs
     let print := if opts.json then printJson else printPlain
     if opts.wantsHelp ||
-      queries.isEmpty && not opts.interactive && opts.writeIndex.isNone
+      queries.isEmpty && not opts.interactive
+        && opts.writeIndex.isNone && opts.useIndex.isNone
     then IO.println usage
     else work opts  fun index => do
       queries.forM (single index opts.maxResults print)
