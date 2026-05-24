@@ -60,7 +60,7 @@ abbrev Failure := String
 def Result := (Except Failure Find.Result × Array String × Nat)
 def Printer := Result → CoreM Unit
 
-def runQuery (index : Find.Index) (query : String) : CoreM Result :=
+def runQuery (index : Find.Index) (maxResults : Nat) (query : String) : CoreM Result :=
   withCurrHeartbeats do
     let (r, suggs) ← tryCatchRuntimeEx
       (handler := fun e => do return (.error (← e.toMessageData.toString), #[])) do
@@ -68,7 +68,7 @@ def runQuery (index : Find.Index) (query : String) : CoreM Result :=
         | .error err => pure $ (.error err, #[])
         | .ok s => do
           MetaM.run' do
-            match ← TermElabM.run' $ Loogle.Find.find index (.mk s) with
+            match ← TermElabM.run' $ Loogle.Find.find index (.mk s) (maxShown := maxResults) with
             | .ok result => do
               let suggs ← result.suggestions.mapM fun sugg => do
                 return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty (width := 10000)
@@ -138,17 +138,18 @@ def printJson : Printer := fun r => do
   IO.println (← toJson r).compress
   (← IO.getStdout).flush
 
-def single (index : Find.Index) (print : Printer) (query : String) : CoreM Unit := do
-  let r ← runQuery index query
+def single (index : Find.Index) (maxResults : Nat) (print : Printer) (query : String) :
+    CoreM Unit := do
+  let r ← runQuery index maxResults query
   print r
 
-def interactive (index : Find.Index) (print : Printer) : CoreM Unit := do
+def interactive (index : Find.Index) (maxResults : Nat) (print : Printer) : CoreM Unit := do
   IO.println "Loogle is ready."
   (← IO.getStdout).flush
   while true do
     let query := (← (← IO.getStdin).getLine).trimAscii.copy
     if query.isEmpty then break
-    single index print query
+    single index maxResults print query
 
 structure LoogleOptions where
   interactive : Bool := false
@@ -158,6 +159,7 @@ structure LoogleOptions where
   searchPath : List System.FilePath := []
   writeIndex : Option String := none
   readIndex : Option String := none
+  maxResults : Nat := 200
   wantsHelp : Bool := false
 
 unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Unit := do
@@ -224,6 +226,10 @@ def lakeLongOption : (opt : String) → CliM PUnit
 | "--module" => do modifyThe LoogleOptions ({· with module := ← takeArg "--module"})
 | "--write-index" => do modifyThe LoogleOptions ({· with writeIndex := ← takeArg "--write-index"})
 | "--read-index" => do modifyThe LoogleOptions ({· with readIndex := ← takeArg "--read-index"})
+| "--max-results" => do
+    let arg ← takeArg "--max-results"
+    let some n := arg.toNat? | throw <| Lake.CliError.invalidOptArg "--max-results" arg
+    modifyThe LoogleOptions ({· with maxResults := n})
 | opt         => throw <| Lake.CliError.unknownLongOption opt
 
 def lakeOption :=
@@ -245,6 +251,7 @@ OPTIONS:
   --path path           search for .olean files here (default: the build time path)
   --write-index file    persists the search index to a file
   --read-index file     read the search index from a file. This file is blindly trusted!
+  --max-results n       limit the number of returned hits (default: 200)
 " ++
 if compileTimeSearchPath.isEmpty then "" else "
 Default search path
@@ -262,9 +269,9 @@ unsafe def loogleCli : CliM PUnit := do
       queries.isEmpty && not opts.interactive && opts.writeIndex.isNone
     then IO.println usage
     else work opts  fun index => do
-      queries.forM (single index print)
+      queries.forM (single index opts.maxResults print)
       if opts.interactive
-      then interactive index print
+      then interactive index opts.maxResults print
 
 public unsafe def main (args : List String) : IO Unit := do
   match (← (loogleCli.run args |>.run' {}).run) with
