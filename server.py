@@ -28,6 +28,12 @@ def parse_args():
     parser.add_argument("--loogle-bin", default=".lake/build/bin/loogle",
                         help="Path to the loogle binary (default: "
                              ".lake/build/bin/loogle)")
+    parser.add_argument("--project-dir", default=None,
+                        help="Lake project directory to serve. When set, the "
+                             "loogle subprocess is invoked via `lake -d <dir> "
+                             "env <loogle-bin> ...` so it sees the project's "
+                             "LEAN_PATH, and the project's name + git "
+                             "revision are shown in the page footer.")
     return parser.parse_known_args()
 
 
@@ -35,6 +41,7 @@ args, loogle_extra_args = parse_args()
 hostName = args.host
 serverPort = args.port
 loogleBin = args.loogle_bin
+projectDir = args.project_dir
 # Strip a leading "--" separator if the user used one to delimit forwarded args.
 if loogle_extra_args and loogle_extra_args[0] == "--":
     loogle_extra_args = loogle_extra_args[1:]
@@ -50,21 +57,14 @@ except Exception:
     pass
 
 
-def find_project_info():
-    """Identify the Lake project we are serving. `lake env` populates
-    `LEAN_SRC_PATH` with the project source directories followed by the
-    toolchain's lake sources, so the second-to-last entry is the project
-    directory. Read its package name from `lake-manifest.json` and its
-    revision from `git rev-parse HEAD`. If we can't determine both,
-    return None and the footer will omit the project line entirely.
-
-    Returns a dict `{name, rev, github_url}` where `github_url` is the
-    commit page on GitHub if the origin remote points at github.com,
-    otherwise None."""
-    entries = [d for d in os.environ.get("LEAN_SRC_PATH", "").split(os.pathsep) if d]
-    if len(entries) < 2:
+def find_project_info(project_dir):
+    """Read the package name from `<project_dir>/lake-manifest.json` and
+    the revision from `git -C <project_dir> rev-parse HEAD`. Returns a
+    dict `{name, rev, github_url}` where `github_url` is the commit page
+    on GitHub if the `origin` remote points at github.com, otherwise
+    None. Returns None if either piece can't be determined."""
+    if not project_dir:
         return None
-    project_dir = entries[-2]
     try:
         with open(os.path.join(project_dir, "lake-manifest.json")) as f:
             manifest = json.load(f)
@@ -97,7 +97,7 @@ def find_project_info():
     return {'name': name, 'rev': rev, 'github_url': github_url}
 
 
-project_info = find_project_info()
+project_info = find_project_info(projectDir)
 
 # Prometheus is optional. If the user doesn't have the `prometheus_client`
 # package installed, metric updates become no-ops and the /metrics endpoint
@@ -148,8 +148,11 @@ class Loogle():
 
     def start(self):
         self.starting = True
+        cmd = [loogleBin, "--json", "--interactive", *loogle_extra_args]
+        if projectDir:
+            cmd = ["lake", "-d", projectDir, "env", *cmd]
         self.loogle = subprocess.Popen(
-            [loogleBin, "--json", "--interactive", *loogle_extra_args],
+            cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )

@@ -79,18 +79,23 @@ mathlib every 6 hours.
 
 You can run this server locally as well. The wrapper has to run from the
 loogle checkout (it opens `blurb.html`, `loogle.png`, … from the current
-directory), but you usually want it to *search* a different project. From the
-loogle checkout, build loogle once and then point `lake -d` at the project
-you want to search — `lake env` will set the right `LEAN_PATH`:
+directory), but you usually want it to *search* a different project. Pass
+that project's directory with `--project-dir`; the wrapper then invokes the
+loogle subprocess via `lake -d <dir> env <loogle-bin> …` so it sees the
+project's `LEAN_PATH`, and shows the project's name + git revision in the
+page footer:
 
     lake build
-    lake -d /path/to/project env ./server.py
+    ./server.py --project-dir /path/to/project
 
-The wrapper accepts `--host`, `--port`, and `--loogle-bin`, and forwards any
-arguments after `--` to the loogle binary, so you can e.g. narrow the env and
-shrink the result list:
+`--project-dir` requires only Python and a working `lake` on `PATH`;
+nothing else from this checkout is needed at runtime.
 
-    lake -d /path/to/project env ./server.py --port 9000 \
+The wrapper accepts `--host`, `--port`, `--loogle-bin`, and `--project-dir`,
+and forwards any arguments after `--` to the loogle binary, so you can e.g.
+narrow the env and shrink the result list:
+
+    ./server.py --project-dir /path/to/project --port 9000 \
       -- --module Init.Data.List.Basic --max-results 50
 
 At the path `/json?q=…` (instead of `/?q=…`), the result is returned in JSON
