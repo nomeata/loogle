@@ -73,30 +73,19 @@ Web service
 This tool is the backend of <https://loogle.lean-lang.org/>. This is currently
 running on a virtual host with a nixos system with a nginx reverse proxy (for
 SSL) in front of a small python HTTP server (see `./server.py`) that uses
-`loogle`. The query processing is locked down using SECCOMP (see
-`./loogle_seccomp.c`). It automatically tries to upgrade to the latest
-mathlib every 6 hours.
+`loogle`. It automatically tries to upgrade to the latest mathlib every 6
+hours.
 
 You can run this server locally as well. The wrapper has to run from the
 loogle checkout (it opens `blurb.html`, `loogle.png`, … from the current
-directory), but you usually want it to *search* a different project. Pass
-that project's directory with `--project-dir`; the wrapper then invokes the
-loogle subprocess via `lake -d <dir> env <loogle-bin> …` so it sees the
-project's `LEAN_PATH`, and shows the project's name + git revision in the
-page footer:
+directory), and pass the directory of the project you want to search via
+`--project-dir`:
 
     lake build
-    ./server.py --project-dir /path/to/project
-
-`--project-dir` requires only Python and a working `lake` on `PATH`;
-nothing else from this checkout is needed at runtime.
+    ./server.py --project-dir /path/to/project -- --module RootModule
 
 The wrapper accepts `--host`, `--port`, `--loogle-bin`, and `--project-dir`,
-and forwards any arguments after `--` to the loogle binary, so you can e.g.
-narrow the env and shrink the result list:
-
-    ./server.py --project-dir /path/to/project --port 9000 \
-      -- --module Init.Data.List.Basic --max-results 50
+and forwards any arguments after `--` to the loogle binary.
 
 At the path `/json?q=…` (instead of `/?q=…`), the result is returned in JSON
 format. No stability of the format is guaranteed at this point.
