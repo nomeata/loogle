@@ -16,8 +16,9 @@ import select
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Loogle HTTP frontend. Any arguments after `--` are "
-                    "forwarded to the loogle subprocess (e.g. `-- --module "
-                    "Init.Data.List.Basic --max-results 50`).",
+                    "forwarded to the loogle subprocess, appended after the "
+                    "always-passed `--json --interactive` (e.g. "
+                    "`-- --module Init.Data.List.Basic --max-results 50`).",
         allow_abbrev=False,
     )
     parser.add_argument("--host", default="localhost",
