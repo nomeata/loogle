@@ -251,16 +251,9 @@ where
     catch e =>
       return .error s!"failed to read index at {path}: {e}"
   act' : CoreM Unit := do
-    let mkFresh : CoreM Find.Index := do
-      let idx ← Find.Index.mk
-      -- warm up cache eagerly
-      let _ ← idx.1.cache.get.run'
-      let _ ← idx.2.cache.get.run'
-      return idx
-
     let index ← do
       if opts.indexMode == .noIndex then
-        mkFresh
+        Find.Index.mk
       else match ← readModuleDepHash opts.module.toName with
       | none =>
         -- Some modules (notably stdlib modules shipped with the toolchain)
@@ -272,18 +265,18 @@ where
         if opts.indexMode == .readIndex then
           throwError s!"loogle: {msg}"
         IO.eprintln s!"loogle: {msg}"
-        mkFresh
+        Find.Index.mk
       | some curDepHash =>
         let path ← match opts.indexFile with
           | some p => pure p
           | none => defaultIndexPath
         let writeFresh : CoreM Find.Index := do
-          let idx ← mkFresh
+          let idx ← Find.Index.mk
           let (names, trie) ← idx.getCache
           writePickle path (curDepHash, names, trie)
           return idx
         match opts.indexMode with
-        | .noIndex => mkFresh  -- unreachable
+        | .noIndex => Find.Index.mk  -- unreachable
         | .readIndex =>
           match ← tryRead curDepHash path with
           | .ok idx => pure idx
@@ -296,6 +289,13 @@ where
             writeFresh
         | .writeIndex =>
           writeFresh
+
+    -- Warm up the cache eagerly *before* `Seccomp.enable`. The first access
+    -- spawns a worker thread; doing that here keeps query-time entirely
+    -- inside the syscalls the seccomp filter allows. Critical for the
+    -- read-from-file path, where there is no other cache touch beforehand.
+    let _ ← index.1.cache.get.run'
+    let _ ← index.2.cache.get.run'
 
     Seccomp.enable
     act index
