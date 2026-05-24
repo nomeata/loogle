@@ -25,14 +25,30 @@ lean_lib Seccomp where
   roots := #[`Seccomp]
   precompileModules := true
 
+-- Everything substantive lives in this lib, including the parsers in
+-- `Loogle.Parsers`. The lib is precompiled so that
+-- `@[builtin_term_parser]` declarations register at import time inside
+-- other Lean processes — specifically, the `(⊢ $s)` quotation patterns
+-- in `Loogle.Find` rely on those tokens being in the env's table when
+-- `Loogle.Find` itself is compiled.
+--
+-- (Neither `initialize` nor `builtin_initialize` blocks fire during the
+-- elaborator's import step — `isInitializerExecutionEnabled` is off
+-- there — so the builtin parser only becomes visible via shared-library
+-- loading, which is what `precompileModules := true` arranges.)
 lean_lib Loogle where
   roots := #[`Loogle]
   globs := #[.andSubmodules `Loogle]
+  precompileModules := true
 
 lean_lib Tests where
   roots := #[`Tests]
 
+-- The exe entry point sits in its own top-level module so that this
+-- lib doesn't include it. Putting the exe root inside a precompiled
+-- lib is a build cycle (the lib's shared object would have to be built
+-- before the exe, but the exe is one of the lib's modules).
 @[default_target]
 lean_exe loogle where
-  root := `Loogle
+  root := `LoogleMain
   supportInterpreter := true

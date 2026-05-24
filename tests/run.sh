@@ -141,6 +141,73 @@ ensure_built lake-env
 run_scenario "lake-env" "$EXPECTED" \
   bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod 'myUniqueValue'"
 
+# Cover each shape of `#find` filter end-to-end — including the
+# suggestion-rendering path — through the binary.
+
+# Turnstile + term equation (the case originally reported broken).
+TURNSTILE_EXPECTED='Found one declaration mentioning Nat, myUniqueValue, and Eq.
+Of these, one matches your pattern(s).
+
+myUniqueValue_eq (from MyMod)'
+run_scenario "lake-env turnstile query" "$TURNSTILE_EXPECTED" \
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod '|- myUniqueValue = _'"
+
+# String-literal filter (matches by name fragment).
+STR_EXPECTED='Found 2 declarations whose name contains "myUnique".
+
+myUniqueValue (from MyMod)
+myUniqueValue_eq (from MyMod)'
+run_scenario "lake-env string-literal filter" "$STR_EXPECTED" \
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod '\"myUnique\"'"
+
+# Multiple comma-separated filters.
+MULTI_EXPECTED='Found 2 declarations mentioning myUniqueValue.
+Of these, one has a name containing "eq".
+
+myUniqueValue_eq (from MyMod)'
+run_scenario "lake-env comma-separated filters" "$MULTI_EXPECTED" \
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod 'myUniqueValue, \"eq\"'"
+
+# Suggestion path — bare unknown identifier produces both a name-fragment
+# suggestion and a qualified-name suggestion. Renders ident and string
+# filters.
+SUGG_BARE_EXPECTED='unknown identifier '\''aUniqueNSValue'\''
+Maybe you meant:
+* "aUniqueNSValue"
+* MyNS.aUniqueNSValue'
+run_scenario "lake-env suggestion path (bare ident)" "$SUGG_BARE_EXPECTED" \
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod 'aUniqueNSValue'"
+
+# Suggestion path — turnstile + equation with an unknown ident. The
+# rendered suggestion preserves the user's turnstile spelling.
+SUGG_TURN_EXPECTED='Unknown identifier `aUniqueNSValue`
+Maybe you meant:
+* |- MyNS.aUniqueNSValue = _'
+run_scenario "lake-env suggestion path (turnstile + equation)" "$SUGG_TURN_EXPECTED" \
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod '|- aUniqueNSValue = _'"
+
+# Unicode turnstile — should behave identically to the ASCII `|-` form.
+run_scenario "lake-env unicode turnstile" "$TURNSTILE_EXPECTED" \
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod '⊢ myUniqueValue = _'"
+
+# A bare general term (not just an ident / str / turnstile) — exercises
+# the catch-all `$s:term` arm in `find`.
+run_scenario "lake-env general term filter" "$TURNSTILE_EXPECTED" \
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod 'myUniqueValue = _'"
+
+# `_` on its own should give a helpful error, not a crash.
+UNDERSCORE_EXPECTED='Cannot search for _. Did you forget to put a term pattern in parentheses?'
+run_scenario "lake-env underscore-only filter" "$UNDERSCORE_EXPECTED" \
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod '_'"
+
+# Multiple filters where one is a turnstile pattern.
+MIXED_EXPECTED='Found one declaration mentioning myUniqueValue and Eq.
+Of these, one matches your pattern(s).
+
+myUniqueValue_eq (from MyMod)'
+run_scenario "lake-env mixed ident + turnstile filters" "$MIXED_EXPECTED" \
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod 'myUniqueValue, |- _ = _'"
+
 # ---------------------------------------------------------------------------
 # Index lifecycle scenarios — all in the lake-env project for simplicity.
 # ---------------------------------------------------------------------------

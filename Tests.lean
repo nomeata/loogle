@@ -200,13 +200,18 @@ section ListMapTest
 open Loogle.Find
 open Lean Elab Command
 
-elab s:"#assert_match " name_s:ident concl:(turnstyle)? query:term : command => liftTermElabM do
-    let pat ← Loogle.Find.elabTerm' query none
+elab s:"#assert_match " name_s:ident query:term : command => liftTermElabM do
+    -- The user can write `|- query` or `⊢ query` to ask for a conclusion
+    -- match; otherwise we match anywhere. The turnstile forms are regular
+    -- term syntax (see `Loogle.Find.turnstileTerm`), so they're already
+    -- captured inside `query` and we just inspect its shape.
+    let (queryTerm, isConcl) ← match query with
+      | `(⊢ $t) | `(|- $t) => pure (t, true)
+      | _                  => pure (query, false)
+    let pat ← Loogle.Find.elabTerm' queryTerm none
     let name := Lean.TSyntax.getId name_s
     let matcher ←
-      if concl.isSome
-      then matchConclusion pat
-      else matchAnywhere pat
+      if isConcl then matchConclusion pat else matchAnywhere pat
     let c := (← getEnv).constants.find! name
     unless ← matcher c do
       logErrorAt s "Pattern does not match when it should!"

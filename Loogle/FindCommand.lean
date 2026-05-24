@@ -5,13 +5,46 @@ Authors: Joachim Breitner
 -/
 module
 
+public import Loogle.Find
+public import Loogle.BaseIOThunk
 public meta import Loogle.Find
+public meta import Loogle.BaseIOThunk
+public meta import Lean
+public meta import Lean.Elab.Command
+public meta import Lean.Elab.Tactic.Basic
+public meta import Lean.Meta.Tactic.TryThis
 
 public meta section
 
 namespace Loogle.Find
 
-open Lean.Elab.Command
+open Lean Lean.Elab Lean.Elab.Command Lean.Elab.Tactic Lean.Meta
+
+/-- Process-local index used by the in-Lean `#find` command. The first call
+to `#find` in a Lean session triggers a full scan of the imported
+environment; the resulting caches live for the lifetime of the process. -/
+initialize cachedIndex : Loogle.Thunk Index ← Loogle.Thunk.new Index.mk
+
+/-- Option to control whether `#find` should print types of found lemmas. -/
+register_option find.showTypes : Bool := {
+  defValue := true
+  descr    := "showing types in #find"
+}
+
+private def elabFind (ref : Lean.Syntax) (filters : Array (Lean.TSyntax `term)) :
+    TermElabM Unit := do
+  match ← find (← cachedIndex.get) filters with
+  | .error ⟨refErr, warn, suggestions⟩ => do
+    Lean.logErrorAt refErr warn
+    unless suggestions.isEmpty do
+      let suggs : Array Lean.Meta.Tactic.TryThis.Suggestion ← suggestions.mapM fun sugg => do
+        return { suggestion := .string (← renderFilters sugg) }
+      Lean.Meta.Tactic.TryThis.addSuggestions ref suggs
+  | .ok result => do
+    let showTypes := (← Lean.MonadOptions.getOptions).get
+        find.showTypes.name find.showTypes.defValue
+    let names := result.hits.map fun x => (x.1.name, x.1.type)
+    Lean.logInfo $ result.header ++ (← MessageData.bulletListOfConstsAndTypes names showTypes)
 
 /--
 The `#find` command finds definitions and lemmas in various ways. One can search by: the constants
@@ -74,23 +107,22 @@ will find all lemmas which mention the constants `Real.sin` and `tsum`, have `"t
 substring of the lemma name, include a product and a power somewhere in the type, *and* have a
 hypothesis of the form `_ < _`.
 
-`#find` maintains an index of which lemmas mention which other constants and name fragments.
-If you have downloaded the olean cache for mathlib, the index will be precomputed. If not,
-the _first_ use of `#find` in a module will be slow (in the order of minutes). If you cannot use
-the distributed cache, it may be useful to open a scratch file, `import Mathlib`, and use `#find`
-there, this way you will find lemmas that you have not yet imported, and the
-cache will stay up-to-date.
+`#find` maintains a per-process index of which lemmas mention which other constants and name
+fragments. The first use in a Lean session is slow (in the order of minutes on Mathlib);
+subsequent uses reuse the in-memory index.
 
 By default `#find` prints names and types of found definitions and lemmas. You can also make it print
-names only by setting `find.showType` to `false`:
+names only by setting `find.showTypes` to `false`:
 
 ```lean
 set_option find.showTypes false
 ```
 -/
-elab(name := findSyntax) "#find " args:find_filters : command =>
-  liftTermElabM $ elabFind args
+elab(name := findSyntax) s:"#find " args:term,* : command =>
+  liftTermElabM <| elabFind s args.getElems
 
 @[inherit_doc findSyntax]
-elab(name := findSyntaxTac) "#find " args:find_filters : tactic =>
-  elabFind args
+elab(name := findSyntaxTac) s:"#find " args:term,* : tactic =>
+  elabFind s args.getElems
+
+end Loogle.Find

@@ -13,7 +13,7 @@ public import Loogle.NameRel
 public import Loogle.TreeMap
 public import Loogle.BlackListed
 public import Loogle.Trie
-public import Loogle.BaseIOThunk
+public import Loogle.Parsers
 
 /-!
 # The `#find` command and tactic.
@@ -255,42 +255,9 @@ the index was built against, paired with the imported per-module data. The
 depHash is checked on load so that a stale index is detected and rejected. -/
 abbrev PickledIndex : Type := String × NameRel × SuffixTrie
 
-/-!
-## The #find syntax and elaboration helpers
--/
-
+-- The turnstile term syntax (`⊢ T` / `|- T`) lives in `Loogle.Parsers`
+-- as builtin term parsers so the kinds are available in any environment.
 open Parser
-
-/-- The turnstyle uesd bin `#find`, unicode or ascii allowed -/
-syntax turnstyle := patternIgnore("⊢ " <|> "|- ")
-/-- a single `#find` filter. The `term` can also be an ident or a strlit,
-these are distinguished in `parseFindFilters` -/
-syntax find_filter := (turnstyle term) <|> term
-
-/-- The argument to `#find`, a list of filters -/
-syntax find_filters := find_filter,*
-
-/-!
-Stand-alone `Parser` values mirroring the `find_filters` / `find_filter` /
-`turnstyle` syntax above. These are exposed so the loogle binary can parse
-queries directly without needing the user's environment to import this
-module — the parser function and its tokens are baked into the compiled
-binary as ordinary Lean values. The produced `Syntax` carries the same
-`SyntaxNodeKind`s as the `syntax` declarations above, so existing
-quotation matches keep working.
--/
-
-/-- Plain-`Parser` version of `turnstyle`. -/
-def turnstyleParser : Parser :=
-  node ``turnstyle (patternIgnore (symbol "⊢ " <|> symbol "|- "))
-
-/-- Plain-`Parser` version of `find_filter`. -/
-def findFilterParser : Parser :=
-  node ``find_filter ((turnstyleParser >> termParser) <|> termParser)
-
-/-- Plain-`Parser` version of `find_filters`. -/
-def findFiltersParser : Parser :=
-  node ``find_filters (sepBy findFilterParser ", " (symbol ", "))
 
 /-- A variant of `Lean.Elab.Term.elabTerm` that does not complain for example
 when a type class constraint has no instances.  -/
@@ -366,34 +333,33 @@ def resolveUnqualifiedName (index : Index) (n : Name) : MetaM (Array Name) := do
   let names := names.filter ((← getEnv).contains ·)
   sortByModule id (fun _ => 0) names
 
-/-- If the `s` at `si` is an identifier not found in he environment, produce a list
-of possible suggestions in place of `s`. -/
-def suggestQualifiedNames {kind} (index : Index) (s : TSyntax kind) (si : SourceInfo) :
-    MetaM (Array (TSyntax kind)) := do
-  let .some n := findNameAt si s | pure #[]
-  let .none := (← getEnv).find? n | pure #[]
-  let suggestedNames ← resolveUnqualifiedName index n
-  return suggestedNames.map fun sugg => replaceIdentAt si sugg s
+/-- If any filter contains an unknown identifier at source position `needle`,
+produce one alternative filter list per possible qualified name resolution. -/
+def suggestQualifiedNames (index : Index) (needle : SourceInfo) (filters : Array Term) :
+    MetaM (Array (Array Term)) := do
+  let mut nameOpt : Option Name := none
+  for filter in filters do
+    if let some n := findNameAt needle filter.raw then
+      nameOpt := some n
+      break
+  let some n := nameOpt | return #[]
+  if (← getEnv).find? n |>.isSome then return #[]
+  let names ← resolveUnqualifiedName index n
+  return names.map fun suggName =>
+    filters.map fun filter => ⟨replaceIdentAt' needle suggName filter.raw⟩
 
-/-- If the `s` at the subexpression `needle` is an identifier `find_filter`, suggest replacing it
-with a name string filter. -/
-partial def suggestQuoted' (needle : SourceInfo) (s : Syntax) : Syntax :=
-  match s with
-  | .node si₁ ``find_filter #[.ident si₂ str _n _prs]  =>
-    if SourceInfo.beq needle si₂ then
-      .node si₁ ``find_filter #[Syntax.mkStrLit str.toString]
-    else
-      s
-  | .node si kind cs =>
-    .node si kind <| cs.map (suggestQuoted' needle)
-  | _ => s
-
-/-- If the `s` at the subexpression `needle` is an identifier `find_filter`, suggest replacing it
-with a name string filter. -/
-partial def suggestQuoted {kind} (needle : SourceInfo) : TSyntax kind → Array (TSyntax kind)
-  | .mk s =>
-    let s' := suggestQuoted' needle s
-    if s == s' then  #[] else #[.mk s']
+/-- If any filter is exactly an identifier whose source position matches
+`needle`, return one variant per such match where the offending identifier
+is replaced by a string-literal filter (so it becomes a name-fragment
+search rather than a constant lookup). -/
+def suggestQuoted (needle : SourceInfo) (filters : Array Term) : Array (Array Term) := Id.run do
+  let mut results := #[]
+  for (filter, i) in filters.zipIdx do
+    if let .ident si str _ _ := filter.raw then
+      if SourceInfo.beq needle si then
+        let strFilter : Term := ⟨Syntax.mkStrLit str.toString⟩
+        results := results.push (filters.set! i strFilter)
+  return results
 
 
 /-!
@@ -419,8 +385,8 @@ structure Result where
   count : Nat
   /-- Matching definition (with defining module, if imported)  -/
   hits : Array (ConstantInfo × Option Name)
-  /-- Alternative suggestions  -/
-  suggestions : Array (TSyntax ``find_filters)
+  /-- Alternative suggestions, each one a full replacement filter list. -/
+  suggestions : Array (Array Term)
 
 /-- Negative result  of `find` -/
 structure Failure where
@@ -428,13 +394,13 @@ structure Failure where
   ref : Syntax
   /-- Error message -/
   message : MessageData
-  /-- Alternative suggestions  -/
-  suggestions : Array (TSyntax ``find_filters)
+  /-- Alternative suggestions, each one a full replacement filter list. -/
+  suggestions : Array (Array Term)
 
-/-- The core of the `#find` tactic with all parsing/printing factored out, for
-programmatic use (e.g. the loogle CLI).
-It also does not use the implicit global Index, but rather expects one as an argument. -/
-def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
+/-- The core of the `#find` engine with parsing/printing factored out, for
+programmatic use (e.g. the loogle CLI). Filters are passed in as
+already-parsed terms; the turnstile cases are detected by their syntax kind. -/
+def find (index : Index) (filters : Array Term) (maxShown := 200) :
     TermElabM (Except Failure Result) := do
   profileitM Exception "#find" (← getOptions) do
     let mut message := MessageData.nil
@@ -442,41 +408,39 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
     let mut namePats := #[]
     let mut terms := #[]
     try
-      match args with
-      | `(find_filters| $args':find_filter,*) =>
-        for argi in List.range args'.getElems.size do
-        let arg := args'.getElems[argi]!
-          match arg with
-          | `(find_filter| $_:turnstyle $s:term) => do
-            let e ← elabTerm' s (some (mkSort (← mkFreshLevelMVar)))
-            let t := ← inferType e
-            unless t.isSort do
-              throwErrorAt s m!"Conclusion pattern is of type {t}, should be of type `Sort`"
-            terms := terms.push (true, e)
-          | `(find_filter| $ss:str) => do
-            let str := Lean.TSyntax.getString ss
-            if str = "" || str = "." then
-              throwErrorAt ss "Name pattern is too general"
-            namePats := namePats.push str
-          | `(find_filter| $i:ident) => do
-            let n := Lean.TSyntax.getId i
-            if (← getEnv).contains n then
-              idents := idents.push n
-            else
-              throwErrorAt i m!"unknown identifier '{n}'"
-          | `(find_filter| _) => do
-            throwErrorAt arg ("Cannot search for _. " ++
-              "Did you forget to put a term pattern in parentheses?")
-          | `(find_filter| $s:term) => do
-            let e ← elabTerm' s none
-            terms := terms.push (false, e)
-          | _ => throwErrorAt args "unexpected argument to #find"
-        | _ => throwErrorAt args "unexpected argument to #find"
+      for arg in filters do
+        match arg with
+        | `(⊢ $s) | `(|- $s) => do
+          let e ← elabTerm' s (some (mkSort (← mkFreshLevelMVar)))
+          let t ← inferType e
+          unless t.isSort do
+            throwErrorAt s m!"Conclusion pattern is of type {t}, should be of type `Sort`"
+          terms := terms.push (true, e)
+        | `($ss:str) => do
+          let str := Lean.TSyntax.getString ss
+          if str = "" || str = "." then
+            throwErrorAt ss "Name pattern is too general"
+          namePats := namePats.push str
+        | `($i:ident) => do
+          let n := Lean.TSyntax.getId i
+          if (← getEnv).contains n then
+            idents := idents.push n
+          else
+            throwErrorAt i m!"unknown identifier '{n}'"
+        | `(_) => do
+          throwErrorAt arg ("Cannot search for _. " ++
+            "Did you forget to put a term pattern in parentheses?")
+        | _ => do
+          let e ← elabTerm' arg none
+          terms := terms.push (false, e)
     catch e => do
       let .error ref msg := e | throw e
-      let suggestions1 := suggestQuoted (.fromRef ref) args
-      let suggestions2 ← suggestQualifiedNames index args (.fromRef ref)
+      let suggestions1 := suggestQuoted (.fromRef ref) filters
+      let suggestions2 ← suggestQualifiedNames index (.fromRef ref) filters
       return .error ⟨ref, msg, suggestions1 ++ suggestions2⟩
+
+    -- Use the first filter as the syntactic anchor for error messages.
+    let anchor : Syntax := if h : 0 < filters.size then (filters[0]'h).raw else .missing
 
     -- Collect set of names to query the index by
     let needles : NameSet :=
@@ -485,7 +449,7 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
     let (indexHits, remainingNamePats)  ← do
       if needles.isEmpty then do
         if namePats.isEmpty then
-          return .error ⟨args, m!"Cannot search: No constants or name fragments in search pattern.",
+          return .error ⟨anchor, m!"Cannot search: No constants or name fragments in search pattern.",
             #[]⟩
         -- No constants in patterns, use trie
         let (t₁, t₂) ← index.trieCache.get
@@ -559,42 +523,25 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
     -- suggest search just by names
     let mut suggestions := #[]
     if !needles.isEmpty && !indexHits.isEmpty && hits7.isEmpty then
-      let is := needles.toArray.map Lean.mkIdent
-      let sugg ← `(find_filters| $[$is:ident],*)
+      let sugg : Array Term := needles.toArray.map fun n => ⟨Lean.mkIdent n⟩
       suggestions := suggestions.push sugg
 
     return .ok ⟨message, hits4.size, hits7, suggestions⟩
 
-open System (FilePath)
+/-- Strip leading/trailing trivia from a `Syntax` tree so that
+`PrettyPrinter.ppTerm` doesn't carry the user's comments or whitespace
+into rendered suggestions. -/
+partial def stripSourceInfo : Lean.Syntax → Lean.Syntax
+  | .atom _ val => .atom .none val
+  | .ident _ str val pre => .ident .none str val pre
+  | .node _ kind args => .node .none kind (args.map stripSourceInfo)
+  | s => s
 
-/--
-Process-local index used by the in-Lean `#find` command. The first call to
-`#find` in a Lean session triggers a full scan of the imported environment;
-the resulting caches live for the lifetime of the process. (The loogle CLI
-does **not** use this thunk — it manages the index explicitly via
-`--write-index` / `--read-index` / `--use-index`.)
--/
-initialize cachedIndex : Loogle.Thunk Index ← Loogle.Thunk.new <| unsafe Index.mk
-
-open Command
-
-/--
-Option to control whether `find` should print types of found lemmas
--/
-register_option find.showTypes : Bool := {
-  defValue := true
-  descr := "showing types in #f"
-}
-
-def elabFind (args : TSyntax `Loogle.Find.find_filters) : TermElabM Unit := do
-  profileitM Exception "find" (← getOptions) do
-      match ← find (← cachedIndex.get) args with
-      | .error ⟨s, warn, suggestions⟩ => do
-        Lean.logErrorAt s warn
-        unless suggestions.isEmpty do
-          Lean.Meta.Tactic.TryThis.addSuggestions args <| suggestions.map fun sugg =>
-            { suggestion := .tsyntax sugg }
-      | .ok result =>
-        let showTypes := (<- getOptions).get find.showTypes.name find.showTypes.defValue
-        let names := result.hits.map $ fun x=> (x.1.name, x.1.type)
-        Lean.logInfo $ result.header ++ (← MessageData.bulletListOfConstsAndTypes names showTypes)
+/-- Render a list of `Term` filters back to a `"foo, bar"` string. Uses
+`ppTerm` (a Lean builtin) for each filter, so it works in any environment
+without depending on a category-specific formatter. -/
+def renderFilters (filters : Array Term) : MetaM String := do
+  let parts ← filters.mapM fun f => do
+    let stripped : Term := ⟨stripSourceInfo f.raw⟩
+    return (← Lean.PrettyPrinter.ppTerm stripped).pretty (width := 10000)
+  return ", ".intercalate parts.toList

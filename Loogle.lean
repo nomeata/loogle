@@ -1,42 +1,17 @@
 module
 
 public import Lean.Meta
-public import Lake.CLI.Error
-public import Lake.Util.Cli
 
 public import Loogle.Find
+public import Loogle.Parsers
 
 public import Seccomp
 
-import Lean.PrettyPrinter.Delaborator.Builtins
+public import Lean.PrettyPrinter.Delaborator.Builtins
 
 set_option autoImplicit false
 
-
-section RunParser
-open Lean Parser
-
-/-- Run a stand-alone `Parser` (one provided as a Lean value, not looked up by
-name in the environment) on the given input string. The parser's own tokens are
-merged into the environment's token table on the fly, so this works even when
-no module declaring those tokens has been imported. This is what lets the loogle
-binary parse `#find` queries inside projects that don't depend on `Loogle.Find`. -/
-def runStandaloneParser (env : Environment) (p : Parser) (input : String)
-    (fileName := "<input>") :
-    Except String Syntax :=
-  let pfn := andthenFn whitespace p.fn
-  let baseTable := getTokenTable env
-  let table := (p.info.collectTokens []).foldl (fun t tk => t.insert tk tk) baseTable
-  let ictx := mkInputContext input fileName
-  let s := pfn.run ictx { env, options := {} } table (mkParserState input)
-  if s.hasError then
-     Except.error (s.toErrorMsg ictx)
-  else if s.pos.atEnd input then
-    Except.ok s.stxStack.back
-  else
-    Except.error ((s.mkError "end of input").toErrorMsg ictx)
-
-end RunParser
+@[expose] public section
 
 open Lean Core Meta Elab Term Command
 open Loogle
@@ -64,18 +39,18 @@ def runQuery (index : Find.Index) (maxResults : Nat) (query : String) : CoreM Re
   withCurrHeartbeats do
     let (r, suggs) ← tryCatchRuntimeEx
       (handler := fun e => do return (.error (← e.toMessageData.toString), #[])) do
-        match runStandaloneParser (← getEnv) Loogle.Find.findFiltersParser query with
+        match runStandaloneParser (← getEnv) queryParser query with
         | .error err => pure $ (.error err, #[])
         | .ok s => do
+          let filters : Array Term :=
+            (Syntax.SepArray.mk (sep := ", ") s.getArgs).getElems.map (⟨·⟩)
           MetaM.run' do
-            match ← TermElabM.run' $ Loogle.Find.find index (.mk s) (maxShown := maxResults) with
+            match ← TermElabM.run' $ Loogle.Find.find index filters (maxShown := maxResults) with
             | .ok result => do
-              let suggs ← result.suggestions.mapM fun sugg => do
-                return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty (width := 10000)
+              let suggs ← result.suggestions.mapM Loogle.Find.renderFilters
               pure $ (.ok result, suggs)
             | .error err => do
-              let suggs ← err.suggestions.mapM fun sugg => do
-                return (← PrettyPrinter.ppCategory ``Find.find_filters sugg).pretty (width := 10000)
+              let suggs ← err.suggestions.mapM Loogle.Find.renderFilters
               return (.error (← err.message.toString), suggs)
     let heartbeats := ((← IO.getNumHeartbeats) - (← getInitHeartbeats )) / 1000
     return (r, suggs, heartbeats)
@@ -172,7 +147,7 @@ structure LoogleOptions where
   searchPath : List System.FilePath := []
   /-- The lifecycle of the on-disk index file. Defaults to `useIndex` because
   the speed-up from a cached index is dramatic and the location is
-  predictable; pass `--no-index` to skip caching entirely. -/
+  predictable; pass `--index-mode none` to skip caching entirely. -/
   indexMode : IndexMode := .useIndex
   /-- Override for the index file path. When `none`, the default location is
   derived from the root module's `.olean` (swap `.olean` for `.loogle-index`). -/
@@ -210,8 +185,8 @@ unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Un
 
   Lean.enableInitializersExecution
   -- We deliberately do not import `Loogle.Find` here: the query parser is
-  -- baked into the binary via `Loogle.Find.findFiltersParser` and does not
-  -- need the user's environment to know anything about loogle.
+  -- baked into the binary via `Loogle.Parsers` and does not need the user's
+  -- environment to know anything about loogle.
   let imports := #[{module := opts.module.toName}]
   let env ← importModules (loadExts := true) imports {}
   let ctx := {fileName := "/", fileMap := Inhabited.default}
@@ -300,105 +275,3 @@ where
     Seccomp.enable
     act index
 
-abbrev CliMainM := ExceptT Lake.CliError IO
-abbrev CliStateM := StateT LoogleOptions CliMainM
-abbrev CliM := Lake.ArgsT CliStateM
-
-def takeArg (arg : String) : CliM String := do
-  match (← Lake.takeArg?) with
-  | none => throw <| Lake.CliError.missingArg arg
-  | some arg => pure arg
-
-def lakeShortOption : (opt : Char) → CliM PUnit
-| 'i' => modifyThe LoogleOptions ({· with interactive := true})
-| 'j' => modifyThe LoogleOptions ({· with json := true})
-| 'h' => modifyThe LoogleOptions ({· with wantsHelp := true})
-| opt => throw <| Lake.CliError.unknownShortOption opt
-
-def lakeLongOption : (opt : String) → CliM PUnit
-| "--help" => lakeShortOption 'h'
-| "--interactive" => lakeShortOption 'i'
-| "--json" => lakeShortOption 'j'
-| "--path" => do
-    let path : System.FilePath ← takeArg "--path"
-    modifyThe LoogleOptions fun opts => {opts with searchPath := opts.searchPath ++ [path]}
-| "--module" => do modifyThe LoogleOptions ({· with module := ← takeArg "--module"})
-| "--index-mode" => do
-    let arg ← takeArg "--index-mode"
-    let mode ← match arg with
-      | "use" => pure IndexMode.useIndex
-      | "read" => pure IndexMode.readIndex
-      | "write" => pure IndexMode.writeIndex
-      | "none" => pure IndexMode.noIndex
-      | _ => throw <| Lake.CliError.invalidOptArg "--index-mode" arg
-    modifyThe LoogleOptions ({· with indexMode := mode})
-| "--index-file" => do
-    let path : System.FilePath ← takeArg "--index-file"
-    modifyThe LoogleOptions ({· with indexFile := some path})
-| "--max-results" => do
-    let arg ← takeArg "--max-results"
-    let some n := arg.toNat? | throw <| Lake.CliError.invalidOptArg "--max-results" arg
-    modifyThe LoogleOptions ({· with maxResults := n})
-| opt         => throw <| Lake.CliError.unknownLongOption opt
-
-def lakeOption :=
-  Lake.option {
-    short := lakeShortOption
-    long := lakeLongOption
-    longShort := Lake.shortOptionWithArg lakeShortOption
-  }
-
-def usage := "
-USAGE:
-  loogle [OPTIONS] [QUERY]
-
-OPTIONS:
-  --help
-  --interactive, -i     read querys from stdin
-  --json, -j            print result in JSON format
-  --module mod          import this module (default: Mathlib)
-  --path path           search for .olean files here (default: the build time path)
-  --index-mode MODE     how to manage the on-disk search index. One of:
-                          use   (default) load if present and up-to-date,
-                                otherwise build and write
-                          read  load existing index; refuse to start if it
-                                is missing or out of date
-                          write always (re)build the index and write it
-                          none  build in memory and discard on exit
-  --index-file PATH     override the default index path. The default lives
-                        next to the root module's .olean (with .loogle-index
-                        extension); pass this if that location is read-only.
-  --max-results n       limit the number of returned hits (default: 200)
-" ++
-if compileTimeSearchPath.isEmpty then "" else "
-Default search path
-" ++ String.join (compileTimeSearchPath.map (fun p => s!" * {p}\n"))
-
-unsafe def loogleCli : CliM PUnit := do
-  match (← Lake.getArgs) with
-  | [] => IO.println usage
-  | _ => -- normal CLI
-    Lake.processOptions lakeOption
-    let opts ← getThe LoogleOptions
-    let queries ← Lake.takeArgs
-    let print := if opts.json then printJson else printPlain
-    -- `--write-index` is the only flag that justifies running `work` on its
-    -- own (without a query or `--interactive`): the user is asking to rebuild
-    -- the cache. `--use-index` is the *default*, so it never counts here.
-    let workWithoutQuery := opts.indexMode == .writeIndex
-    if opts.wantsHelp ||
-      queries.isEmpty && not opts.interactive && not workWithoutQuery
-    then IO.println usage
-    else work opts  fun index => do
-      queries.forM (single index opts.maxResults print)
-      if opts.interactive
-      then interactive index opts.maxResults print
-
-public unsafe def main (args : List String) : IO UInt32 := do
-  try
-    match (← (loogleCli.run args |>.run' {}).run) with
-      | .ok _ => return (0 : UInt32)
-      | .error e => IO.eprintln e.toString; return 1
-  catch e =>
-    IO.eprintln e.toString
-    return 1
