@@ -45,7 +45,8 @@ run_scenario () {
   fi
 }
 
-EXPECTED='Found 2 declarations whose name contains "myUniqueValue".
+EXPECTED='Found 2 declarations mentioning myUniqueValue.
+
 myUniqueValue (from MyMod)
 myUniqueValue_eq (from MyMod)'
 

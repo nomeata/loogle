@@ -266,6 +266,28 @@ syntax find_filter := (turnstyle term) <|> term
 /-- The argument to `#find`, a list of filters -/
 syntax find_filters := find_filter,*
 
+/-!
+Stand-alone `Parser` values mirroring the `find_filters` / `find_filter` /
+`turnstyle` syntax above. These are exposed so the loogle binary can parse
+queries directly without needing the user's environment to import this
+module — the parser function and its tokens are baked into the compiled
+binary as ordinary Lean values. The produced `Syntax` carries the same
+`SyntaxNodeKind`s as the `syntax` declarations above, so existing
+quotation matches keep working.
+-/
+
+/-- Plain-`Parser` version of `turnstyle`. -/
+def turnstyleParser : Parser :=
+  node ``turnstyle (patternIgnore (symbol "⊢ " <|> symbol "|- "))
+
+/-- Plain-`Parser` version of `find_filter`. -/
+def findFilterParser : Parser :=
+  node ``find_filter ((turnstyleParser >> termParser) <|> termParser)
+
+/-- Plain-`Parser` version of `find_filters`. -/
+def findFiltersParser : Parser :=
+  node ``find_filters (sepBy findFilterParser ", " (symbol ", "))
+
 /-- A variant of `Lean.Elab.Term.elabTerm` that does not complain for example
 when a type class constraint has no instances.  -/
 def elabTerm' (t : Term) (expectedType? : Option Expr) : TermElabM Expr := do

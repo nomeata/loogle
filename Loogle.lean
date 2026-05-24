@@ -16,13 +16,19 @@ set_option autoImplicit false
 section RunParser
 open Lean Parser
 
---- like `Parser.runParserCategory`, but does not need a parser category. H'T Kyle Miller
-def Parser.runParser (env : Environment) (declName : Name) (input : String)
+/-- Run a stand-alone `Parser` (one provided as a Lean value, not looked up by
+name in the environment) on the given input string. The parser's own tokens are
+merged into the environment's token table on the fly, so this works even when
+no module declaring those tokens has been imported. This is what lets the loogle
+binary parse `#find` queries inside projects that don't depend on `Loogle.Find`. -/
+def runStandaloneParser (env : Environment) (p : Parser) (input : String)
     (fileName := "<input>") :
     Except String Syntax :=
-  let p := andthenFn whitespace (evalParserConst declName)
+  let pfn := andthenFn whitespace p.fn
+  let baseTable := getTokenTable env
+  let table := (p.info.collectTokens []).foldl (fun t tk => t.insert tk tk) baseTable
   let ictx := mkInputContext input fileName
-  let s := p.run ictx { env, options := {} } (getTokenTable env) (mkParserState input)
+  let s := pfn.run ictx { env, options := {} } table (mkParserState input)
   if s.hasError then
      Except.error (s.toErrorMsg ictx)
   else if s.pos.atEnd input then
@@ -58,7 +64,7 @@ def runQuery (index : Find.Index) (query : String) : CoreM Result :=
   withCurrHeartbeats do
     let (r, suggs) ← tryCatchRuntimeEx
       (handler := fun e => do return (.error (← e.toMessageData.toString), #[])) do
-        match Parser.runParser (← getEnv) `Loogle.Find.find_filters query with
+        match runStandaloneParser (← getEnv) Loogle.Find.findFiltersParser query with
         | .error err => pure $ (.error err, #[])
         | .ok s => do
           MetaM.run' do
@@ -155,12 +161,23 @@ structure LoogleOptions where
   wantsHelp : Bool := false
 
 unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Unit := do
-  if opts.searchPath.isEmpty
-  then searchPathRef.set compileTimeSearchPath
-  else searchPathRef.set opts.searchPath
+  -- An explicit `--path` wins; otherwise honour `LEAN_PATH` (e.g. set up by
+  -- `lake env`) so loogle works inside any Lake project of the same toolchain;
+  -- only fall back to the build-time search path when no environment is set.
+  let searchPath : SearchPath ←
+    if !opts.searchPath.isEmpty then
+      pure opts.searchPath
+    else
+      match (← IO.getEnv "LEAN_PATH") with
+      | some s => pure (System.SearchPath.parse s)
+      | none   => pure compileTimeSearchPath
+  searchPathRef.set searchPath
 
   Lean.enableInitializersExecution
-  let imports := #[{module := opts.module.toName}, {module := `Loogle.Find}]
+  -- We deliberately do not import `Loogle.Find` here: the query parser is
+  -- baked into the binary via `Loogle.Find.findFiltersParser` and does not
+  -- need the user's environment to know anything about loogle.
+  let imports := #[{module := opts.module.toName}]
   let env ← importModules (loadExts := true) imports {}
   let ctx := {fileName := "/", fileMap := Inhabited.default}
   let state := {env}
