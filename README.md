@@ -21,38 +21,30 @@ Try it at <https://loogle.lean-lang.org/>!
 Running locally
 ---------------
 
-To use `loogle` locally:
+The loogle binary searches any Lake project of the same Lean toolchain — your
+project does **not** need to depend on loogle. The setup is:
 
-1. check out this repository
-2. install [elan](https://github.com/leanprover/elan)
-3. run `lake exe cache get`
-4. run `lake exe loogle --help` (or other options)
+1. Install [elan](https://github.com/leanprover/elan).
+2. Clone this repository, `cd` into it, and run `lake build`. (The
+   toolchain in `lean-toolchain` will be installed automatically.) This
+   produces the binary at `.lake/build/bin/loogle`.
+3. From any other Lake project of the same toolchain, point loogle at
+   the module you want to search. Use `--use-index` to cache the search
+   index across runs so the second invocation onward is fast:
 
-If you use `loogle` on a large repository like Mathlib, the startup-time will
-be rather large. Run `lake build LoogleMathlibCache` if you want to pre-compute
-the index for Mathlib.
+       lake env /path/to/loogle/.lake/build/bin/loogle \
+         --use-index .lake/loogle.idx --module MyModule "<query>"
+
+   The first call builds the index and writes it to `.lake/loogle.idx`;
+   subsequent calls reload it as long as the underlying `.olean`s
+   haven't changed. When they do change, loogle rebuilds the index in
+   place.
+
+`lake env` sets up `LEAN_PATH` for the calling project; loogle honours it
+and falls back to its build-time search path only when no environment is
+set.
 
 [elan]: https://github.com/leanprover/elan
-
-### Running loogle against your own Lean project
-
-The query parser is baked into the loogle binary, so loogle can search any
-Lean project of the same toolchain — the project does **not** need to depend on
-loogle. Two usage patterns are supported:
-
-**Lake exe pattern** — your project declares loogle as a dependency. From the
-project directory:
-
-    lake exe loogle --module MyModule "<query>"
-
-**Lake env pattern** — your project has no loogle dependency. Build loogle once
-in a checkout of this repository (`lake build`) and invoke its binary by path:
-
-    lake env /path/to/loogle/.lake/build/bin/loogle --module MyModule "<query>"
-
-In both cases, `lake env`/`lake exe` set up `LEAN_PATH` so that loogle can
-locate `MyModule.olean`. Loogle honours `LEAN_PATH` and falls back to its
-build-time search path only when no environment is set.
 
 CLI Usage
 ---------
@@ -66,14 +58,16 @@ CLI Usage
       --json, -j            print result in JSON format
       --module mod          import this module (default: Mathlib)
       --path path           search for .olean files here (default: the build time path)
-      --write-index file    persists the search index to a file
-      --read-index file     read the search index from a file. This file is blindly trusted!
+      --write-index file    build the search index and persist it to <file>
+      --read-index file     load the search index from <file>; fail if it is stale
+      --use-index file      load <file> if present and up-to-date, otherwise build
+                            the index and write it to <file>
       --max-results n       limit the number of returned hits (default: 200)
 
-By default, it will create an internal index upon starting,  which takes a bit.
-You can use `--write-index` and `--read-index` to cache that, but it is your
-responsibility to pass the right index for the given module and search path. In
-the nix setup, the index is built as part of the build process.
+Indices are tagged with the Lake `depHash` of the root module they were built
+against, so loogle can detect when an index is out of date with respect to the
+current `.olean`s and refuse to use it (`--read-index`) or rebuild it
+(`--use-index`).
 
 Web service
 -----------
