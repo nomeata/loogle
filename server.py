@@ -28,6 +28,13 @@ def parse_args():
     parser.add_argument("--loogle-bin", default=".lake/build/bin/loogle",
                         help="Path to the loogle binary (default: "
                              ".lake/build/bin/loogle)")
+    parser.add_argument("--mathlib-rev", default=None,
+                        help="Mathlib revision to show in the page footer. "
+                             "If omitted, the server tries to read it from a "
+                             "lake-manifest.json in the current directory or "
+                             "the first LEAN_SRC_PATH entry; if that also "
+                             "fails, the mathlib portion of the footer is "
+                             "omitted.")
     return parser.parse_known_args()
 
 
@@ -46,22 +53,42 @@ banner = open("./loogle-banner.png","rb").read()
 rev1 = "UNKNOWN"
 try:
     rev1 = subprocess.check_output(['git', 'rev-parse', 'HEAD']).decode('ascii').strip()
-except _:
+except Exception:
     pass
 
-rev2 = "UNKNOWN"
-try:
-    manifest = json.load(open('lake-manifest.json'))
-    for package in manifest['packages']:
-        if package['name'] == "mathlib":
-            rev2 = package['rev']
-except _:
-    pass
+
+def find_mathlib_rev():
+    """Look for a `lake-manifest.json` listing mathlib. Tries the current
+    working directory first (preserves the old behaviour when loogle is
+    invoked from a checkout that has mathlib as a dep), then each entry of
+    LEAN_SRC_PATH (catches the `lake -d /path/to/project env ./server.py`
+    case, where lake adds the target project's source dir as the first
+    LEAN_SRC_PATH entry). Returns the rev string or None."""
+    candidates = [os.getcwd()]
+    for d in os.environ.get("LEAN_SRC_PATH", "").split(os.pathsep):
+        if d and d not in candidates:
+            candidates.append(d)
+    for d in candidates:
+        path = os.path.join(d, "lake-manifest.json")
+        if not os.path.isfile(path):
+            continue
+        try:
+            with open(path) as f:
+                manifest = json.load(f)
+            for package in manifest.get("packages", []):
+                if package.get("name") == "mathlib":
+                    return package.get("rev")
+        except (OSError, json.JSONDecodeError):
+            continue
+    return None
+
+
+rev2 = args.mathlib_rev or find_mathlib_rev()
 
 # Prometheus setup
 import prometheus_client
 m_info = prometheus_client.Info('versions', 'Lean and mathlib versions')
-m_info.info({'loogle': rev1, 'mathlib': rev2})
+m_info.info({'loogle': rev1, 'mathlib': rev2 or 'UNKNOWN'})
 m_queries = prometheus_client.Counter('queries', 'Total number of queries')
 m_errors = prometheus_client.Counter('errors', 'Total number of failing queries')
 m_results = prometheus_client.Histogram('results', 'Results per query', buckets=(0,1,2,5,10,50,100,200,500,1000))
@@ -462,9 +489,19 @@ class MyHandler(prometheus_client.MetricsHandler):
 
             self.wfile.write(blurb)
 
-            self.wfile.write(bytes(f"""
-                <p><small>This is Loogle revision <a href="https://github.com/nomeata/loogle/commit/{rev1}"><code>{rev1[:7]}</code></a> serving mathlib revision <a href="https://github.com/leanprover-community/mathlib4/commit/{rev2}"><code>{rev2[:7]}</code></a></small></p>
-            """, "utf-8"))
+            footer = (
+                f'<p><small>This is Loogle revision '
+                f'<a href="https://github.com/nomeata/loogle/commit/{rev1}">'
+                f'<code>{rev1[:7]}</code></a>'
+            )
+            if rev2:
+                footer += (
+                    f' serving mathlib revision '
+                    f'<a href="https://github.com/leanprover-community/mathlib4/commit/{rev2}">'
+                    f'<code>{rev2[:7]}</code></a>'
+                )
+            footer += '</small></p>'
+            self.wfile.write(bytes(footer, "utf-8"))
 
             self.wfile.write(b"""
                 </main>
