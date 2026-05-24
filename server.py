@@ -73,16 +73,33 @@ def find_mathlib_rev():
 
 rev2 = find_mathlib_rev()
 
-# Prometheus setup
-import prometheus_client
-m_info = prometheus_client.Info('versions', 'Lean and mathlib versions')
-m_info.info({'loogle': rev1, 'mathlib': rev2 or 'UNKNOWN'})
-m_queries = prometheus_client.Counter('queries', 'Total number of queries')
-m_errors = prometheus_client.Counter('errors', 'Total number of failing queries')
-m_results = prometheus_client.Histogram('results', 'Results per query', buckets=(0,1,2,5,10,50,100,200,500,1000))
-m_heartbeats = prometheus_client.Histogram('heartbeats', 'Heartbeats per query', buckets=(0,2e0,2e1,2e2,2e3,2e4))
-m_client = prometheus_client.Counter('clients', 'Clients used', ["client"])
-for l in ("web", "zulip", "json", "nvim", "vscode-lean4", "vscode-loogle", "LeanSearchClient", "lean-lsp-mcp", "meta-agent"): m_client.labels(l)
+# Prometheus is optional. If the user doesn't have the `prometheus_client`
+# package installed, metric updates become no-ops and the /metrics endpoint
+# returns HTTP 500 with an explanatory message.
+try:
+    import prometheus_client
+except ImportError:
+    prometheus_client = None
+
+if prometheus_client is not None:
+    m_info = prometheus_client.Info('versions', 'Lean and mathlib versions')
+    m_info.info({'loogle': rev1, 'mathlib': rev2 or 'UNKNOWN'})
+    m_queries = prometheus_client.Counter('queries', 'Total number of queries')
+    m_errors = prometheus_client.Counter('errors', 'Total number of failing queries')
+    m_results = prometheus_client.Histogram('results', 'Results per query', buckets=(0,1,2,5,10,50,100,200,500,1000))
+    m_heartbeats = prometheus_client.Histogram('heartbeats', 'Heartbeats per query', buckets=(0,2e0,2e1,2e2,2e3,2e4))
+    m_client = prometheus_client.Counter('clients', 'Clients used', ["client"])
+    for l in ("web", "zulip", "json", "nvim", "vscode-lean4", "vscode-loogle", "LeanSearchClient", "lean-lsp-mcp", "meta-agent"): m_client.labels(l)
+else:
+    class _NoopMetric:
+        """Stand-in for prometheus metrics when the library is not installed.
+        Every operation is a no-op; `labels(...)` returns self so chained
+        calls like `m_client.labels(...).inc()` still work."""
+        def inc(self, *a, **kw): pass
+        def observe(self, *a, **kw): pass
+        def labels(self, *a, **kw): return self
+        def info(self, *a, **kw): pass
+    m_info = m_queries = m_errors = m_results = m_heartbeats = m_client = _NoopMetric()
 
 examples = [
     "Real.sin",
@@ -180,7 +197,10 @@ def zulHit(hit):
 def zulQuery(sugg):
     return f"[`{sugg}`]({querylink(sugg)})"
 
-class MyHandler(prometheus_client.MetricsHandler):
+HandlerBase = prometheus_client.MetricsHandler if prometheus_client is not None \
+    else BaseHTTPRequestHandler
+
+class MyHandler(HandlerBase):
 
     def return404(self):
         self.send_response(404)
@@ -315,6 +335,19 @@ class MyHandler(prometheus_client.MetricsHandler):
             if url.path == "/json":
                 want_json = True
             elif url.path == "/metrics":
+                if prometheus_client is None:
+                    self.send_response(500)
+                    self.send_header("Content-type", "text/plain")
+                    self.end_headers()
+                    try:
+                        self.wfile.write(
+                            b"The /metrics endpoint requires the "
+                            b"'prometheus_client' Python package, which is "
+                            b"not installed. Install it (e.g. `pip install "
+                            b"prometheus_client`) and restart the server.\n")
+                    except BrokenPipeError:
+                        pass
+                    return
                 return super(MyHandler, self).do_GET()
             elif url.path != "/":
                 self.return404()
