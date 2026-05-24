@@ -45,10 +45,10 @@ project directory:
 
     lake exe loogle --module MyModule "<query>"
 
-**Lake env pattern** — loogle is installed on `PATH` (e.g. from this checkout's
-build) but your project has no loogle dependency. From the project directory:
+**Lake env pattern** — your project has no loogle dependency. Build loogle once
+in a checkout of this repository (`lake build`) and invoke its binary by path:
 
-    lake env loogle --module MyModule "<query>"
+    lake env /path/to/loogle/.lake/build/bin/loogle --module MyModule "<query>"
 
 In both cases, `lake env`/`lake exe` set up `LEAN_PATH` so that loogle can
 locate `MyModule.olean`. Loogle honours `LEAN_PATH` and falls back to its
