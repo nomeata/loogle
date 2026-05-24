@@ -24,10 +24,15 @@ Running locally
 The loogle binary searches any Lake project of the same Lean toolchain — your
 project does **not** need to depend on loogle. The setup is:
 
-1. Clone this repository, `cd` into it, and run `lake build`. This produces
-   the binary at `.lake/build/bin/loogle`.
-2. From any other Lake project of the same toolchain, point loogle at the
-   module you want to search:
+1. Clone this repository and `cd` into it.
+2. Copy the target project's `lean-toolchain` into this checkout, so the
+   loogle binary is built with the same toolchain as the oleans it will
+   read:
+
+       cp /path/to/project/lean-toolchain .
+
+3. Run `lake build`. This produces the binary at `.lake/build/bin/loogle`.
+4. From the target project, point loogle at the module you want to search:
 
        lake env /path/to/loogle/.lake/build/bin/loogle \
          --module MyModule "<query>"
