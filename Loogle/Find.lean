@@ -217,7 +217,7 @@ def SuffixTrie.find (t : SuffixTrie) (s : String) : NameSet :=
 def SuffixTrie.findSuffix (t : SuffixTrie) (s : String) : Array Name :=
   (Loogle.Trie.find? t s.toLower).getD #[]
 
-open Batteries.Tactic
+open Loogle.Cache
 
 /-- The index used by `#find`: A declaration cache with a `NameRel` mapping names to the name
 of constants they are mentinend in, and a declaration cache storing a suffix trie. -/
@@ -499,8 +499,8 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
       else do
         -- Query the declaration cache
         let (m₁, m₂) ← index.nameRelCache.get
-        let hits := .intersects_loogle <| needles.toArray.map <| fun needle =>
-          ((m₁.find needle).union_loogle (m₂.find needle)).insert needle
+        let hits := Loogle.TreeSet.intersects <| needles.toArray.map <| fun needle =>
+          (Loogle.TreeSet.union (m₁.find needle) (m₂.find needle)).insert needle
 
         let needlesList := .andList (needles.toList.map .ofConstName)
         if hits.size == 1 then
@@ -580,7 +580,7 @@ This is lazily initialized, so that the cost is only paid when Loogle is used, n
 imported. Among other things, this means we do not bother loading the database when _compiling_
 `Loogle.lean` into a binary!
 -/
-initialize cachedIndex : IO.Thunk Index ← IO.Thunk.new <| unsafe do
+initialize cachedIndex : Loogle.Thunk Index ← Loogle.Thunk.new <| unsafe do
   let path ← cachePath
   if (← path.pathExists) then
     let (d, _) ← unpickle _ path

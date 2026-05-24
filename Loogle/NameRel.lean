@@ -16,7 +16,7 @@ public import Lean.Declaration
 
 open Lean Meta
 
-namespace Lean
+namespace Loogle
 
 /-- A `NameRel` maps names to sets of names -/
 def NameRel := NameMap NameSet
@@ -34,4 +34,4 @@ def NameRel.find (m : NameRel) (n : Name) : NameSet := m.getD n {}
 def NameRel.insert (m : NameRel) (n₁ n₂ : Name) : NameRel :=
   m.find n₁ |>.insert n₂ |> NameMap.insert m n₁
 
-end Lean
+end Loogle

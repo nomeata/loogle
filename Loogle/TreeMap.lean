@@ -4,7 +4,7 @@ public import Std
 
 @[expose] public section
 
-namespace Std.TreeSet
+namespace Loogle.TreeSet
 
 variable {α : Type _} {cmp}
 
@@ -14,12 +14,12 @@ variable {α : Type _} {cmp}
 `O(n₂ * log (n₁ + n₂))`. Merges the maps `t₁` and `t₂`.
 If equal keys exist in both, the key from `t₂` is preferred.
 -/
-def union_loogle (t₁ t₂ : TreeSet α cmp) : TreeSet α cmp :=
+def union (t₁ t₂ : Std.TreeSet α cmp) : Std.TreeSet α cmp :=
   t₂.foldl .insert t₁
 
 /-- The intersection of a (non-empty) array of `RBTree`s. If
 the input is empty, the empty tree is returned. -/
-def intersects_loogle (ts : Array (TreeSet α cmp)) : TreeSet α cmp :=
+def intersects (ts : Array (Std.TreeSet α cmp)) : Std.TreeSet α cmp :=
   if ts.isEmpty then {} else
   -- sorts smallest set to the back, and iterate over that one
   -- TODO: An `RBTree` admits bulk operations, which could replace this implementation
@@ -27,5 +27,4 @@ def intersects_loogle (ts : Array (TreeSet α cmp)) : TreeSet α cmp :=
   ts.back!.foldl (init := {}) fun s m =>
     if ts.pop.all (·.contains m) then s.insert m else s
 
-
-end Std.TreeSet
+end Loogle.TreeSet

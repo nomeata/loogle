@@ -9,10 +9,9 @@ public import Batteries.Util.Cache
 
 @[expose] public section
 
-open Lean Meta
+open Lean Meta Batteries.Tactic
 
--- Odd to have that namespace in std4
-namespace Batteries.Tactic
+namespace Loogle.Cache
 
 /--
 A type synonym for a `DeclCache` containing a pair of elements.
