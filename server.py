@@ -50,39 +50,54 @@ except Exception:
     pass
 
 
-def find_mathlib_rev():
-    """Look for the mathlib revision in the surrounding Lake project's
-    `lake-manifest.json`. `lake env` populates `LEAN_SRC_PATH` with the
-    project source directories followed by the toolchain's lake sources;
-    the second-to-last entry is therefore the project we are serving.
-    Returns the rev string, or None if it can't be determined."""
+def find_project_info():
+    """Identify the Lake project we are serving. `lake env` populates
+    `LEAN_SRC_PATH` with the project source directories followed by the
+    toolchain's lake sources, so the second-to-last entry is the project
+    directory. Read its package name from `lake-manifest.json` and its
+    revision from `git rev-parse HEAD`. If we can't determine both,
+    return None and the footer will omit the project line entirely.
+
+    Returns a dict `{name, rev, github_url}` where `github_url` is the
+    commit page on GitHub if the origin remote points at github.com,
+    otherwise None."""
     entries = [d for d in os.environ.get("LEAN_SRC_PATH", "").split(os.pathsep) if d]
     if len(entries) < 2:
         return None
     project_dir = entries[-2]
-    path = os.path.join(project_dir, "lake-manifest.json")
     try:
-        with open(path) as f:
+        with open(os.path.join(project_dir, "lake-manifest.json")) as f:
             manifest = json.load(f)
     except (OSError, json.JSONDecodeError):
         return None
-    # If the project we're serving *is* mathlib, it won't list itself as a
-    # dependency — fall back to asking git for the checkout's HEAD rev.
-    if manifest.get("name") == "mathlib":
-        try:
-            return subprocess.check_output(
-                ['git', '-C', project_dir, 'rev-parse', 'HEAD'],
-                stderr=subprocess.DEVNULL,
-            ).decode('ascii').strip()
-        except (subprocess.CalledProcessError, OSError):
-            return None
-    for package in manifest.get("packages", []):
-        if package.get("name") == "mathlib":
-            return package.get("rev")
-    return None
+    name = (manifest.get("name") or "").strip("«»")
+    if not name:
+        return None
+    try:
+        rev = subprocess.check_output(
+            ['git', '-C', project_dir, 'rev-parse', 'HEAD'],
+            stderr=subprocess.DEVNULL,
+        ).decode('ascii').strip()
+    except (subprocess.CalledProcessError, OSError):
+        return None
+    github_url = None
+    try:
+        origin = subprocess.check_output(
+            ['git', '-C', project_dir, 'remote', 'get-url', 'origin'],
+            stderr=subprocess.DEVNULL,
+        ).decode('ascii').strip()
+        # Match git@github.com:owner/repo(.git) and https://github.com/owner/repo(.git)
+        m = re.match(
+            r'(?:git@github\.com:|https://github\.com/)([^/]+/[^/]+?)(?:\.git)?$',
+            origin)
+        if m:
+            github_url = f"https://github.com/{m.group(1)}/commit/{rev}"
+    except (subprocess.CalledProcessError, OSError):
+        pass
+    return {'name': name, 'rev': rev, 'github_url': github_url}
 
 
-rev2 = find_mathlib_rev()
+project_info = find_project_info()
 
 # Prometheus is optional. If the user doesn't have the `prometheus_client`
 # package installed, metric updates become no-ops and the /metrics endpoint
@@ -94,7 +109,14 @@ except ImportError:
 
 if prometheus_client is not None:
     m_info = prometheus_client.Info('versions', 'Lean and mathlib versions')
-    m_info.info({'loogle': rev1, 'mathlib': rev2 or 'UNKNOWN'})
+    if project_info is not None:
+        m_info.info({
+            'loogle': rev1,
+            'project': project_info['name'],
+            'project_rev': project_info['rev'],
+        })
+    else:
+        m_info.info({'loogle': rev1})
     m_queries = prometheus_client.Counter('queries', 'Total number of queries')
     m_errors = prometheus_client.Counter('errors', 'Total number of failing queries')
     m_results = prometheus_client.Histogram('results', 'Results per query', buckets=(0,1,2,5,10,50,100,200,500,1000))
@@ -526,12 +548,18 @@ class MyHandler(HandlerBase):
                 f'<a href="https://github.com/nomeata/loogle/commit/{rev1}">'
                 f'<code>{rev1[:7]}</code></a>'
             )
-            if rev2:
-                footer += (
-                    f' serving mathlib revision '
-                    f'<a href="https://github.com/leanprover-community/mathlib4/commit/{rev2}">'
-                    f'<code>{rev2[:7]}</code></a>'
-                )
+            if project_info is not None:
+                name = html.escape(project_info['name'])
+                rev = project_info['rev']
+                short = rev[:7]
+                if project_info['github_url']:
+                    footer += (
+                        f' serving {name} revision '
+                        f'<a href="{project_info["github_url"]}">'
+                        f'<code>{short}</code></a>'
+                    )
+                else:
+                    footer += f' serving {name} revision <code>{short}</code>'
             footer += '</small></p>'
             self.wfile.write(bytes(footer, "utf-8"))
 
