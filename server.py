@@ -59,15 +59,26 @@ def find_mathlib_rev():
     entries = [d for d in os.environ.get("LEAN_SRC_PATH", "").split(os.pathsep) if d]
     if len(entries) < 2:
         return None
-    path = os.path.join(entries[-2], "lake-manifest.json")
+    project_dir = entries[-2]
+    path = os.path.join(project_dir, "lake-manifest.json")
     try:
         with open(path) as f:
             manifest = json.load(f)
-        for package in manifest.get("packages", []):
-            if package.get("name") == "mathlib":
-                return package.get("rev")
     except (OSError, json.JSONDecodeError):
-        pass
+        return None
+    # If the project we're serving *is* mathlib, it won't list itself as a
+    # dependency — fall back to asking git for the checkout's HEAD rev.
+    if manifest.get("name") == "mathlib":
+        try:
+            return subprocess.check_output(
+                ['git', '-C', project_dir, 'rev-parse', 'HEAD'],
+                stderr=subprocess.DEVNULL,
+            ).decode('ascii').strip()
+        except (subprocess.CalledProcessError, OSError):
+            return None
+    for package in manifest.get("packages", []):
+        if package.get("name") == "mathlib":
+            return package.get("rev")
     return None
 
 
