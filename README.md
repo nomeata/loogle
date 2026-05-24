@@ -33,12 +33,13 @@ project does **not** need to depend on loogle. The setup is:
    index across runs so the second invocation onward is fast:
 
        lake env /path/to/loogle/.lake/build/bin/loogle \
-         --use-index .lake/loogle.idx --module MyModule "<query>"
+         --use-index --module MyModule "<query>"
 
-   The first call builds the index and writes it to `.lake/loogle.idx`;
-   subsequent calls reload it as long as the underlying `.olean`s
-   haven't changed. When they do change, loogle rebuilds the index in
-   place.
+   The first call builds the index and writes it to a file next to
+   `MyModule.olean`; subsequent calls reload it as long as the
+   underlying `.olean`s haven't changed. When they do change, loogle
+   rebuilds the index in place. If the default location is not
+   writable, pass `--index-file PATH` to choose another.
 
 `lake env` sets up `LEAN_PATH` for the calling project; loogle honours it
 and falls back to its build-time search path only when no environment is
@@ -58,10 +59,13 @@ CLI Usage
       --json, -j            print result in JSON format
       --module mod          import this module (default: Mathlib)
       --path path           search for .olean files here (default: the build time path)
-      --write-index file    build the search index and persist it to <file>
-      --read-index file     load the search index from <file>; fail if it is stale
-      --use-index file      load <file> if present and up-to-date, otherwise build
-                            the index and write it to <file>
+      --write-index         build the search index and persist it to disk
+      --read-index          load the search index from disk; fail if it is stale
+      --use-index           load the index from disk if present and up-to-date,
+                            otherwise build it and write it to disk
+      --index-file PATH     override the default index path. The default lives
+                            next to the root module's .olean (with .loogle-index
+                            extension); pass this if that location is read-only.
       --max-results n       limit the number of returned hits (default: 200)
 
 Indices are tagged with the Lake `depHash` of the root module they were built
