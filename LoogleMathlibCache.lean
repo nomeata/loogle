@@ -14,7 +14,7 @@ This file will be distributed via our Azure storage.
 -/
 
 open Lean.Elab.Command
-open Loogle.Find
+open Loogle Loogle.Find
 
 run_meta do
   let path ← cachePath

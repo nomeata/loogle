@@ -6,8 +6,7 @@ Authors: Joachim Breitner
 module
 
 public import Lean
-public import Batteries.Data.String.Matcher
-public import Batteries.Util.Pickle
+public import Loogle.Pickle
 
 public import Loogle.Cache
 public import Loogle.NameRel
@@ -345,7 +344,7 @@ partial def replaceIdentAt' (needle : SourceInfo) (new_name : Name) : Syntax →
   | .node si kind cs => .node si kind (cs.map (replaceIdentAt' needle new_name))
   | .ident si str n prs =>
     if SourceInfo.beq needle si then
-      .ident si (new_name.toString) new_name []
+      .ident si new_name.toString.toRawSubstring new_name []
     else
       .ident si str n prs
   | s => s
@@ -510,9 +509,10 @@ def find (index : Index) (args : TSyntax ``find_filters) (maxShown := 200) :
         pure (hits, namePats)
 
     -- Filter by name patterns
-    let nameMatchers := remainingNamePats.map (String.Matcher.ofString ·.toLower)
-    let hits2 := indexHits.toArray.filter fun n => nameMatchers.all fun m =>
-      m.find? n.toString.toLower |>.isSome
+    let lowerPats := remainingNamePats.map String.toLower
+    let hits2 := indexHits.toArray.filter fun n =>
+      let lowerName := n.toString.toLower
+      lowerPats.all fun pat => (lowerName.find? pat).isSome
     unless (remainingNamePats.isEmpty) do
       let nameList := .andList <| namePats.toList.map fun s => m!"\"{s}\""
       if hits2.size == 1 then
