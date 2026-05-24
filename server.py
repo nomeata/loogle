@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import argparse
 import urllib
 import subprocess
 import json
@@ -12,8 +13,30 @@ import os
 import select
 
 
-hostName = "localhost"
-serverPort = 8088
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Loogle HTTP frontend. Any arguments after `--` are "
+                    "forwarded to the loogle subprocess (e.g. `-- --module "
+                    "Init.Data.List.Basic --max-results 50`).",
+        allow_abbrev=False,
+    )
+    parser.add_argument("--host", default="localhost",
+                        help="HTTP listen address (default: localhost)")
+    parser.add_argument("--port", type=int, default=8088,
+                        help="HTTP listen port (default: 8088)")
+    parser.add_argument("--loogle-bin", default=".lake/build/bin/loogle",
+                        help="Path to the loogle binary (default: "
+                             ".lake/build/bin/loogle)")
+    return parser.parse_known_args()
+
+
+args, loogle_extra_args = parse_args()
+hostName = args.host
+serverPort = args.port
+loogleBin = args.loogle_bin
+# Strip a leading "--" separator if the user used one to delimit forwarded args.
+if loogle_extra_args and loogle_extra_args[0] == "--":
+    loogle_extra_args = loogle_extra_args[1:]
 
 blurb = open("./blurb.html","rb").read()
 icon = open("./loogle.png","rb").read()
@@ -60,8 +83,7 @@ class Loogle():
     def start(self):
         self.starting = True
         self.loogle = subprocess.Popen(
-            #[".lake/build/bin/loogle","--json", "--interactive", "--module","Init.Data.List.Basic"],
-            [".lake/build/bin/loogle","--json", "--interactive"],
+            [loogleBin, "--json", "--interactive", *loogle_extra_args],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
