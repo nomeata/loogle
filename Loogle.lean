@@ -223,16 +223,14 @@ where
   `.olean` suffix replaced by `.loogle-index`. -/
   defaultIndexPath : IO System.FilePath := do
     return (← findOLean opts.module.toName).withExtension "loogle-index"
-  /-- Pickle to a sibling `.tmp` file and atomically rename, so an interrupted
-  write never leaves a half-written index behind. On a write failure (often a
-  read-only default location), surface a message suggesting `--index-file`. -/
+  /-- `Lean.saveModuleData` (called by `pickle`) already writes to a
+  `<path>.tmp.<pid>` and renames atomically, so we only need to add a
+  friendly error wrapper. On a write failure (often a read-only default
+  location), surface a message suggesting `--index-file`. -/
   writePickle (path : System.FilePath) (data : Find.PickledIndex) : IO Unit := do
-    let tmpPath := path.addExtension s!"tmp.{← IO.Process.getPID}"
     try
-      pickle tmpPath data
-      IO.FS.rename tmpPath path
+      pickle path data
     catch e =>
-      try IO.FS.removeFile tmpPath catch _ => pure ()
       let hint :=
         if opts.indexFile.isNone then
           " (the default location is derived from the root module's olean and \
