@@ -50,10 +50,11 @@ EXPECTED='Found 2 declarations mentioning myUniqueValue.
 myUniqueValue (from MyMod)
 myUniqueValue_eq (from MyMod)'
 
-# Scenario A: lake exe pattern — loogle declared as a lake require.
+# Scenario A: lake exe pattern — loogle declared as a lake require, run via
+# `lake exe loogle` so it's built and invoked through the dep graph.
 ensure_built lake-exe
 run_scenario "lake-exe" "$EXPECTED" \
-  bash -c "cd $TESTS_DIR/lake-exe && lake env loogle --module MyMod 'myUniqueValue'"
+  bash -c "cd $TESTS_DIR/lake-exe && lake exe loogle --module MyMod 'myUniqueValue'"
 
 # Scenario B: lake env pattern — loogle NOT a lake dep; invoke the binary
 # explicitly via the project's `lake env` so LEAN_PATH points at MyMod.
