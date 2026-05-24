@@ -32,9 +32,6 @@ lean_lib Loogle where
   roots := #[`Loogle]
   globs := #[.andSubmodules `Loogle]
 
-lean_lib LoogleMathlibCache where
-  roots := #[`LoogleMathlibCache]
-
 lean_lib Tests where
   roots := #[`Tests]
 
