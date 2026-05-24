@@ -14,3 +14,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: leanprover/lean-action@v1
+      - name: End-to-end tests (lake-env + lake-exe)
+        run: ./tests/run.sh
