@@ -28,13 +28,6 @@ def parse_args():
     parser.add_argument("--loogle-bin", default=".lake/build/bin/loogle",
                         help="Path to the loogle binary (default: "
                              ".lake/build/bin/loogle)")
-    parser.add_argument("--mathlib-rev", default=None,
-                        help="Mathlib revision to show in the page footer. "
-                             "If omitted, the server tries to read it from a "
-                             "lake-manifest.json in the current directory or "
-                             "the first LEAN_SRC_PATH entry; if that also "
-                             "fails, the mathlib portion of the footer is "
-                             "omitted.")
     return parser.parse_known_args()
 
 
@@ -58,32 +51,27 @@ except Exception:
 
 
 def find_mathlib_rev():
-    """Look for a `lake-manifest.json` listing mathlib. Tries the current
-    working directory first (preserves the old behaviour when loogle is
-    invoked from a checkout that has mathlib as a dep), then each entry of
-    LEAN_SRC_PATH (catches the `lake -d /path/to/project env ./server.py`
-    case, where lake adds the target project's source dir as the first
-    LEAN_SRC_PATH entry). Returns the rev string or None."""
-    candidates = [os.getcwd()]
-    for d in os.environ.get("LEAN_SRC_PATH", "").split(os.pathsep):
-        if d and d not in candidates:
-            candidates.append(d)
-    for d in candidates:
-        path = os.path.join(d, "lake-manifest.json")
-        if not os.path.isfile(path):
-            continue
-        try:
-            with open(path) as f:
-                manifest = json.load(f)
-            for package in manifest.get("packages", []):
-                if package.get("name") == "mathlib":
-                    return package.get("rev")
-        except (OSError, json.JSONDecodeError):
-            continue
+    """Look for the mathlib revision in the surrounding Lake project's
+    `lake-manifest.json`. `lake env` populates `LEAN_SRC_PATH` with the
+    project source directories followed by the toolchain's lake sources;
+    the second-to-last entry is therefore the project we are serving.
+    Returns the rev string, or None if it can't be determined."""
+    entries = [d for d in os.environ.get("LEAN_SRC_PATH", "").split(os.pathsep) if d]
+    if len(entries) < 2:
+        return None
+    path = os.path.join(entries[-2], "lake-manifest.json")
+    try:
+        with open(path) as f:
+            manifest = json.load(f)
+        for package in manifest.get("packages", []):
+            if package.get("name") == "mathlib":
+                return package.get("rev")
+    except (OSError, json.JSONDecodeError):
+        pass
     return None
 
 
-rev2 = args.mathlib_rev or find_mathlib_rev()
+rev2 = find_mathlib_rev()
 
 # Prometheus setup
 import prometheus_client
