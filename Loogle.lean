@@ -151,15 +151,30 @@ def interactive (index : Find.Index) (maxResults : Nat) (print : Printer) : Core
     if query.isEmpty then break
     single index maxResults print query
 
+/-- How the loogle binary should treat a cached index file on disk. -/
+inductive IndexMode where
+  /-- Do not touch any index file. -/
+  | noIndex
+  /-- Read the file if it exists and its depHash matches the current root
+  module; otherwise build the index from scratch and write it back. -/
+  | useIndex
+  /-- Build the index from scratch and write it to the file unconditionally. -/
+  | writeIndex
+  /-- Read the file; fail if it is absent or stale. -/
+  | readIndex
+  deriving Inhabited, BEq
+
 structure LoogleOptions where
   interactive : Bool := false
   json : Bool := false
   query : Option String := none
   module : String := "Mathlib"
   searchPath : List System.FilePath := []
-  writeIndex : Option String := none
-  readIndex : Option String := none
-  useIndex : Option String := none
+  /-- The lifecycle of the on-disk index file. -/
+  indexMode : IndexMode := .noIndex
+  /-- Override for the index file path. When `none`, the default location is
+  derived from the root module's `.olean` (swap `.olean` for `.loogle-index`). -/
+  indexFile : Option System.FilePath := none
   maxResults : Nat := 200
   wantsHelp : Bool := false
 
@@ -202,57 +217,75 @@ unsafe def work (opts : LoogleOptions) (act : Find.Index → CoreM Unit) : IO Un
   let state := {env}
   Prod.fst <$> act'.toIO ctx state
 where
+  /-- Default index file path: sit next to the root module's `.olean`, with the
+  `.olean` suffix replaced by `.loogle-index`. -/
+  defaultIndexPath : IO System.FilePath := do
+    return (← findOLean opts.module.toName).withExtension "loogle-index"
   /-- Pickle to a sibling `.tmp` file and atomically rename, so an interrupted
-  write never leaves a half-written index behind. -/
+  write never leaves a half-written index behind. On a write failure (often a
+  read-only default location), surface a message suggesting `--index-file`. -/
   writePickle (path : System.FilePath) (data : Find.PickledIndex) : IO Unit := do
     let tmpPath := path.addExtension s!"tmp.{← IO.Process.getPID}"
-    pickle tmpPath data
-    IO.FS.rename tmpPath path
-  /-- Try to load `path` and verify its depHash matches `curDepHash`. Returns
-  `none` (and logs to stderr) if the file is absent, unreadable, or stale. -/
+    try
+      pickle tmpPath data
+      IO.FS.rename tmpPath path
+    catch e =>
+      try IO.FS.removeFile tmpPath catch _ => pure ()
+      let hint :=
+        if opts.indexFile.isNone then
+          " (the default location is derived from the root module's olean and \
+           may be in a read-only build tree; pass `--index-file PATH` to \
+           choose a writable location)"
+        else ""
+      throw <| .userError s!"loogle: failed to write index to {path}: {e}{hint}"
+  /-- Try to load `path` and verify its depHash matches `curDepHash`. -/
   tryRead (curDepHash : String) (path : System.FilePath) :
-      IO (Option Find.Index) := unsafe do
-    if !(← path.pathExists) then return none
+      IO (Except String Find.Index) := unsafe do
+    if !(← path.pathExists) then
+      return .error s!"no index file at {path}"
     try
       let ((storedHash, names, trie), _) ← unpickle Find.PickledIndex path
       if storedHash != curDepHash then
-        IO.eprintln
-          s!"loogle: index at {path} is stale (built against {storedHash}, current is {curDepHash})"
-        return none
-      return some (← Find.Index.mkFromCache (names, trie))
+        return .error s!"index at {path} is stale \
+          (built against {storedHash}, current is {curDepHash})"
+      return .ok (← Find.Index.mkFromCache (names, trie))
     catch e =>
-      IO.eprintln s!"loogle: failed to read index at {path}: {e}"
-      return none
+      return .error s!"failed to read index at {path}: {e}"
   act' : CoreM Unit := do
-    let curDepHash ← readModuleDepHash opts.module.toName
-
     let mkFresh : CoreM Find.Index := do
       let idx ← Find.Index.mk
       -- warm up cache eagerly
       let _ ← idx.1.cache.get.run'
       let _ ← idx.2.cache.get.run'
       return idx
-    let writeIdx (path : System.FilePath) (idx : Find.Index) : CoreM Unit := do
-      let (names, trie) ← idx.getCache
-      writePickle path (curDepHash, names, trie)
 
     let index ← do
-      if let some path := opts.readIndex then
-        match ← tryRead curDepHash path with
-        | some idx => pure idx
-        | none =>
-          throwError s!"loogle: cannot use index at {path} (missing or stale)"
-      else if let some path := opts.useIndex then
-        match ← tryRead curDepHash path with
-        | some idx => pure idx
-        | none =>
-          let idx ← mkFresh
-          writeIdx path idx
-          pure idx
+      if opts.indexMode == .noIndex then
+        mkFresh
       else
-        let idx ← mkFresh
-        if let some path := opts.writeIndex then writeIdx path idx
-        pure idx
+        let path ← match opts.indexFile with
+          | some p => pure p
+          | none => defaultIndexPath
+        let curDepHash ← readModuleDepHash opts.module.toName
+        let writeFresh : CoreM Find.Index := do
+          let idx ← mkFresh
+          let (names, trie) ← idx.getCache
+          writePickle path (curDepHash, names, trie)
+          return idx
+        match opts.indexMode with
+        | .noIndex => mkFresh  -- unreachable
+        | .readIndex =>
+          match ← tryRead curDepHash path with
+          | .ok idx => pure idx
+          | .error msg => throwError s!"loogle: {msg}"
+        | .useIndex =>
+          match ← tryRead curDepHash path with
+          | .ok idx => pure idx
+          | .error msg =>
+            IO.eprintln s!"loogle: {msg}; rebuilding."
+            writeFresh
+        | .writeIndex =>
+          writeFresh
 
     Seccomp.enable
     act index
@@ -280,9 +313,12 @@ def lakeLongOption : (opt : String) → CliM PUnit
     let path : System.FilePath ← takeArg "--path"
     modifyThe LoogleOptions fun opts => {opts with searchPath := opts.searchPath ++ [path]}
 | "--module" => do modifyThe LoogleOptions ({· with module := ← takeArg "--module"})
-| "--write-index" => do modifyThe LoogleOptions ({· with writeIndex := ← takeArg "--write-index"})
-| "--read-index" => do modifyThe LoogleOptions ({· with readIndex := ← takeArg "--read-index"})
-| "--use-index" => do modifyThe LoogleOptions ({· with useIndex := ← takeArg "--use-index"})
+| "--write-index" => modifyThe LoogleOptions ({· with indexMode := .writeIndex})
+| "--read-index" => modifyThe LoogleOptions ({· with indexMode := .readIndex})
+| "--use-index" => modifyThe LoogleOptions ({· with indexMode := .useIndex})
+| "--index-file" => do
+    let path : System.FilePath ← takeArg "--index-file"
+    modifyThe LoogleOptions ({· with indexFile := some path})
 | "--max-results" => do
     let arg ← takeArg "--max-results"
     let some n := arg.toNat? | throw <| Lake.CliError.invalidOptArg "--max-results" arg
@@ -306,12 +342,15 @@ OPTIONS:
   --json, -j            print result in JSON format
   --module mod          import this module (default: Mathlib)
   --path path           search for .olean files here (default: the build time path)
-  --write-index file    build the search index and persist it to <file>
-  --read-index file     load the search index from <file>; fail if it is stale
+  --write-index         build the search index and persist it to disk
+  --read-index          load the search index from disk; fail if it is stale
                         (the index records the Lake depHash of the root module
                         and is rejected if the current depHash differs)
-  --use-index file      load <file> if present and up-to-date, otherwise build
-                        the index and write it to <file>
+  --use-index           load the index from disk if present and up-to-date,
+                        otherwise build it and write it to disk
+  --index-file PATH     override the default index path. The default lives
+                        next to the root module's .olean (with .loogle-index
+                        extension); pass this if that location is read-only.
   --max-results n       limit the number of returned hits (default: 200)
 " ++
 if compileTimeSearchPath.isEmpty then "" else "
@@ -326,16 +365,21 @@ unsafe def loogleCli : CliM PUnit := do
     let opts ← getThe LoogleOptions
     let queries ← Lake.takeArgs
     let print := if opts.json then printJson else printPlain
+    let producesSideEffect :=
+      opts.indexMode == .writeIndex || opts.indexMode == .useIndex
     if opts.wantsHelp ||
-      queries.isEmpty && not opts.interactive
-        && opts.writeIndex.isNone && opts.useIndex.isNone
+      queries.isEmpty && not opts.interactive && not producesSideEffect
     then IO.println usage
     else work opts  fun index => do
       queries.forM (single index opts.maxResults print)
       if opts.interactive
       then interactive index opts.maxResults print
 
-public unsafe def main (args : List String) : IO Unit := do
-  match (← (loogleCli.run args |>.run' {}).run) with
-    | .ok _ => pure ()
-    | .error e => IO.println e.toString
+public unsafe def main (args : List String) : IO UInt32 := do
+  try
+    match (← (loogleCli.run args |>.run' {}).run) with
+      | .ok _ => return (0 : UInt32)
+      | .error e => IO.eprintln e.toString; return 1
+  catch e =>
+    IO.eprintln e.toString
+    return 1
