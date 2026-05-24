@@ -34,6 +34,26 @@ the index for Mathlib.
 
 [elan]: https://github.com/leanprover/elan
 
+### Running loogle against your own Lean project
+
+The query parser is baked into the loogle binary, so loogle can search any
+Lean project of the same toolchain — the project does **not** need to depend on
+loogle. Two usage patterns are supported:
+
+**Lake exe pattern** — your project declares loogle as a dependency. From the
+project directory:
+
+    lake exe loogle --module MyModule "<query>"
+
+**Lake env pattern** — loogle is installed on `PATH` (e.g. from this checkout's
+build) but your project has no loogle dependency. From the project directory:
+
+    lake env loogle --module MyModule "<query>"
+
+In both cases, `lake env`/`lake exe` set up `LEAN_PATH` so that loogle can
+locate `MyModule.olean`. Loogle honours `LEAN_PATH` and falls back to its
+build-time search path only when no environment is set.
+
 CLI Usage
 ---------
 
@@ -48,6 +68,7 @@ CLI Usage
       --path path           search for .olean files here (default: the build time path)
       --write-index file    persists the search index to a file
       --read-index file     read the search index from a file. This file is blindly trusted!
+      --max-results n       limit the number of returned hits (default: 200)
 
 By default, it will create an internal index upon starting,  which takes a bit.
 You can use `--write-index` and `--read-index` to cache that, but it is your
@@ -65,7 +86,11 @@ SSL) in front of a small python HTTP server (see `./server.py`) that uses
 mathlib every 6 hours.
 
 You can run this server locally as well, either using `./server.py` after you
-built `loogle` via `lake`.
+built `loogle` via `lake`. The wrapper accepts `--host`, `--port`, and
+`--loogle-bin`, and forwards any arguments after `--` to the loogle binary, so
+you can e.g. point the web frontend at a smaller module:
+
+    python3 server.py --port 9000 -- --module Init.Data.List.Basic --max-results 50
 
 At the path `/json?q=…` (instead of `/?q=…`), the result is returned in JSON
 format. No stability of the format is guaranteed at this point.
