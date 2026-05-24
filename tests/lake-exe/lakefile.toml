@@ -1,0 +1,9 @@
+name = "lake-exe-test"
+defaultTargets = ["MyMod"]
+
+[[require]]
+name = "loogle"
+path = "../.."
+
+[[lean_lib]]
+name = "MyMod"

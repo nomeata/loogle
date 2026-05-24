@@ -1,0 +1,5 @@
+name = "lake-env-test"
+defaultTargets = ["MyMod"]
+
+[[lean_lib]]
+name = "MyMod"

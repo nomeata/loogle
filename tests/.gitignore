@@ -1,0 +1,4 @@
+lake-env/.lake/
+lake-exe/.lake/
+lake-env/lake-manifest.json
+lake-exe/lake-manifest.json
