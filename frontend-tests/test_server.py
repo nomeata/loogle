@@ -49,9 +49,10 @@ def _free_port():
 class Server:
     """Lifecycle wrapper around a `python3 server.py` subprocess."""
 
-    def __init__(self, workers, env_overrides=None):
+    def __init__(self, workers, env_overrides=None, startup_timeout=5.0):
         self.workers = workers
         self.env_overrides = env_overrides or {}
+        self.startup_timeout = startup_timeout
         self.port = _free_port()
         self.proc = None
         self.log_path = None
@@ -73,7 +74,7 @@ class Server:
              "--port", str(self.port),
              "--workers", str(self.workers),
              "--restart-delay", "0.05",
-             "--startup-timeout", "5",
+             "--startup-timeout", str(self.startup_timeout),
              "--loogle-bin", str(MOCK_PATH)],
             cwd=str(ROOT),
             env=env,
@@ -353,6 +354,36 @@ class NoGreetingTests(unittest.TestCase):
         self.assertEqual(status, 503)
         self.assertEqual(headers.get("Retry-After"), "5")
         self.assertIn("under load", json.loads(body).get("error", ""))
+
+
+class StartupTimeoutTests(unittest.TestCase):
+    """A backend that hangs without printing a greeting must hit the
+    startup-timeout, get killed, and stay out of the pool — never
+    leaving a request thread blocked on readline()."""
+
+    server: Server
+
+    @classmethod
+    def setUpClass(cls):
+        cls.server = Server(
+            workers=1,
+            env_overrides={"MOCK_HANG_BEFORE_GREETING": "1"},
+            startup_timeout=0.3,
+        )
+        cls.server.start()
+        cls.server.wait_listening()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.stop()
+
+    def test_hanging_startup_times_out(self):
+        # Wait for the bring-up thread to log the timeout.
+        self.server.wait_log("did not send greeting within 0.3s")
+        self.server.wait_log("did not come up cleanly")
+        # Pool stays empty; queries load-shed.
+        status, _, _ = http_get(self.server, "/json?q=hello")
+        self.assertEqual(status, 503)
 
 
 class WorkerLostTests(unittest.TestCase):

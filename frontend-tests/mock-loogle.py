@@ -30,11 +30,16 @@ Env vars:
                            invocation to fail without affecting the
                            first one — useful for exercising the
                            "restart itself failed" branch.
+  MOCK_HANG_BEFORE_GREETING=1
+                           Block forever before printing the greeting,
+                           so the test can exercise the startup-timeout
+                           path in Loogle._read_greeting.
 """
 import sys
 import os
 import json
 import signal
+import time
 
 
 def handle(query):
@@ -66,6 +71,10 @@ def handle(query):
 
 
 def main():
+    if os.environ.get("MOCK_HANG_BEFORE_GREETING"):
+        # Sleep well past any reasonable startup-timeout. The server
+        # will kill us when its timeout fires.
+        time.sleep(86400)
     fail_if = os.environ.get("MOCK_FAIL_GREETING_IF")
     bad = bool(os.environ.get("MOCK_NO_GREETING")) \
         or (fail_if is not None and os.path.exists(fail_if))
