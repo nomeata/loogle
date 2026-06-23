@@ -73,6 +73,7 @@ class Server:
              "--port", str(self.port),
              "--workers", str(self.workers),
              "--restart-delay", "0.05",
+             "--startup-timeout", "5",
              "--loogle-bin", str(MOCK_PATH)],
             cwd=str(ROOT),
             env=env,

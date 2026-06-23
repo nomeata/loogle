@@ -11,6 +11,7 @@ import time
 import re
 import os
 import queue
+import select
 import threading
 
 
@@ -33,6 +34,11 @@ def parse_args():
                         help="Seconds to wait for a misbehaving worker to "
                              "die before polling its exit code (default: "
                              "5.0). Lower values make the test suite quick.")
+    parser.add_argument("--startup-timeout", type=float, default=600.0,
+                        help="Seconds to wait for a worker subprocess to "
+                             "print its greeting before giving up on the "
+                             "startup attempt (default: 600). Caps the "
+                             "blast radius of a wedged backend on restart.")
     parser.add_argument("--workers", type=int, default=1,
                         help="Number of loogle worker subprocesses (default: "
                              "1). Each worker holds its own mathlib in RAM. "
@@ -48,10 +54,17 @@ def parse_args():
 
 
 args, loogle_extra_args = parse_args()
+if args.workers < 1:
+    sys.exit(f"--workers must be at least 1 (got {args.workers})")
+if args.restart_delay < 0:
+    sys.exit(f"--restart-delay must be non-negative (got {args.restart_delay})")
+if args.startup_timeout <= 0:
+    sys.exit(f"--startup-timeout must be positive (got {args.startup_timeout})")
 hostName = args.host
 serverPort = args.port
 loogleBin = args.loogle_bin
 restartDelay = args.restart_delay
+startupTimeout = args.startup_timeout
 projectDir = args.project_dir
 # Strip a leading "--" separator if the user used one to delimit forwarded args.
 if loogle_extra_args and loogle_extra_args[0] == "--":
@@ -162,6 +175,16 @@ class Loogle():
         self.start()
 
     def start(self):
+        # Reap any prior subprocess before spawning the replacement. The
+        # crash/sandbox paths in do_query already reaped via poll(), but
+        # the unresponsive path only kill()s — without an explicit wait()
+        # that zombie would linger until our own process exits.
+        prev = getattr(self, "loogle", None)
+        if prev is not None:
+            if prev.poll() is None:
+                prev.kill()
+            prev.wait()
+
         cmd = [loogleBin, "--json", "--interactive", *loogle_extra_args]
         if projectDir:
             cmd = ["lake", "-d", projectDir, "env", *cmd]
@@ -170,19 +193,48 @@ class Loogle():
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
-        # Block until the backend signals readiness. Workers only enter the
-        # pool after this returns, so the dispatcher never hands out a worker
-        # that is still loading mathlib.
-        greeting = self.loogle.stdout.readline()
+        # Block until the backend signals readiness, with a generous
+        # timeout so a wedged subprocess doesn't hang the request thread
+        # that's restarting it. Workers only enter the pool after this
+        # returns True, so the dispatcher never hands out a worker that
+        # is still loading mathlib.
+        greeting = self._read_greeting(startupTimeout)
         if greeting != b"Loogle is ready.\n":
-            sys.stderr.write(
-                f"Backend did not send expected greeting (got: {greeting!r}).\n")
+            if greeting is None:
+                sys.stderr.write(
+                    f"Backend did not send greeting within {startupTimeout}s.\n")
+            else:
+                sys.stderr.write(
+                    f"Backend did not send expected greeting (got: {greeting!r}).\n")
             self.loogle.kill()
-            # Reap synchronously so is_alive() in the caller sees the dead
-            # subprocess immediately (kill() alone is asynchronous).
+            # Reap synchronously so is_alive() in the caller sees the
+            # dead subprocess immediately (kill() alone is asynchronous).
             self.loogle.wait()
             return False
         return True
+
+    def _read_greeting(self, timeout):
+        """Read one line from the backend's stdout, bounded by `timeout`
+        seconds. Returns the line (including newline) on success, b'' on
+        EOF, or None on timeout. Uses os.read so we don't fill the
+        buffered reader past the newline — subsequent queries use the
+        normal .readline() path."""
+        fd = self.loogle.stdout.fileno()
+        deadline = time.monotonic() + timeout
+        line = bytearray()
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return None
+            r, _, _ = select.select([fd], [], [], remaining)
+            if not r:
+                return None
+            chunk = os.read(fd, 1)
+            if not chunk:
+                return bytes(line)
+            line.extend(chunk)
+            if chunk == b"\n":
+                return bytes(line)
 
     def is_alive(self):
         return self.loogle.poll() is None
