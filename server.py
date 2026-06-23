@@ -11,7 +11,6 @@ import time
 import re
 import os
 import queue
-import select
 import threading
 
 
@@ -214,27 +213,20 @@ class Loogle():
         return True
 
     def _read_greeting(self, timeout):
-        """Read one line from the backend's stdout, bounded by `timeout`
-        seconds. Returns the line (including newline) on success, b'' on
-        EOF, or None on timeout. Uses os.read so we don't fill the
-        buffered reader past the newline — subsequent queries use the
-        normal .readline() path."""
-        fd = self.loogle.stdout.fileno()
-        deadline = time.monotonic() + timeout
-        line = bytearray()
-        while True:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                return None
-            r, _, _ = select.select([fd], [], [], remaining)
-            if not r:
-                return None
-            chunk = os.read(fd, 1)
-            if not chunk:
-                return bytes(line)
-            line.extend(chunk)
-            if chunk == b"\n":
-                return bytes(line)
+        """Read the greeting line from the backend's stdout, bounded by
+        `timeout` seconds. Returns the line on success, b'' on EOF, or
+        None on timeout. A daemon thread does the blocking readline; on
+        timeout the caller kill()s the subprocess, which makes readline
+        return EOF and the thread exit cleanly."""
+        result = []
+        def reader():
+            result.append(self.loogle.stdout.readline())
+        t = threading.Thread(target=reader, daemon=True)
+        t.start()
+        t.join(timeout)
+        if t.is_alive():
+            return None
+        return result[0]
 
     def is_alive(self):
         return self.loogle.poll() is None
