@@ -16,3 +16,14 @@ jobs:
       - uses: leanprover/lean-action@v1
       - name: End-to-end tests (lake-env + lake-exe)
         run: ./tests/run.sh
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: HTTP frontend tests (mocked backend)
+        run: python3 frontend-tests/test_server.py
