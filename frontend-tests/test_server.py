@@ -133,9 +133,13 @@ class Server:
         raise RuntimeError(f"log never contained {needle!r}\n--- log ---\n{self._read_log()}")
 
 
+TEST_USER_AGENT = "loogle-tests/0"
+
+
 def _do_request(req):
     """Run a urllib request, returning (status, headers_dict, body_text).
     Treats 4xx/5xx as values rather than exceptions."""
+    req.add_unredirected_header("User-Agent", TEST_USER_AGENT)
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
             return r.status, dict(r.headers), r.read().decode("utf-8")

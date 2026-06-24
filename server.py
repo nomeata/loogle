@@ -141,7 +141,9 @@ if prometheus_client is not None:
     else:
         m_info.info({'loogle': rev1})
     m_queries = prometheus_client.Counter('queries', 'Total number of queries')
-    m_errors = prometheus_client.Counter('errors', 'Total number of failing queries')
+    m_errors_backend = prometheus_client.Counter('errors_backend', 'Queries failed because the backend crashed or timed out')
+    m_errors_loogle = prometheus_client.Counter('errors_loogle', 'Queries where loogle itself returned an error response')
+    m_errors_denylist = prometheus_client.Counter('errors_denylist', 'Requests rejected by the user-agent denylist')
     m_load_shed = prometheus_client.Counter('load_shed', 'Requests rejected because all workers were busy')
     m_restarts = prometheus_client.Counter('restarts', 'Backend worker restarts', ['reason'])
     for l in ("sandbox", "died", "unresponsive"): m_restarts.labels(l)
@@ -159,7 +161,7 @@ else:
         def observe(self, *a, **kw): pass
         def labels(self, *a, **kw): return self
         def info(self, *a, **kw): pass
-    m_info = m_queries = m_errors = m_results = m_heartbeats = m_client = m_load_shed = m_restarts = m_workers_lost = _NoopMetric()
+    m_info = m_queries = m_errors_backend = m_errors_loogle = m_errors_denylist = m_results = m_heartbeats = m_client = m_load_shed = m_restarts = m_workers_lost = _NoopMetric()
 
 examples = [
     "Real.sin",
@@ -247,22 +249,23 @@ class Loogle():
                 self.loogle.wait()
             sys.stderr.write(f"{msg}\n")
             m_restarts.labels(reason).inc()
+            m_errors_backend.inc()
             if self.start():
-                return {"error": f"{msg} Restarting..."}
+                return {"error": f"{msg} Restarting...", "_backend_error": True}
             # Restart itself failed (greeting bad). The handler will see
             # is_alive() == False and drop the worker instead of pooling
             # it. Surface that distinction to the user.
             return {"error":
                 f"{msg} Backend failed to come up cleanly on restart; "
-                "removing worker from pool."}
+                "removing worker from pool.",
+                "_backend_error": True}
 
     def query(self, query):
         m_queries.inc()
         print(f"Query: {json.dumps(query)}", flush=True)
         output = self.do_query(query)
-        # Update metrics
-        if "error" in output:
-            m_errors.inc()
+        if "error" in output and not output.pop("_backend_error", False):
+            m_errors_loogle.inc()
         if "count" in output:
             m_results.observe(output["count"])
         if "heartbeats" in output:
@@ -482,6 +485,7 @@ class MyHandler(HandlerBase):
             overloaded = False
             url = urllib.parse.urlparse(self.path)
             want_json = False
+            user_agent = self.headers.get("user-agent", "") or ""
 
             if url.path == "/loogle.png":
                self.returnPNG(icon)
@@ -489,6 +493,21 @@ class MyHandler(HandlerBase):
             if url.path == "/loogle-banner.png":
                self.returnPNG(banner)
                return
+            if user_agent == "Python-urllib/3.12":
+                m_errors_denylist.inc()
+                self.send_response(403)
+                self.send_header("Content-type", "text/plain")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Access-Control-Allow-Headers", "User-Agent, X-Loogle-Client")
+                self.end_headers()
+                try:
+                    self.wfile.write(
+                        b"Your requests are causing issues on this loogle "
+                        b"instance. Please contact Joachim Breitner on "
+                        b"https://leanprover.zulipchat.com/\n")
+                except BrokenPipeError:
+                    pass
+                return
             if url.path == "/json":
                 want_json = True
             elif url.path == "/metrics":
@@ -513,7 +532,6 @@ class MyHandler(HandlerBase):
             url_query = url.query
             params = urllib.parse.parse_qs(url_query)
             if "q" in params and len(params["q"]) == 1:
-                user_agent = self.headers.get("user-agent", "") or ""
                 if "meta-externalagent" in user_agent:
                         m_client.labels("meta-agent").inc()
                 elif want_json:
