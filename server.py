@@ -174,16 +174,6 @@ class Loogle():
         self.start()
 
     def start(self):
-        # Reap any prior subprocess before spawning the replacement. The
-        # crash/sandbox paths in do_query already reaped via poll(), but
-        # the unresponsive path only kill()s — without an explicit wait()
-        # that zombie would linger until our own process exits.
-        prev = getattr(self, "loogle", None)
-        if prev is not None:
-            if prev.poll() is None:
-                prev.kill()
-            prev.wait()
-
         cmd = [loogleBin, "--json", "--interactive", *loogle_extra_args]
         if projectDir:
             cmd = ["lake", "-d", projectDir, "env", *cmd]
@@ -251,7 +241,10 @@ class Loogle():
             else:
                 reason, msg = "unresponsive", \
                     f"Backend did not respond ({e})."
-                self.loogle.kill() # ensure it's gone before we re-start
+                # kill+wait so start() doesn't leave a zombie behind.
+                # The crash/sandbox branches already reaped via poll().
+                self.loogle.kill()
+                self.loogle.wait()
             sys.stderr.write(f"{msg}\n")
             m_restarts.labels(reason).inc()
             if self.start():
