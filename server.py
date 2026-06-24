@@ -513,20 +513,21 @@ class MyHandler(HandlerBase):
             url_query = url.query
             params = urllib.parse.parse_qs(url_query)
             if "q" in params and len(params["q"]) == 1:
-                if "meta-externalagent" in self.headers["user-agent"]:
+                user_agent = self.headers.get("user-agent", "") or ""
+                if "meta-externalagent" in user_agent:
                         m_client.labels("meta-agent").inc()
                 elif want_json:
                     if "lean4/" in self.headers.get("x-loogle-client", ""):
                         m_client.labels("vscode-lean4").inc()
-                    elif "LeanSearchClient" in self.headers["user-agent"]:
+                    elif "LeanSearchClient" in user_agent:
                         m_client.labels("LeanSearchClient").inc()
-                    elif "vscode" in self.headers["user-agent"]:
+                    elif "vscode" in user_agent:
                         m_client.labels("vscode-loogle").inc()
-                    elif "lean.nvim" in self.headers["user-agent"]:
+                    elif "lean.nvim" in user_agent:
                         m_client.labels("nvim").inc()
-                    elif "lean+nvim" in self.headers["user-agent"]:
+                    elif "lean+nvim" in user_agent:
                         m_client.labels("nvim").inc()
-                    elif "lean-lsp-mcp" in self.headers["user-agent"]:
+                    elif "lean-lsp-mcp" in user_agent:
                         m_client.labels("lean-lsp-mcp").inc()
                     else:
                         m_client.labels("json").inc()
