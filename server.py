@@ -273,6 +273,15 @@ class Loogle():
 
 pool = queue.Queue(maxsize=args.workers)
 
+# Declared next to the pool so the binding is obvious. set_function makes
+# this a pull-time gauge: the value is read at /metrics scrape time, so
+# we don't have to keep an inc/dec counter in sync with pool operations.
+if prometheus_client is not None:
+    prometheus_client.Gauge(
+        'workers_available',
+        'Workers currently in the pool and ready to serve a request'
+    ).set_function(pool.qsize)
+
 def _bring_up_worker(i):
     try:
         w = Loogle()
