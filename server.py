@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import argparse
 import urllib
 import subprocess
@@ -10,7 +10,8 @@ import sys
 import time
 import re
 import os
-import select
+import queue
+import threading
 
 
 def parse_args():
@@ -28,6 +29,20 @@ def parse_args():
     parser.add_argument("--loogle-bin", default=".lake/build/bin/loogle",
                         help="Path to the loogle binary (default: "
                              ".lake/build/bin/loogle)")
+    parser.add_argument("--restart-delay", type=float, default=5.0,
+                        help="Seconds to wait for a misbehaving worker to "
+                             "die before polling its exit code (default: "
+                             "5.0). Lower values make the test suite quick.")
+    parser.add_argument("--startup-timeout", type=float, default=600.0,
+                        help="Seconds to wait for a worker subprocess to "
+                             "print its greeting before giving up on the "
+                             "startup attempt (default: 600). Caps the "
+                             "blast radius of a wedged backend on restart.")
+    parser.add_argument("--workers", type=int, default=1,
+                        help="Number of loogle worker subprocesses (default: "
+                             "1). Each worker holds its own mathlib in RAM. "
+                             "Requests that arrive when all workers are busy "
+                             "receive HTTP 503.")
     parser.add_argument("--project-dir", default=None,
                         help="Lake project directory to serve. When set, the "
                              "loogle subprocess is invoked via `lake -d <dir> "
@@ -38,9 +53,17 @@ def parse_args():
 
 
 args, loogle_extra_args = parse_args()
+if args.workers < 1:
+    sys.exit(f"--workers must be at least 1 (got {args.workers})")
+if args.restart_delay < 0:
+    sys.exit(f"--restart-delay must be non-negative (got {args.restart_delay})")
+if args.startup_timeout <= 0:
+    sys.exit(f"--startup-timeout must be positive (got {args.startup_timeout})")
 hostName = args.host
 serverPort = args.port
 loogleBin = args.loogle_bin
+restartDelay = args.restart_delay
+startupTimeout = args.startup_timeout
 projectDir = args.project_dir
 # Strip a leading "--" separator if the user used one to delimit forwarded args.
 if loogle_extra_args and loogle_extra_args[0] == "--":
@@ -119,6 +142,10 @@ if prometheus_client is not None:
         m_info.info({'loogle': rev1})
     m_queries = prometheus_client.Counter('queries', 'Total number of queries')
     m_errors = prometheus_client.Counter('errors', 'Total number of failing queries')
+    m_load_shed = prometheus_client.Counter('load_shed', 'Requests rejected because all workers were busy')
+    m_restarts = prometheus_client.Counter('restarts', 'Backend worker restarts', ['reason'])
+    for l in ("sandbox", "died", "unresponsive"): m_restarts.labels(l)
+    m_workers_lost = prometheus_client.Counter('workers_lost', 'Workers permanently removed from the pool after a failed restart')
     m_results = prometheus_client.Histogram('results', 'Results per query', buckets=(0,1,2,5,10,50,100,200,500,1000))
     m_heartbeats = prometheus_client.Histogram('heartbeats', 'Heartbeats per query', buckets=(0,2e0,2e1,2e2,2e3,2e4))
     m_client = prometheus_client.Counter('clients', 'Clients used', ["client"])
@@ -132,7 +159,7 @@ else:
         def observe(self, *a, **kw): pass
         def labels(self, *a, **kw): return self
         def info(self, *a, **kw): pass
-    m_info = m_queries = m_errors = m_results = m_heartbeats = m_client = _NoopMetric()
+    m_info = m_queries = m_errors = m_results = m_heartbeats = m_client = m_load_shed = m_restarts = m_workers_lost = _NoopMetric()
 
 examples = [
     "Real.sin",
@@ -147,7 +174,6 @@ class Loogle():
         self.start()
 
     def start(self):
-        self.starting = True
         cmd = [loogleBin, "--json", "--interactive", *loogle_extra_args]
         if projectDir:
             cmd = ["lake", "-d", projectDir, "env", *cmd]
@@ -156,20 +182,46 @@ class Loogle():
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
         )
+        # Block until the backend signals readiness, with a generous
+        # timeout so a wedged subprocess doesn't hang the request thread
+        # that's restarting it. Workers only enter the pool after this
+        # returns True, so the dispatcher never hands out a worker that
+        # is still loading mathlib.
+        greeting = self._read_greeting(startupTimeout)
+        if greeting != b"Loogle is ready.\n":
+            if greeting is None:
+                sys.stderr.write(
+                    f"Backend did not send greeting within {startupTimeout}s.\n")
+            else:
+                sys.stderr.write(
+                    f"Backend did not send expected greeting (got: {greeting!r}).\n")
+            self.loogle.kill()
+            # Reap synchronously so is_alive() in the caller sees the
+            # dead subprocess immediately (kill() alone is asynchronous).
+            self.loogle.wait()
+            return False
+        return True
+
+    def _read_greeting(self, timeout):
+        """Read the greeting line from the backend's stdout, bounded by
+        `timeout` seconds. Returns the line on success, b'' on EOF, or
+        None on timeout. A daemon thread does the blocking readline; on
+        timeout the caller kill()s the subprocess, which makes readline
+        return EOF and the thread exit cleanly."""
+        result = []
+        def reader():
+            result.append(self.loogle.stdout.readline())
+        t = threading.Thread(target=reader, daemon=True)
+        t.start()
+        t.join(timeout)
+        if t.is_alive():
+            return None
+        return result[0]
+
+    def is_alive(self):
+        return self.loogle.poll() is None
 
     def do_query(self, query):
-        if self.starting:
-            r, w, e = select.select([ self.loogle.stdout ], [], [], 0)
-            if self.loogle.stdout in r:
-                greeting = self.loogle.stdout.readline()
-                if greeting != b"Loogle is ready.\n":
-                    self.loogle.kill() # just to be sure
-                    self.start()
-                    return {"error": "The backend process did not send greeting, killing and restarting..."}
-                else:
-                    self.starting = False
-            else:
-                return {"error": "The backend process is starting up, please try again later..."}
         try:
             self.loogle.stdin.write(bytes(query, "utf8"));
             self.loogle.stdin.write(b"\n");
@@ -178,25 +230,31 @@ class Loogle():
             output = json.loads(output_json)
             return output
         except (IOError, json.JSONDecodeError) as e:
-            time.sleep(5) # to allow the process to die
+            time.sleep(restartDelay) # to allow the process to die
             code = self.loogle.poll()
             if code == -31:
-                sys.stderr.write(f"Backend died trying to escape the sandbox.\n")
-                self.start()
-                return {"error":
-                    f"Backend died trying to escape the sandbox. Restarting..."
-                }
-            if code is not None:
-                sys.stderr.write(f"Backend died with code {code}.\n")
-                self.start()
-                return {"error":
-                    f"The backend process died with code {code}. Restarting..."
-                }
+                reason, msg = "sandbox", \
+                    "Backend died trying to escape the sandbox."
+            elif code is not None:
+                reason, msg = "died", \
+                    f"The backend process died with code {code}."
             else:
-                sys.stderr.write(f"Backend did not respond ({e}).\n")
-                self.loogle.kill() # just to be sure
-                self.start()
-                return {"error": "The backend process did not respond, killing and restarting..."}
+                reason, msg = "unresponsive", \
+                    f"Backend did not respond ({e})."
+                # kill+wait so start() doesn't leave a zombie behind.
+                # The crash/sandbox branches already reaped via poll().
+                self.loogle.kill()
+                self.loogle.wait()
+            sys.stderr.write(f"{msg}\n")
+            m_restarts.labels(reason).inc()
+            if self.start():
+                return {"error": f"{msg} Restarting..."}
+            # Restart itself failed (greeting bad). The handler will see
+            # is_alive() == False and drop the worker instead of pooling
+            # it. Surface that distinction to the user.
+            return {"error":
+                f"{msg} Backend failed to come up cleanly on restart; "
+                "removing worker from pool."}
 
     def query(self, query):
         m_queries.inc()
@@ -213,7 +271,38 @@ class Loogle():
 
 
 
-loogle = Loogle()
+pool = queue.Queue(maxsize=args.workers)
+
+def _bring_up_worker(i):
+    try:
+        w = Loogle()
+    except Exception as e:
+        sys.stderr.write(f"Worker {i} failed to start: {e}\n")
+        return
+    if w.loogle.poll() is not None:
+        # Start() killed the subprocess (bad greeting). Leave the worker
+        # out of the pool entirely so requests load-shed cleanly instead
+        # of being served by a dead pipe.
+        sys.stderr.write(f"Worker {i} did not come up cleanly; not adding to pool.\n")
+        return
+    pool.put(w)
+    sys.stderr.write(f"Worker {i} ready.\n")
+
+for i in range(args.workers):
+    threading.Thread(
+        target=_bring_up_worker, args=(i,), daemon=True,
+        name=f"loogle-bringup-{i}").start()
+
+def _return_or_drop_worker(worker):
+    """Put a worker back in the pool, unless its restart left it dead —
+    in which case the pool size effectively shrinks for the lifetime of
+    the process. Counts the loss so it's visible in /metrics."""
+    if worker.is_alive():
+        pool.put(worker)
+    else:
+        m_workers_lost.inc()
+        sys.stderr.write(
+            "Worker is dead after attempted restart; removing from pool.\n")
 
 # link formatting
 def locallink(query):
@@ -256,6 +345,18 @@ class MyHandler(HandlerBase):
             self.wfile.write(b"Invalid request.\n")
         except BrokenPipeError:
             # browsers seem to like to close this early
+            pass
+
+    def return503(self, content_type, body):
+        self.send_response(503)
+        self.send_header("Content-type", content_type)
+        self.send_header("Retry-After", "5")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Headers", "User-Agent, X-Loogle-Client")
+        self.end_headers()
+        try:
+            self.wfile.write(body)
+        except BrokenPipeError:
             pass
 
     def returnRedirect(self, url):
@@ -321,7 +422,17 @@ class MyHandler(HandlerBase):
             else:
                 query = message['data'].split('\n', 1)[0]
 
-            result = loogle.query(query)
+            try:
+                worker = pool.get(block=False)
+            except queue.Empty:
+                m_load_shed.inc()
+                self.returnJSON({ "content":
+                    "🛑 Loogle is currently under load, please try again in a moment." })
+                return
+            try:
+                result = worker.query(query)
+            finally:
+                _return_or_drop_worker(worker)
 
             if "error" in result:
                 if "\n" in result['error']:
@@ -359,6 +470,7 @@ class MyHandler(HandlerBase):
         try:
             query = ""
             result = {}
+            overloaded = False
             url = urllib.parse.urlparse(self.path)
             want_json = False
 
@@ -415,20 +527,36 @@ class MyHandler(HandlerBase):
                 query = params["q"][0].strip().removeprefix("#find ").strip()
                 if query:
                     query = re.sub(r'\s', ' ', query, flags=re.UNICODE)
-                    result = loogle.query(query)
+                    try:
+                        worker = pool.get(block=False)
+                    except queue.Empty:
+                        m_load_shed.inc()
+                        overloaded = True
+                    else:
+                        try:
+                            result = worker.query(query)
+                        finally:
+                            _return_or_drop_worker(worker)
 
-                if "lucky" in params:
+                if "lucky" in params and not overloaded:
                     if "hits" in result and len(result["hits"]) >= 1:
                         self.returnRedirect(doclink(result["hits"][0]))
                         return
 
 
             if want_json:
+                if overloaded:
+                    self.return503("application/json", bytes(json.dumps(
+                        {"error": "Loogle is currently under load, please try again later."}),
+                        "utf8"))
+                    return
                 self.returnJSON(result)
                 return
 
-            self.send_response(200)
+            self.send_response(503 if overloaded else 200)
             self.send_header("Content-type", "text/html")
+            if overloaded:
+                self.send_header("Retry-After", "5")
             self.end_headers()
             self.wfile.write(bytes("""
                 <!doctype html>
@@ -511,6 +639,11 @@ class MyHandler(HandlerBase):
                 </form>
                 </section>
             """, "utf-8"))
+            if overloaded:
+                self.wfile.write(b"""
+                    <h2>Loogle is currently under load</h2>
+                    <p>All worker processes are busy. Please try again in a few seconds.</p>
+                """)
             if "error" in result:
                 self.wfile.write(bytes(f"""
                     <h2>Error</h2>
@@ -605,7 +738,7 @@ class MyHandler(HandlerBase):
             pass
 
 if __name__ == "__main__":
-    webServer = HTTPServer((hostName, serverPort), MyHandler)
+    webServer = ThreadingHTTPServer((hostName, serverPort), MyHandler)
     print("Server started http://%s:%s" % (hostName, serverPort), flush=True)
 
     try:
