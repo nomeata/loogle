@@ -531,6 +531,13 @@ class MyHandler(HandlerBase):
 
             url_query = url.query
             params = urllib.parse.parse_qs(url_query)
+            limit = None
+            if "limit" in params:
+                limit = int(params["limit"][0])
+                if limit < 0:
+                    self.return400()
+                    return
+
             if "q" in params and len(params["q"]) == 1:
                 if "meta-externalagent" in user_agent:
                         m_client.labels("meta-agent").inc()
@@ -571,6 +578,8 @@ class MyHandler(HandlerBase):
                         self.returnRedirect(doclink(result["hits"][0]))
                         return
 
+            if limit is not None and "hits" in result:
+                result["hits"] = result["hits"][:limit]
 
             if want_json:
                 if overloaded:
