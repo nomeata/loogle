@@ -63,8 +63,7 @@ the env's token table on the fly. -/
 def runStandaloneParser (env : Environment) (p : Parser) (input : String)
     (fileName := "<input>") :
     Except String Syntax :=
-  let input := input.trim
-  let pfn := andthenFn whitespace p.fn
+  let pfn := andthenFn whitespace (andthenFn p.fn whitespace)
   let baseTable := getTokenTable env
   let table := (p.info.collectTokens []).foldl (fun t tk => t.insert tk tk) baseTable
   let ictx := mkInputContext input fileName
