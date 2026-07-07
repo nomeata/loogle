@@ -252,6 +252,14 @@ class SingleWorkerTests(unittest.TestCase):
         data = json.loads(body)
         self.assertEqual(data["hits"][0]["name"], "Mock.example")
 
+    def test_query_leading_trailing_whitespace_stripped(self):
+        # Queries with surrounding whitespace should be stripped before
+        # being forwarded to the backend (issue #59).
+        status, _, body = http_get(self.server, "/json?q=%20hello%20")
+        self.assertEqual(status, 200)
+        data = json.loads(body)
+        self.assertEqual(data["hits"][0]["name"], "Mock.example")
+
     def test_backend_error_surfaces_in_200(self):
         status, _, body = http_get(self.server, "/json?q=error")
         self.assertEqual(status, 200)

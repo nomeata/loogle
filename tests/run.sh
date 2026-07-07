@@ -195,6 +195,15 @@ run_scenario "lake-env unicode turnstile" "$TURNSTILE_EXPECTED" \
 run_scenario "lake-env general term filter" "$TURNSTILE_EXPECTED" \
   bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod 'myUniqueValue = _'"
 
+# Leading/trailing whitespace — queries with accidental surrounding spaces
+# should give the same results as the trimmed query (issue #59).
+run_scenario "lake-env leading whitespace" "$EXPECTED" \
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod ' myUniqueValue'"
+run_scenario "lake-env trailing whitespace" "$EXPECTED" \
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod 'myUniqueValue '"
+run_scenario "lake-env leading+trailing whitespace" "$EXPECTED" \
+  bash -c "cd $TESTS_DIR/lake-env && lake env '$LOOGLE_BIN' --index-mode none --module MyMod '  myUniqueValue  '"
+
 # `_` on its own should give a helpful error, not a crash.
 UNDERSCORE_EXPECTED='Cannot search for _. Did you forget to put a term pattern in parentheses?'
 run_scenario "lake-env underscore-only filter" "$UNDERSCORE_EXPECTED" \
