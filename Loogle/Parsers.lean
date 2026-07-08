@@ -59,7 +59,11 @@ def queryParser : Parser :=
 
 /-- Run a stand-alone `Parser` value (rather than one looked up by name in the
 environment) on the given input string, merging the parser's own tokens into
-the env's token table on the fly. -/
+the env's token table on the fly.
+
+Surrounding whitespace is consumed by wrapping the parser with `whitespace` on
+both sides, so leading and trailing spaces/tabs/newlines are accepted without
+trimming the input string (which would shift source positions). -/
 def runStandaloneParser (env : Environment) (p : Parser) (input : String)
     (fileName := "<input>") :
     Except String Syntax :=
