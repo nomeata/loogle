@@ -151,7 +151,7 @@ if prometheus_client is not None:
     m_results = prometheus_client.Histogram('results', 'Results per query', buckets=(0,1,2,5,10,50,100,200,500,1000))
     m_heartbeats = prometheus_client.Histogram('heartbeats', 'Heartbeats per query', buckets=(0,2e0,2e1,2e2,2e3,2e4))
     m_client = prometheus_client.Counter('clients', 'Clients used', ["client"])
-    for l in ("web", "zulip", "json", "nvim", "vscode-lean4", "vscode-loogle", "LeanSearchClient", "lean-lsp-mcp", "meta-agent"): m_client.labels(l)
+    for l in ("web", "zulip", "json", "nvim", "vscode-lean4", "vscode-loogle", "LeanSearchClient", "lean-lsp-mcp", "meta-agent", "AutoLeanPaper"): m_client.labels(l)
 else:
     class _NoopMetric:
         """Stand-in for prometheus metrics when the library is not installed.
@@ -547,6 +547,8 @@ class MyHandler(HandlerBase):
                         m_client.labels("nvim").inc()
                     elif "lean-lsp-mcp" in user_agent:
                         m_client.labels("lean-lsp-mcp").inc()
+                    elif "AutoLeanPaper" in user_agent:
+                        m_client.labels("AutoLeanPaper").inc()
                     else:
                         m_client.labels("json").inc()
                 else:
